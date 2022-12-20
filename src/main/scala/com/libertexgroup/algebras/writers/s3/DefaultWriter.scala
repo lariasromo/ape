@@ -6,7 +6,7 @@ import zio.s3.{MultipartUploadOptions, S3, UploadOptions, multipartUpload}
 import zio.stream.ZStream
 import zio.{Has, ZIO, s3}
 
-class DefaultWriter[E] extends Writer[E] {
+class DefaultWriter[E] extends S3Writer[E] {
   override type EnvType = s3.S3 with E with Has[S3Config]
   override type InputType = Array[Byte]
 

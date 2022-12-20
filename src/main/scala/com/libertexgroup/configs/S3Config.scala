@@ -2,7 +2,7 @@ package com.libertexgroup.configs
 
 import com.libertexgroup.models.EncodingType
 import com.libertexgroup.models.EncodingType.EncodingType
-import zio.{Task, ZIO, system}
+import zio.{Has, Task, ZIO, ZLayer, system}
 
 case class S3Config (
                       location:Option[String],
@@ -32,4 +32,5 @@ object S3Config extends ReaderConfig {
     encodingType = encodingType.map(t => EncodingType.withName(t)).getOrElse(EncodingType.GZIP),
     parallelism = parallelism.map(_.toInt).getOrElse(4)
   )
+  val live: ZLayer[system.System, SecurityException, Has[S3Config]] = ZLayer.fromEffect(make)
 }

@@ -3,7 +3,7 @@ import zhttp.http._
 import zhttp.service.Server
 import zio.{ExitCode, URIO, App}
 
-object Main extends App {
+object UI extends App {
   // A simple app to serve static resource files from a local directory.
   val app = Http.collectHttp[Request] { case Method.GET -> "static" /: path =>
     for {

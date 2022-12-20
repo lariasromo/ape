@@ -1,4 +1,4 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0.3"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   "io.d11"  %% "zhttp"     % "1.0.0.0-RC29",
   "dev.zio" %% "zio-kafka" % "0.15.0",
   "dev.zio" %% "zio-s3"    % "0.3.7",
+  "dev.zio" %% "zio-json"  % "0.1.5"
 )
 
 // Credentials to get access to Libertex Artifactory maven repositories
@@ -25,3 +26,13 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 enablePlugins(DockerPlugin)
 enablePlugins(JavaAppPackaging)
+
+
+// Libertex Artifactory maven repositories (artifact publishing configuration)
+publishTo := {
+  val artifactory = "https://lbx.jfrog.io/"
+  if (isSnapshot.value)
+    Some("Artifactory Realm snapshot" at artifactory + "artifactory/alexandria-snapshot")
+  else
+    Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release-local")
+}
