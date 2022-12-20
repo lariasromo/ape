@@ -9,7 +9,7 @@ import zio.kafka.serde.Serde
 import zio.stream.ZStream
 import zio.{Has, ZIO}
 
-object KafkaDefaultReader extends Reader {
+object KafkaDefaultReader extends KafkaReader {
   override type Env = Has[KafkaConfig]
   override type Env2 = Any with Consumer with Clock
   override type StreamType = ConsumerRecord[String, Array[Byte]]

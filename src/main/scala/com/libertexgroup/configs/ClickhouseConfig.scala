@@ -16,9 +16,7 @@ case class ClickhouseConfig(
 }
 
 object ClickhouseConfig {
-  def live: ZIO[system.System, SecurityException, ULayer[Has[ClickhouseConfig]]] = for {
-    conf <- make
-  } yield ZLayer.succeed( conf )
+  def live: ZLayer[system.System, SecurityException, Has[ClickhouseConfig]] = ZLayer.fromEffect(make)
 
   def make: ZIO[system.System, SecurityException, ClickhouseConfig] = for {
     batchSize <- system.env("BATCH_SIZE")
