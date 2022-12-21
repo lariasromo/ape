@@ -13,7 +13,7 @@ class DefaultWriter[E] extends ClickhouseWriter[E] {
 
 //  implicit val t: Array[Byte] => ClickhouseModel
 
-  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Any, Unit] =
+  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Throwable, Unit] =
     for {
       config <- ZIO.access[Has[ClickhouseConfig]](_.get)
       _ <- stream

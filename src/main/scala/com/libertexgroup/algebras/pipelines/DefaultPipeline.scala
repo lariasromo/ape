@@ -7,6 +7,7 @@ import com.libertexgroup.algebras.transformers.clickhouse.DefaultClickhouseTrans
 import com.libertexgroup.algebras.writers.clickhouse.DefaultWriter
 import com.libertexgroup.configs.{ClickhouseConfig, KafkaConfig, ProgramConfig, S3Config}
 import zio.clock.Clock
+import zio.console.{Console, putStrLn}
 import zio.kafka.consumer.Consumer
 import zio.s3.S3
 import zio.{Has, Schedule, ZIO, duration}
@@ -14,7 +15,7 @@ import zio.{Has, Schedule, ZIO, duration}
 import java.util.concurrent.TimeUnit
 
 object DefaultPipeline {
-  def apply(readerI: Reader): ZIO[readerI.Env2 with Has[ClickhouseConfig] with readerI.Env with Has[ProgramConfig], Any, Unit] =
+  def apply(readerI: Reader): ZIO[Console with readerI.Env2 with Has[ClickhouseConfig] with readerI.Env with Has[ProgramConfig], Throwable, Unit] =
     for {
       config <- ZIO.access[Has[ProgramConfig]](_.get)
 
@@ -22,30 +23,27 @@ object DefaultPipeline {
       transformedStream = config.transformer match {
         // register more transformers here
         case "default" => new DefaultClickhouseTransformer[readerI.Env2, readerI.StreamType].apply(stream)
+        case _ => throw new Exception(s"Transformer: ${config.transformer} is not supported")
       }
-      _ <- config.writer match {
+      _ <- (config.writer match {
         // register more writers here
-        case "default" => new DefaultWriter[readerI.Env2].apply(transformedStream)
-      }
+        case "ClickhouseDefault" => new DefaultWriter[readerI.Env2].apply(transformedStream)
+        case _ => throw new Exception(s"Writer: ${config.writer} is not supported")
+      }).catchAll(e => putStrLn(e.toString))
     } yield ()
 
+  type AllConfigs = Has[ClickhouseConfig] with Has[KafkaConfig] with Has[ProgramConfig] with S3 with Has[S3Config]
+  def getReader(config: ProgramConfig): ZIO[Console with Consumer with Clock with AllConfigs, Throwable, Unit] = config.reader match {
+    // register more readers here
+    case "KafkaDefault" => apply(KafkaDefaultReader)
+    case "S3Default" => apply(S3DefaultReader)
+    case _ => throw new Exception(s"Reader: ${config.reader} is not supported")
+  }
 
-  def run: ZIO[
-    Consumer with Clock with S3
-      with Has[ClickhouseConfig]
-      with Has[KafkaConfig]
-      with Has[ProgramConfig]
-      with Has[S3Config],
-    Throwable, Unit] = for {
+  def run: ZIO[Console with Consumer with Clock with AllConfigs with S3, Throwable, AnyVal] = for {
     config <- ZIO.access[Has[ProgramConfig]](_.get)
-    pipe = {
-      (
-        config.reader match {
-          // register more readers here
-          case "KafkaDefault" => apply(KafkaDefaultReader)
-          case "S3Default" => apply(S3DefaultReader)
-        }
-      ).repeat {
+    pipe <- {
+      getReader(config).repeat {
         config.streamConfig.map(streamConfig => {
           Schedule.spaced {
             duration.Duration.apply(streamConfig.durationMinutes, TimeUnit.MINUTES)

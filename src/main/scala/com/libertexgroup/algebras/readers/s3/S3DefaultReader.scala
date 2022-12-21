@@ -14,7 +14,8 @@ object S3DefaultReader extends Reader {
   override type Env2 = S3
   override type StreamType = String
 
-  override def apply: ZIO[S3 with Has[S3Config], Throwable, ZStream[S3, Exception, String]] = for {
+  override def apply: ZIO[Env, Throwable, ZStream[Env2, Throwable, StreamType]] =
+    for {
       config <- ZIO.access[Has[S3Config]](_.get)
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
