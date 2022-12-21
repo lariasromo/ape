@@ -6,35 +6,34 @@ import software.amazon.awssdk.regions.Region
 import zio.blocking.Blocking
 import zio.clock.Clock
 import zio.console.{Console, putStrLn}
-import zio.kafka.consumer.diagnostics.Diagnostics
-import zio.kafka.consumer.{Consumer, ConsumerSettings}
+import zio.kafka.consumer.Consumer
 import zio.s3.S3
 import zio.{ExitCode, Has, URIO, ZIO, ZLayer, system}
 
 object PipelineExample extends zio.App {
-  type Env = Consumer with Clock with S3 with Console
+  type ConsumerEnv = Consumer with Env
+  type Env = Clock with S3 with Console
     with Has[ClickhouseConfig]
     with Has[KafkaConfig]
-    with Has[ProgramConfig]
     with Has[S3Config]
 
+  val configJson: String = """
+                     |{
+                     |    "reader": "KafkaDefault",
+                     |    "transformer": "default",
+                     |    "writer": "ClickhouseDefault"
+                     |}
+                     |""".stripMargin
 
-  val layer: ZLayer[Clock with Blocking with Any with system.System, Throwable, Env] =
-    ZLayer.fromManaged(
-      Consumer.make(
-        ConsumerSettings(List("localhost:29092")).withGroupId("group")
-      )
-    ) ++ Console.live ++ Clock.live ++
-      zio.s3.liveM(Region.EU_WEST_1, zio.s3.providers.system <> zio.s3.providers.env) ++
-      ClickhouseConfig.live ++ KafkaConfig.live ++ ProgramConfig.live ++ S3Config.live
+  val layer: ZLayer[system.System, Throwable, Env] = Console.live ++ Clock.live ++
+    zio.s3.liveM(Region.EU_WEST_1, zio.s3.providers.system <> zio.s3.providers.env) ++
+    ClickhouseConfig.live ++ KafkaConfig.live ++ S3Config.live
 
-  def main: ZIO[Env, Throwable, Unit] = for {
-    _ <- putStrLn("Hello world")
-    _ <- DefaultPipeline.run
+
+  def main: ZIO[Clock with Blocking with system.System with Console, Throwable, Unit] = for {
+    kLayer <- KafkaConfig.kafkaConsumer.provideLayer(layer)
+    _ <- DefaultPipeline.run.provideLayer(layer ++ kLayer ++ ProgramConfig.fromJsonString(configJson))
   } yield ()
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = main
-    .provideLayer(layer)
-    .orDie
-    .as(ExitCode.success)
+  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = main.orDie.as(ExitCode.success)
 }

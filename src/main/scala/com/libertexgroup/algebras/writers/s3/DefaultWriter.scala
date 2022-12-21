@@ -10,7 +10,7 @@ class DefaultWriter[E] extends S3Writer[E] {
   override type EnvType = s3.S3 with E with Has[S3Config]
   override type InputType = Array[Byte]
 
-  override def apply(stream: ZStream[E, Throwable, Array[Byte]]): ZIO[S3 with E with Has[S3Config], Any, Unit] =
+  override def apply(stream: ZStream[E, Throwable, InputType]): ZIO[EnvType, Throwable, Unit] =
     for {
       config <- ZIO.access[Has[S3Config]](_.get)
       bucket <- config.taskS3Bucket

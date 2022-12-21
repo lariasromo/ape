@@ -11,11 +11,10 @@ import zio.{Has, ZIO}
 
 object KafkaDefaultReader extends KafkaReader {
   override type Env = Has[KafkaConfig]
-  override type Env2 = Any with Consumer with Clock
+  override type Env2 = Consumer with Clock
   override type StreamType = ConsumerRecord[String, Array[Byte]]
 
-  override def apply: ZIO[Has[KafkaConfig], Throwable,
-    ZStream[Any with Consumer with Clock, Throwable, ConsumerRecord[String, Array[Byte]]]] =
+  override def apply: ZIO[Env, Throwable, ZStream[Env2, Throwable, StreamType]] =
     for {
         kafkaConfig <- ZIO.access[Has[KafkaConfig]](_.get)
         stream <- ZIO {

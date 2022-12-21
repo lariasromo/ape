@@ -8,5 +8,5 @@ import zio.stream.ZStream
 trait ClickhouseWriter[E] extends Writer[E] {
   type InputType = ClickhouseModel
   val sql: String
-  override def apply(stream: ZStream[E, Throwable, InputType]): ZIO[EnvType, Any, Unit]
+  override def apply(stream: ZStream[E, Throwable, InputType]): ZIO[EnvType, Throwable, Unit]
 }
