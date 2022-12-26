@@ -20,8 +20,8 @@ case class KafkaConfig(
 object KafkaConfig extends ReaderConfig {
   def make: ZIO[system.System, SecurityException, KafkaConfig] = for {
     kafkaBrokers <- system.envOrElse("KAFKA_BROKERS", "")
-    consumerGroup <- system.envOrElse("CONSUMER_GROUP", "")
-    topicName <- system.envOrElse("TOPIC", "")
+    consumerGroup <- system.envOrElse("KAFKA_CONSUMER_GROUP", "")
+    topicName <- system.envOrElse("KAFKA_TOPIC", "")
     flushSeconds <- system.envOrElse("KAFKA_FLUSH_SECONDS", "300")
     batchSize <- system.envOrElse("KAFKA_BATCH_SIZE", "10000")
   } yield KafkaConfig(
@@ -36,12 +36,12 @@ object KafkaConfig extends ReaderConfig {
 
   val kafkaConsumer: ZIO[Has[KafkaConfig], Nothing, ZLayer[Clock with Blocking, Throwable, Has[Consumer.Service]]] = for {
     config <- ZIO.access[Has[KafkaConfig]](_.get)
+    _ <- ZIO.when(config.kafkaBrokers.isEmpty || config.kafkaBrokers.head.isEmpty) {
+      ZIO.fail(throw new Exception("Kafka Brokers are empty"))
+    }
   } yield ZLayer.fromManaged(
     Consumer.make(
       ConsumerSettings(config.kafkaBrokers).withGroupId(config.consumerGroup)
     )
   )
-
-  val kafkaConsumerLayer: ZLayer[Has[KafkaConfig], Nothing, Has[ZLayer[Clock with Blocking, Throwable, Has[Consumer.Service]]]] =
-    ZLayer.fromEffect(kafkaConsumer)
 }

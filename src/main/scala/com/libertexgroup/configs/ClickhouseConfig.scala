@@ -19,7 +19,7 @@ object ClickhouseConfig {
   def live: ZLayer[system.System, SecurityException, Has[ClickhouseConfig]] = ZLayer.fromEffect(make)
 
   def make: ZIO[system.System, SecurityException, ClickhouseConfig] = for {
-    batchSize <- system.envOrElse("BATCH_SIZE", "10000")
+    batchSize <- system.envOrElse("CLICKHOUSE_BATCH_SIZE", "10000")
     host <- system.envOrElse("CLICKHOUSE_HOST", "")
     port <- system.envOrElse("CLICKHOUSE_PORT", "8123")
     databaseName <- system.envOrElse("CLICKHOUSE_DATABASE_NAME", "")
