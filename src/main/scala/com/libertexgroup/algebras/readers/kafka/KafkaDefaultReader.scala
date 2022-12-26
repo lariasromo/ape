@@ -1,6 +1,5 @@
 package com.libertexgroup.algebras.readers.kafka
 
-import com.libertexgroup.algebras.readers.Reader
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import zio.clock.Clock
@@ -9,12 +8,10 @@ import zio.kafka.serde.Serde
 import zio.stream.ZStream
 import zio.{Has, ZIO}
 
-object KafkaDefaultReader extends KafkaReader {
-  override type Env = Has[KafkaConfig]
-  override type Env2 = Consumer with Clock
-  override type StreamType = ConsumerRecord[String, Array[Byte]]
-
-  override def apply: ZIO[Env, Throwable, ZStream[Env2, Throwable, StreamType]] =
+class KafkaDefaultReader extends KafkaReader[Has[KafkaConfig], Consumer with Clock, ConsumerRecord[String, Array[Byte]]] {
+  override def apply:
+  ZIO[Has[KafkaConfig], Throwable, ZStream[Any with Consumer with Clock, Throwable, ConsumerRecord[String, Array[Byte]]]]
+  =
     for {
         kafkaConfig <- ZIO.access[Has[KafkaConfig]](_.get)
         stream <- ZIO {
