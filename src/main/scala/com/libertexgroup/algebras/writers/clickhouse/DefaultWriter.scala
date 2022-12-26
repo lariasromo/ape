@@ -7,11 +7,8 @@ import zio.{Has, ZIO}
 
 import scala.util.{Failure, Success, Try}
 
-class DefaultWriter[E] extends ClickhouseWriter[E] {
+class DefaultWriter[E] extends ClickhouseWriter[E, E with Has[ClickhouseConfig], ClickhouseModel] {
   val sql: String = "insert into foo(val1, val2) values(?, ?);"
-  type EnvType = E with Has[ClickhouseConfig]
-
-//  implicit val t: Array[Byte] => ClickhouseModel
 
   override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Throwable, Unit] =
     for {
@@ -25,7 +22,10 @@ class DefaultWriter[E] extends ClickhouseWriter[E] {
               Try {
                 val stmt = conn.prepareStatement(sql)
                 batch.foreach(row => {
-                  row.prepare(stmt)
+                  row match {
+                    case model : ClickhouseModel => model.prepare(stmt)
+                    case _ => throw new Exception("Input stream needs to implement ClickhouseModel")
+                  }
                   stmt.addBatch()
                 })
                 stmt.executeUpdate()
@@ -36,7 +36,6 @@ class DefaultWriter[E] extends ClickhouseWriter[E] {
             }
           } yield error )
         } yield error )
-        .runHead
+        .runDrain
     } yield ()
-
 }

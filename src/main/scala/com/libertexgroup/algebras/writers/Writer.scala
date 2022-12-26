@@ -3,8 +3,6 @@ package com.libertexgroup.algebras.writers
 import zio.{Has, ZIO}
 import zio.stream.ZStream
 
-trait Writer[E] {
-  type EnvType
-  type InputType
-  def apply(stream: ZStream[E, Throwable, InputType]): ZIO[EnvType, Throwable, Unit]
+trait Writer[E, E1, T] {
+  def apply(stream: ZStream[E, Throwable, T]): ZIO[E1, Throwable, Unit]
 }
