@@ -7,6 +7,7 @@ import org.testcontainers.containers.ContainerState
 import org.testcontainers.containers.wait.strategy.Wait
 import zio._
 import zio.blocking.{Blocking, effectBlocking}
+import zio.duration.durationInt
 
 import java.io.File
 
@@ -39,6 +40,7 @@ object S3ClickhouseContainerService {
         .getOrElse(throw new Exception("Failed to start minio container"))
 
       val chConfig = ClickhouseConfig(
+        syncDuration = 5.minutes,
         batchSize = 10000,
         host = chContainer.getHost,
         port = chContainer.getMappedPort(8123),
