@@ -19,18 +19,18 @@ object ClickhouseConfig {
   def live: ZLayer[system.System, SecurityException, Has[ClickhouseConfig]] = ZLayer.fromEffect(make)
 
   def make: ZIO[system.System, SecurityException, ClickhouseConfig] = for {
-    batchSize <- system.env("BATCH_SIZE")
-    host <- system.env("CLICKHOUSE_HOST")
-    port <- system.env("CLICKHOUSE_PORT")
-    databaseName <- system.env("CLICKHOUSE_DATABASE_NAME")
-    username <- system.env("CLICKHOUSE_USERNAME")
-    password <- system.env("CLICKHOUSE_PASSWORD")
+    batchSize <- system.envOrElse("CLICKHOUSE_BATCH_SIZE", "10000")
+    host <- system.envOrElse("CLICKHOUSE_HOST", "")
+    port <- system.envOrElse("CLICKHOUSE_PORT", "8123")
+    databaseName <- system.envOrElse("CLICKHOUSE_DATABASE_NAME", "")
+    username <- system.envOrElse("CLICKHOUSE_USERNAME", "")
+    password <- system.envOrElse("CLICKHOUSE_PASSWORD", "")
   } yield ClickhouseConfig(
-    batchSize = port.flatMap(p => Try(p.toInt).toOption).getOrElse(10000),
-    host = host.getOrElse(""),
-    port = port.flatMap(p => Try(p.toInt).toOption).getOrElse(8123),
-    databaseName = databaseName.getOrElse(""),
-    username = username.getOrElse(""),
-    password = password.getOrElse("")
+    batchSize = Try(port.toInt).toOption.getOrElse(10000),
+    host = host,
+    port = Try(port.toInt).toOption.getOrElse(8123),
+    databaseName = databaseName,
+    username = username,
+    password = password
   )
 }

@@ -1,6 +1,9 @@
 package com.libertexgroup.configs
 
+import zio.blocking.Blocking
+import zio.clock.Clock
 import zio.duration.{Duration, durationInt}
+import zio.kafka.consumer.{Consumer, ConsumerSettings}
 import zio.{Has, ZIO, ZLayer, system}
 
 import scala.util.Try
@@ -16,18 +19,29 @@ case class KafkaConfig(
 
 object KafkaConfig extends ReaderConfig {
   def make: ZIO[system.System, SecurityException, KafkaConfig] = for {
-    kafkaBrokers <- system.envOrElse("KAFKA_BROKERS", throw new Exception("Variable KAFKA_BROKERS should be set"))
-    consumerGroup <- system.envOrElse("CONSUMER_GROUP", throw new Exception("Variable CONSUMER_GROUP should be set"))
-    topicName <- system.envOrElse("TOPIC", throw new Exception("Variable TOPIC should be set"))
-    flushSeconds <- system.env("KAFKA_FLUSH_SECONDS")
-    batchSize <- system.env("KAFKA_BATCH_SIZE")
+    kafkaBrokers <- system.envOrElse("KAFKA_BROKERS", "")
+    consumerGroup <- system.envOrElse("KAFKA_CONSUMER_GROUP", "")
+    topicName <- system.envOrElse("KAFKA_TOPIC", "")
+    flushSeconds <- system.envOrElse("KAFKA_FLUSH_SECONDS", "300")
+    batchSize <- system.envOrElse("KAFKA_BATCH_SIZE", "10000")
   } yield KafkaConfig(
     topicName,
     kafkaBrokers.split(",").toList,
     consumerGroup,
-    Try(flushSeconds.map(_.toInt)).toOption.flatten.getOrElse(300).seconds,
-    Try(batchSize.map(_.toInt)).toOption.flatten.getOrElse(1000)
+    Try(flushSeconds.toInt).toOption.getOrElse(300).seconds,
+    Try(batchSize.toInt).toOption.getOrElse(1000)
   )
 
   def live: ZLayer[system.System, SecurityException, Has[KafkaConfig]] = ZLayer.fromEffect(make)
+
+  val kafkaConsumer: ZIO[Has[KafkaConfig], Nothing, ZLayer[Clock with Blocking, Throwable, Has[Consumer.Service]]] = for {
+    config <- ZIO.access[Has[KafkaConfig]](_.get)
+    _ <- ZIO.when(config.kafkaBrokers.isEmpty || config.kafkaBrokers.head.isEmpty) {
+      ZIO.fail(throw new Exception("Kafka Brokers are empty"))
+    }
+  } yield ZLayer.fromManaged(
+    Consumer.make(
+      ConsumerSettings(config.kafkaBrokers).withGroupId(config.consumerGroup)
+    )
+  )
 }

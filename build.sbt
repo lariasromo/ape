@@ -1,4 +1,4 @@
-ThisBuild / version := "0.1.0.4"
+ThisBuild / version := "0.1.1.4"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -13,7 +13,12 @@ libraryDependencies ++= Seq(
   "io.d11"  %% "zhttp"     % "1.0.0.0-RC29",
   "dev.zio" %% "zio-kafka" % "0.15.0",
   "dev.zio" %% "zio-s3"    % "0.3.7",
-  "dev.zio" %% "zio-json"  % "0.1.5"
+  "dev.zio" %% "zio-json"  % "0.1.5",
+  "dev.zio" %% "zio-test"     % "1.0.16" % "test",
+  "dev.zio" %% "zio-test-sbt" % "1.0.16" % "test",
+  "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
+  "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
+  "com.dimafeng" %% "testcontainers-scala-kafka" % "0.40.10" % "test",
 )
 
 // Credentials to get access to Libertex Artifactory maven repositories
