@@ -1,0 +1,22 @@
+version: '2.3'
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    ports:
+      - "8000:9000"
+      - "9009:9009"
+      - "8123:8123"
+    volumes:
+      - "./logs:/var/log/clickhouse-server"
+      - "./configs/clickhouse/config.d/storage.xml:/etc/clickhouse-server/config.d/storage.xml"
+    healthcheck:
+      test: clickhouse client --query='select 1'
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - label:disable

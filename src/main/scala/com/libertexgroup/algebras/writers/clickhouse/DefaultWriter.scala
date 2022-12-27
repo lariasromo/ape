@@ -7,9 +7,8 @@ import zio.{Has, ZIO}
 
 import scala.util.{Failure, Success, Try}
 
-class DefaultWriter[E] extends ClickhouseWriter[E] {
+class DefaultWriter[E] extends ClickhouseWriter[E, E with Has[ClickhouseConfig], ClickhouseModel] {
   val sql: String = "insert into foo(val1, val2) values(?, ?);"
-  type EnvType = E with Has[ClickhouseConfig]
 
   override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Throwable, Unit] =
     for {
@@ -43,5 +42,4 @@ class DefaultWriter[E] extends ClickhouseWriter[E] {
         } yield error )
         .runDrain
     } yield ()
-
 }

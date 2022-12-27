@@ -9,12 +9,11 @@ import zio.stream.ZTransducer.gunzip
 import zio.stream.{ZStream, ZTransducer}
 import zio.{Chunk, Has, ZIO}
 
-object S3DefaultReader extends Reader {
-  override type Env = S3 with Has[S3Config]
-  override type Env2 = S3
-  override type StreamType = String
+class S3DefaultReader extends Reader[S3 with Has[S3Config], S3, String] {
 
-  override def apply: ZIO[S3 with Has[S3Config], Throwable, ZStream[S3, Exception, String]] = for {
+  override def apply: ZIO[S3 with Has[S3Config], Throwable, ZStream[S3, Exception, String]]
+  =
+    for {
       config <- ZIO.access[Has[S3Config]](_.get)
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
