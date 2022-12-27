@@ -11,32 +11,37 @@ class DefaultWriter[E] extends ClickhouseWriter[E] {
   val sql: String = "insert into foo(val1, val2) values(?, ?);"
   type EnvType = E with Has[ClickhouseConfig]
 
-//  implicit val t: Array[Byte] => ClickhouseModel
-
-  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Any, Unit] =
+  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Throwable, Unit] =
     for {
       config <- ZIO.access[Has[ClickhouseConfig]](_.get)
       _ <- stream
         .grouped(config.batchSize)
-        .map(batch => for {
-          connect <- connect
-          error <- connect.use(conn => for {
+        .mapM(batch => for {
+          conn <- connect
+          error <- conn.use(conn => for {
             error <- ZIO.fromEither {
               Try {
+                val sql = batch.head.sql
                 val stmt = conn.prepareStatement(sql)
                 batch.foreach(row => {
-                  row.prepare(stmt)
+                  row match {
+                    case model : ClickhouseModel => model.prepare(stmt)
+                    case _ => throw new Exception("Input stream needs to implement ClickhouseModel")
+                  }
                   stmt.addBatch()
                 })
                 stmt.executeUpdate()
               } match {
-                case Failure(exception) => Left(exception)
+                case Failure(exception) => {
+                  exception.printStackTrace()
+                  Left(exception)
+                }
                 case Success(value) => Right(value)
               }
             }
           } yield error )
         } yield error )
-        .runHead
+        .runDrain
     } yield ()
 
 }
