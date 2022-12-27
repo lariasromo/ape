@@ -2,19 +2,18 @@ package com.libertexgroup.algebras.writers.clickhouse
 import com.libertexgroup.algebras.writers.clickhouse.JDBCUtils.connect
 import com.libertexgroup.configs.ClickhouseConfig
 import com.libertexgroup.models.ClickhouseModel
+import zio.clock.Clock
 import zio.stream.ZStream
 import zio.{Has, ZIO}
 
 import scala.util.{Failure, Success, Try}
 
-class DefaultWriter[E] extends ClickhouseWriter[E, E with Has[ClickhouseConfig], ClickhouseModel] {
-  val sql: String = "insert into foo(val1, val2) values(?, ?);"
-
-  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Throwable, Unit] =
+class DefaultWriter[E] extends ClickhouseWriter[E, E with Clock with Has[ClickhouseConfig], ClickhouseModel] {
+  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Clock with Has[ClickhouseConfig], Throwable, Unit] =
     for {
       config <- ZIO.access[Has[ClickhouseConfig]](_.get)
       _ <- stream
-        .grouped(config.batchSize)
+        .groupedWithin(config.batchSize, config.syncDuration)
         .mapM(batch => for {
           conn <- connect
           error <- conn.use(conn => for {
@@ -23,13 +22,10 @@ class DefaultWriter[E] extends ClickhouseWriter[E, E with Has[ClickhouseConfig],
                 val sql = batch.head.sql
                 val stmt = conn.prepareStatement(sql)
                 batch.foreach(row => {
-                  row match {
-                    case model : ClickhouseModel => model.prepare(stmt)
-                    case _ => throw new Exception("Input stream needs to implement ClickhouseModel")
-                  }
+                  row.prepare(stmt)
                   stmt.addBatch()
                 })
-                stmt.executeUpdate()
+                stmt.executeBatch()
               } match {
                 case Failure(exception) => {
                   exception.printStackTrace()
