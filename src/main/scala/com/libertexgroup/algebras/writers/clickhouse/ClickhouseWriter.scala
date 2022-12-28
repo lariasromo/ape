@@ -1,7 +1,6 @@
 package com.libertexgroup.algebras.writers.clickhouse
 
 import com.libertexgroup.algebras.writers.Writer
-import com.libertexgroup.models.ClickhouseModel
 import zio.ZIO
 import zio.stream.ZStream
 
