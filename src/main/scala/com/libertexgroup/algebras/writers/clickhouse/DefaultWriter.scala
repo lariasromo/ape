@@ -8,19 +8,17 @@ import zio.{Has, ZIO}
 import scala.util.{Failure, Success, Try}
 
 class DefaultWriter[E] extends ClickhouseWriter[E, E with Has[ClickhouseConfig], ClickhouseModel] {
-  val sql: String = "insert into foo(val1, val2) values(?, ?);"
-
   override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Has[ClickhouseConfig], Throwable, Unit] =
     for {
       config <- ZIO.access[Has[ClickhouseConfig]](_.get)
       _ <- stream
         .grouped(config.batchSize)
-        .map(batch => for {
+        .mapM(batch => for {
           connect <- connect
           error <- connect.use(conn => for {
             error <- ZIO.fromEither {
               Try {
-                val stmt = conn.prepareStatement(sql)
+                val stmt = conn.prepareStatement(batch.head.sql)
                 batch.foreach(row => {
                   row match {
                     case model : ClickhouseModel => model.prepare(stmt)

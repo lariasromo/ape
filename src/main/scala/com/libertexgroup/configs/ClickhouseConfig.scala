@@ -26,7 +26,7 @@ object ClickhouseConfig {
     username <- system.envOrElse("CLICKHOUSE_USERNAME", "")
     password <- system.envOrElse("CLICKHOUSE_PASSWORD", "")
   } yield ClickhouseConfig(
-    batchSize = Try(port.toInt).toOption.getOrElse(10000),
+    batchSize = Try(batchSize.toInt).toOption.getOrElse(10000),
     host = host,
     port = Try(port.toInt).toOption.getOrElse(8123),
     databaseName = databaseName,
