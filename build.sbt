@@ -1,4 +1,4 @@
-ThisBuild / version := "0.1.1.3"
+ThisBuild / version := "0.1.2"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -8,6 +8,8 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies ++= Seq(
+  "com.libertexgroup"   %% "schemas" % "0.1.4",
+  "com.sksamuel.avro4s" %% "avro4s-core" % "4.1.0",
   "com.clickhouse" % "clickhouse-jdbc" % "0.3.2-patch11",
   "dev.zio" %% "zio"       % "1.0.16",
   "io.d11"  %% "zhttp"     % "1.0.0.0-RC29",
