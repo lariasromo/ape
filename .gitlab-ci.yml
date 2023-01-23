@@ -13,7 +13,7 @@ frogbot-scan:
   tags:
     - alexandria
   image:
-    name: 895855336803.dkr.ecr.eu-west-1.amazonaws.com/alexandria/dindsbt:0.0.7-AD-API
+    name: 895855336803.dkr.ecr.eu-west-1.amazonaws.com/alexandria/dindsbt:0.0.4
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       when: manual
@@ -87,6 +87,6 @@ frogbot-scan:
   script:
     # For Linux / MacOS runner:
     - sbt clean compile package publish
-    - apk add curl
-    - curl -fLg "https://releases.jfrog.io/artifactory/frogbot/v2/[RELEASE]/getFrogbot.sh" | sh
-    - ./frogbot ${FROGBOT_CMD}
+    #- apk add curl
+    #- curl -fLg "https://releases.jfrog.io/artifactory/frogbot/v2/[RELEASE]/getFrogbot.sh" | sh
+    #- ./frogbot ${FROGBOT_CMD}
