@@ -21,4 +21,14 @@ object Pipeline {
       _ <- writer.apply(transformedStream)
         .catchAll(e => putStrLn(e.toString))
     } yield ()
+
+  def createWithETL[E0 : Tag, E : Tag, T : Tag, T1 : Tag, E1 : Tag]
+  (reader: Reader[E0, E, T], transformer: Transformer[E, T, T1], writer: Writer[E, E1, T1]):
+    ZIO[Console with E1 with E0, Throwable, Unit] =
+    for {
+    stream <- reader.apply
+    transformedStream = transformer.apply(stream)
+    _ <- writer.apply(transformedStream)
+      .catchAll(e => putStrLn(e.toString))
+  } yield ()
 }

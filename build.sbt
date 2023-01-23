@@ -8,7 +8,15 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies ++= Seq(
-  "com.libertexgroup"   %% "schemas" % "0.1.4",
+//  "com.libertexgroup"   %% "schemas" % "0.1.4",
+  "org.apache.parquet" % "parquet-avro" % "1.12.0",
+  "org.apache.avro" % "avro" % "1.10.2",
+  "com.google.guava" % "guava" % "11.0.2",
+  "org.apache.hadoop" % "hadoop-client" % "2.4.0",
+  "org.apache.hadoop" % "hadoop-aws" % "3.3.0",
+  "org.apache.hadoop" % "hadoop-common" % "3.3.0",
+  "com.amazonaws" % "aws-java-sdk-core" % "1.11.563",
+  "com.amazonaws" % "aws-java-sdk-s3" % "1.11.563",
   "com.sksamuel.avro4s" %% "avro4s-core" % "4.1.0",
   "com.clickhouse" % "clickhouse-jdbc" % "0.3.2-patch11",
   "dev.zio" %% "zio"       % "1.0.16",
