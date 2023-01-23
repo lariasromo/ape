@@ -7,15 +7,16 @@ import scala.util.Try
 
 case class ClickhouseConfig(
                              batchSize: Int,
+                             syncDuration: Duration,
                              host: String,
                              port: Int,
-                             syncDuration: Duration,
                              databaseName: String,
                              username: String,
                              password: String
                            ){
   val jdbcUrl = s"jdbc:clickhouse://$host:$port/$databaseName"
 }
+//                           ) extends JDBCConfig
 
 object ClickhouseConfig {
   def live: ZLayer[system.System, SecurityException, Has[ClickhouseConfig]] = ZLayer.fromEffect(make)

@@ -54,7 +54,7 @@ object S3ClickhouseContainerService {
         s3Bucket = Some("ltx-eu-west-1-datalake-bronze"),
         s3Host = "http://minio:9000",
         encodingType = EncodingType.GZIP,
-        parallelism = 10
+        parallelism = 10,awsAccessKey = "", awsSecretKey = ""
       )
       ContainersAndConfigs(container, chConfig, s3Config)
     }.orDie
