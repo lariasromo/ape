@@ -11,20 +11,28 @@ case class S3Config (
                       s3Bucket: Option[String],
                       s3Host: String,
                       encodingType: EncodingType,
-                      parallelism: Int
+                      parallelism: Int,
+                      awsAccessKey: String,
+                      awsSecretKey: String,
   ) {
+
+
   val taskLocation: Task[String] = ZIO.getOrFail(location)
   val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
 }
 
 object S3Config extends ReaderConfig {
   def make: ZIO[system.System, SecurityException, S3Config] = for {
+    awsAccessKey <- system.envOrElse("AWS_ACCESS_KEY", "")
+    awsSecretKey <- system.envOrElse("AWS_SECRET_KEY", "")
     location <- system.env("S3_LOCATION")
     parallelism <- system.envOrElse("S3_PARALLELISM", "4")
     s3Bucket <- system.env("S3_BUCKET")
     encodingType <- system.envOrElse("ENCODING_TYPE", "GZIP")
     s3Host <- system.envOrElse("S3_OVERRIDE_URL", "https://s3.eu-west-1.amazonaws.com")
   } yield S3Config (
+    awsAccessKey = awsAccessKey,
+    awsSecretKey = awsSecretKey,
     location = location,
     s3Bucket = s3Bucket,
     s3Host = s3Host,
