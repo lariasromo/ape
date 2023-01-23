@@ -34,21 +34,9 @@ object PipelineExample1 extends zio.App {
     } yield ())
   }
 
-  val awsAccessKey = "..."
-  val awsSecretKey = "..."
-  val s3Config = S3Config(
-    location = Some("parquet/anodot/table=clientPrediction/year=2023/month=01/day=23/"),
-    s3Bucket = Some("eu-west-1-datalake-prod"),
-    s3Host = "https://s3.eu-west-1.amazonaws.com",
-    encodingType = PARQUET,
-    parallelism = 3,
-    awsAccessKey = awsAccessKey,
-    awsSecretKey = awsSecretKey,
-  )
-
-  val s3Layer: ZLayer[Any, S3Exception, S3 with Has[S3Config] with Console] =
-    zio.s3.liveM(Region.EU_WEST_1, zio.s3.providers.const(awsAccessKey, awsSecretKey)) ++
-      ZLayer.succeed(s3Config) ++ zio.console.Console.live
+  val s3ConfigLayer = S3Config.live
+  val s3Layer: ZLayer[system.System with Any, RuntimeException, Has[S3Config] with system.System with Console with Has[S3.Service]] =
+    s3ConfigLayer ++ (system.System.live ++ zio.console.Console.live ++ (s3ConfigLayer >>> S3Config.liveFromS3Config))
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = readText.provideLayer(s3Layer).orDie.as(ExitCode.success)
 }

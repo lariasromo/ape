@@ -2,7 +2,11 @@ package com.libertexgroup.configs
 
 import com.libertexgroup.models.EncodingType
 import com.libertexgroup.models.EncodingType.EncodingType
-import zio.{Has, Task, ZIO, ZLayer, system}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.model.S3Exception
+import zio.s3.providers.const
+import zio.s3.{ConnectionError, InvalidSettings, Live, S3, S3Region}
+import zio.{Has, Task, ZIO, ZLayer, ZManaged, system}
 
 import scala.util.Try
 
@@ -39,5 +43,18 @@ object S3Config extends ReaderConfig {
     encodingType = EncodingType.withName(encodingType),
     parallelism = Try(parallelism.toInt).toOption.getOrElse(4)
   )
+
+  val liveFromS3Config: ZLayer[Has[S3Config], S3Exception, Has[S3.Service]] =
+    ZLayer.fromManaged{
+      ZManaged.fromEffect(
+        for {
+          config <- ZIO.access[Has[S3Config]](_.get)
+          region <- ZIO.fromEither(S3Region.from(Region.EU_WEST_1))
+        } yield (config, region)
+      ).flatMap {
+        case (config: S3Config, region: S3Region) =>
+          zio.s3.Live.connect(region, const(config.awsAccessKey, config.awsSecretKey), None)
+      }
+    }
   val live: ZLayer[system.System, SecurityException, Has[S3Config]] = ZLayer.fromEffect(make)
 }
