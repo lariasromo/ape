@@ -1,0 +1,5 @@
+AWS_ACCESS_KEY="AKIAJBVHZ5OOKFOFGPQQ"
+AWS_SECRET_KEY="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"
+S3_LOCATION="parquet/anodot/table=clientPrediction/year=2023/month=01/day=23/"
+S3_BUCKET="eu-west-1-datalake-prod"
+ENCODING_TYPE="PARQUET"
