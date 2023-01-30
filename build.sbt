@@ -1,4 +1,4 @@
-ThisBuild / version := "0.1.3"
+ThisBuild / version := "0.1.3.1"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -7,8 +7,18 @@ lazy val root = (project in file("."))
     name := "pipelineEngine"
   )
 
+val zioVersion = "2.0.6"
+
+val zioLibraries = Seq(
+  "dev.zio" %% "zio"       % zioVersion,
+  "dev.zio" %% "zio-kafka" % zioVersion,
+  "dev.zio" %% "zio-s3"    % "0.4.2.3",
+  "dev.zio" %% "zio-json"  % "0.4.2",
+  "dev.zio" %% "zio-test"     % zioVersion % "test",
+  "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
+)
+
 libraryDependencies ++= Seq(
-//  "com.libertexgroup"   %% "schemas" % "0.1.4",
   "org.apache.parquet" % "parquet-avro" % "1.12.0",
   "org.apache.avro" % "avro" % "1.10.2",
   "com.google.guava" % "guava" % "11.0.2",
@@ -19,17 +29,11 @@ libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk-s3" % "1.11.563",
   "com.sksamuel.avro4s" %% "avro4s-core" % "4.1.0",
   "com.clickhouse" % "clickhouse-jdbc" % "0.3.2-patch11",
-  "dev.zio" %% "zio"       % "1.0.16",
   "io.d11"  %% "zhttp"     % "1.0.0.0-RC29",
-  "dev.zio" %% "zio-kafka" % "0.15.0",
-  "dev.zio" %% "zio-s3"    % "0.3.7",
-  "dev.zio" %% "zio-json"  % "0.1.5",
-  "dev.zio" %% "zio-test"     % "1.0.16" % "test",
-  "dev.zio" %% "zio-test-sbt" % "1.0.16" % "test",
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-kafka" % "0.40.10" % "test",
-)
+) ++ zioLibraries
 
 // Credentials to get access to Libertex Artifactory maven repositories
 credentials += Credentials(Path.userHome / ".sbt" / "artifactory_credentials")
@@ -41,7 +45,6 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 enablePlugins(DockerPlugin)
 enablePlugins(JavaAppPackaging)
-
 
 // Libertex Artifactory maven repositories (artifact publishing configuration)
 publishTo := {

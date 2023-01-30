@@ -1,7 +1,8 @@
 package com.libertexgroup.configs
 
+import zio.System.env
 import zio.json.{DecoderOps, DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
-import zio.{Has, ZIO, ZLayer, system}
+import zio.{ZIO, ZLayer}
 
 case class ProgramConfig(
                              reader: String,
@@ -14,11 +15,11 @@ object ProgramConfig {
   implicit val decoder: JsonDecoder[ProgramConfig] = DeriveJsonDecoder.gen[ProgramConfig]
   implicit val encoder: JsonEncoder[ProgramConfig] = DeriveJsonEncoder.gen[ProgramConfig]
 
-  def make: ZIO[system.System, SecurityException, ProgramConfig] = for {
-    reader <- system.env("READER_NAME")
-    transformer <- system.env("TRANSFORMER_NAME")
-    durationMins <- system.env("DURATION_MINUTES")
-    writer <- system.env("WRITER_NAME")
+  def make: ZIO[Any, SecurityException, ProgramConfig] = for {
+    reader <- env("READER_NAME")
+    transformer <- env("TRANSFORMER_NAME")
+    durationMins <- env("DURATION_MINUTES")
+    writer <- env("WRITER_NAME")
   } yield ProgramConfig(
     reader = reader.getOrElse(throw new Exception("READER_NAME must be set")),
     streamConfig = durationMins.map(mins => StreamConfig(mins.toLong)),
@@ -26,9 +27,9 @@ object ProgramConfig {
     writer = writer.getOrElse(throw new Exception("WRITER_NAME must be set"))
   )
 
-  def fromJsonString(json:String): ZLayer[Any, Throwable, Has[ProgramConfig]] = ZLayer.fromEffect {
-    ZIO(json.fromJson[ProgramConfig].getOrElse(throw new Exception("Failed to decode config string")))
+  def fromJsonString(json:String): ZLayer[Any, Throwable, ProgramConfig] = ZLayer {
+    ZIO.succeed(json.fromJson[ProgramConfig].getOrElse(throw new Exception("Failed to decode config string")))
   }
 
-  def live: ZLayer[system.System, SecurityException, Has[ProgramConfig]] = ZLayer.fromEffect(make)
+  def live: ZLayer[Any, SecurityException, ProgramConfig] = ZLayer(make)
 }

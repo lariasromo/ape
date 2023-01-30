@@ -3,7 +3,7 @@ package com.libertexgroup.algebras.readers.s3
 import com.libertexgroup.algebras.readers.Reader
 import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.EncodingType._
-import org.apache.avro.{Schema, SchemaBuilder}
+import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.{GenericData, GenericRecord, GenericRecordBuilder}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -11,9 +11,8 @@ import org.apache.parquet.avro.AvroParquetReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import software.amazon.awssdk.services.s3.model.S3Exception
 import zio.s3.{ListObjectOptions, S3, S3ObjectSummary}
-import zio.stream.ZTransducer.gunzip
-import zio.stream.{ZStream, ZTransducer}
-import zio.{Chunk, Has, ZIO}
+import zio.stream.{ZPipeline, ZStream}
+import zio.{Chunk, ZIO}
 
 
 /**
@@ -21,12 +20,12 @@ import zio.{Chunk, Has, ZIO}
  * The GenericRecord interface allows to interact with parquet values
  * If the file is just a text file each line will be a string stored in an attribute named `value`
  */
-class S3DefaultReader extends Reader[S3 with Has[S3Config], S3, GenericRecord] {
+class S3DefaultReader extends Reader[S3 with S3Config, S3, GenericRecord] {
 
-  override def apply: ZIO[S3 with Has[S3Config], Throwable, ZStream[S3, Throwable, GenericRecord]]
+  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Throwable, GenericRecord]]
   =
     for {
-      config <- ZIO.access[Has[S3Config]](_.get)
+      config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
       stream <- decodeS3Files(bucket, location)
@@ -35,9 +34,9 @@ class S3DefaultReader extends Reader[S3 with Has[S3Config], S3, GenericRecord] {
   def readFiles(bucket: String, location: String): ZIO[S3, S3Exception, Chunk[S3ObjectSummary]] =
     zio.s3.listObjects(bucket, ListObjectOptions.from(location, 100)).map(_.objectSummaries)
 
-  def decodeS3Files(bucket: String, location: String): ZIO[S3 with Has[S3Config], Throwable, ZStream[S3, Throwable, GenericRecord]] =
+  def decodeS3Files(bucket: String, location: String): ZIO[S3 with S3Config, Throwable, ZStream[S3, Throwable, GenericRecord]] =
     for {
-      config <- ZIO.access[Has[S3Config]](_.get)
+      config <- ZIO.service[S3Config]
       lines <- config.encodingType match {
           case AVRO => throw new Exception("Reading AVRO from S3 hasn't been implemented")
           case PARQUET => readParquet(bucket, location)
@@ -45,10 +44,9 @@ class S3DefaultReader extends Reader[S3 with Has[S3Config], S3, GenericRecord] {
         }
     } yield lines
 
-  def readText(bucket: String, location: String):
-  ZIO[S3 with Has[S3Config], S3Exception, ZStream[S3, Exception, GenericData.Record]] =
+  def readText(bucket: String, location: String): ZIO[S3 with S3Config, S3Exception, ZStream[S3, Exception, GenericData.Record]] =
     for {
-      config <- ZIO.access[Has[S3Config]](_.get)
+      config <- ZIO.service[S3Config]
       chunk <- readFiles(bucket, location)
       lines = chunk
         .map(file => {
@@ -56,9 +54,9 @@ class S3DefaultReader extends Reader[S3 with Has[S3Config], S3, GenericRecord] {
         })
         .map(stream => config.encodingType match {
           case PLAINTEXT =>
-            stream.transduce(ZTransducer.utf8Decode >>> ZTransducer.splitLines)
+            stream.via(ZPipeline.utf8Decode >>> ZPipeline.splitLines)
           case GZIP | GUNZIP =>
-            stream.transduce(gunzip(64 * 1024)).transduce(ZTransducer.utf8Decode >>> ZTransducer.splitLines)
+            stream.via(ZPipeline.gunzip(64 * 1024)).via(ZPipeline.utf8Decode >>> ZPipeline.splitLines)
         })
         .fold(ZStream.empty)(_ ++ _)
         .map(l => {
@@ -72,8 +70,8 @@ class S3DefaultReader extends Reader[S3 with Has[S3Config], S3, GenericRecord] {
         })
     } yield lines
 
-  def readParquet(bucket: String, location: String): ZIO[S3 with Has[S3Config], S3Exception, ZStream[Any, Throwable, GenericRecord]] = for {
-    config <- ZIO.access[Has[S3Config]](_.get)
+  def readParquet(bucket: String, location: String): ZIO[S3 with S3Config, S3Exception, ZStream[Any, Throwable, GenericRecord]] = for {
+    config <- ZIO.service[S3Config]
     chunk <- readFiles(bucket, location)
     stream = ZStream.fromChunk(chunk)
       .flatMap(file => {
@@ -85,12 +83,11 @@ class S3DefaultReader extends Reader[S3 with Has[S3Config], S3, GenericRecord] {
         conf.setBoolean("fs.s3a.path.style.access", true)
         conf.setBoolean(org.apache.parquet.avro.AvroReadSupport.READ_INT96_AS_FIXED, true)
 
-        ZStream
-          .bracket(
-            ZIO.effect(AvroParquetReader.builder[GenericRecord](
+        ZStream.acquireReleaseWith(
+            ZIO.succeed(AvroParquetReader.builder[GenericRecord](
               HadoopInputFile.fromPath(path, conf)
             ).build)
-          )(x => ZIO.effectTotal(x.close()))
+          )(x => ZIO.succeed(x.close()))
           .flatMap { is =>
             ZStream.succeed(is.read())
           }

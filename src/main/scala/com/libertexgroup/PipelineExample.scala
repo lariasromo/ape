@@ -1,57 +1,32 @@
 package com.libertexgroup
 
 import com.libertexgroup.algebras.pipelines.Pipeline
-import com.libertexgroup.algebras.readers.Reader
-import com.libertexgroup.algebras.readers.kafka.KafkaDefaultReader
-import com.libertexgroup.algebras.transformers.Transformer
-import com.libertexgroup.algebras.transformers.clickhouse.DefaultClickhouseTransformer
-import com.libertexgroup.algebras.writers.{Writer, clickhouse}
-import com.libertexgroup.configs.{ClickhouseConfig, KafkaConfig}
-import com.libertexgroup.models.ClickhouseModel
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.blocking.Blocking
-import zio.clock.Clock
-import zio.console.Console
-import zio.kafka.consumer.Consumer
-import zio.{ExitCode, Has, URIO, ZIO, ZLayer, system}
+import com.libertexgroup.algebras.readers.s3.S3DefaultReader
+import com.libertexgroup.algebras.transformers.{NoOpTransformer, Transformer}
+import com.libertexgroup.algebras.writers.{DefaultWriter, Writer}
+import com.libertexgroup.configs.S3Config
+import org.apache.avro.generic.GenericRecord
+import software.amazon.awssdk.services.s3.model.S3Exception
+import zio.{Console, ExitCode, Layer, Scope, System, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
+import zio.s3.{S3, errors}
 
-object PipelineExample extends zio.App {
-  val reader: Reader[Has[KafkaConfig], Consumer with Clock, ConsumerRecord[String, Array[Byte]]] = new KafkaDefaultReader()
-  val transformer: Transformer[Consumer with Clock, ConsumerRecord[String, Array[Byte]], ClickhouseModel] =
-    new DefaultClickhouseTransformer[Consumer with Clock]()
-  val writer: Writer[Consumer with Clock, Consumer with Clock with Has[ClickhouseConfig], ClickhouseModel] =
-    new clickhouse.DefaultWriter[Consumer with Clock]()
+import java.lang
 
-  type pipeType = Console with Has[KafkaConfig] with Clock with Has[ClickhouseConfig]
-    with Has[Reader[Has[KafkaConfig], Consumer with Clock, ConsumerRecord[String, Array[Byte]]]]
-    with Has[Transformer[Consumer with Clock, ConsumerRecord[String, Array[Byte]], ClickhouseModel]]
-    with Has[Writer[Consumer with Clock, Consumer with Clock with Has[ClickhouseConfig], ClickhouseModel]]
-
-
-  def getLayer: ZLayer[Any with Blocking with system.System, Throwable, pipeType] = Clock.live ++ Console.live ++
-    ZLayer.succeed(reader) ++
-    ZLayer.succeed(transformer) ++
-    ZLayer.succeed(writer) ++
-    KafkaConfig.live ++
-    ClickhouseConfig.live
-
-  val layerEffect: ZIO[Any with Blocking with system.System, Any, ZLayer[Clock with Blocking with Any with system.System, Any, Consumer with pipeType]] = for {
-    layer <- ZIO.succeed(getLayer)
-    kLayer <- KafkaConfig.kafkaConsumer.provideLayer(layer)
-  } yield kLayer ++ layer
-
-  def PIPE: ZIO[Consumer with pipeType, Throwable, Unit] = Pipeline.apply[
-    Has[KafkaConfig],
-    Consumer with Clock,
-    Consumer with Clock with Has[ClickhouseConfig],
-    ConsumerRecord[String, Array[Byte]],
-    ClickhouseModel,
-  ]
-
-  def main: ZIO[Clock with Blocking with Any with system.System, Nothing, Unit] = (for {
-    l <- layerEffect
-    _ <- PIPE.provideLayer(l)
-  } yield ()).catchAll(_ => ZIO.unit)
-
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = main.as(ExitCode.success)
-}
+//object PipelineExample extends ZIOAppDefault {
+//  val readText: ZIO[Any with S3, Throwable, Unit] = {
+//    val reader = new S3DefaultReader()
+//    val transformer: Transformer[S3, GenericRecord, GenericRecord] = new NoOpTransformer[S3, GenericRecord]()
+//    val writer: Writer[S3, Console with S3, GenericRecord] = new DefaultWriter[S3, GenericRecord]()
+//    (for {
+//      _ <- Console.printLine("hello")
+//      _ <- Pipeline.apply(reader, transformer, writer)
+//    } yield ())
+//  }
+//
+//  val s3ConfigLayer: ZLayer[lang.System, SecurityException, S3Config] = S3Config.live
+//  val s3Layer: ZLayer[lang.System, RuntimeException, S3Config with Layer[S3Exception, S3]] =
+//    s3ConfigLayer ++ ((s3ConfigLayer >>> S3Config.liveFromS3Config))
+//
+//  override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] =
+//    readText.provideLayer(s3Layer).orDie.as(ExitCode.success)
+//}

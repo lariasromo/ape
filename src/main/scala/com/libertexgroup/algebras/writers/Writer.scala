@@ -1,6 +1,7 @@
 package com.libertexgroup.algebras.writers
 
-import zio.{Has, ZIO}
+
+import zio.ZIO
 import zio.stream.ZStream
 
 trait Writer[E, E1, T] {
