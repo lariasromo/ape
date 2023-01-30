@@ -1,7 +1,7 @@
 package com.libertexgroup.configs
 
-import zio.duration.{Duration, durationInt}
-import zio.{Has, ULayer, ZIO, ZLayer, system}
+import zio.System.envOrElse
+import zio.{ZIO, ZLayer}
 
 import scala.util.Try
 
@@ -16,14 +16,14 @@ case class JDBCConfig(
 }
 
 object JDBCConfig {
-  def live: ZLayer[system.System, SecurityException, Has[JDBCConfig]] = ZLayer.fromEffect(make)
+  def live: ZLayer[System, SecurityException, JDBCConfig] = ZLayer(make)
 
-  def make: ZIO[system.System, SecurityException, JDBCConfig] = for {
-    host <- system.envOrElse("JDBC_HOST", "")
-    port <- system.envOrElse("JDBC_PORT", "8123")
-    databaseName <- system.envOrElse("JDBC_DATABASE_NAME", "")
-    username <- system.envOrElse("JDBC_USERNAME", "")
-    password <- system.envOrElse("JDBC_PASSWORD", "")
+  def make: ZIO[System, SecurityException, JDBCConfig] = for {
+    host <- envOrElse("JDBC_HOST", "")
+    port <- envOrElse("JDBC_PORT", "8123")
+    databaseName <- envOrElse("JDBC_DATABASE_NAME", "")
+    username <- envOrElse("JDBC_USERNAME", "")
+    password <- envOrElse("JDBC_PASSWORD", "")
   } yield JDBCConfig(
     host = host,
     port = Try(port.toInt).toOption.getOrElse(8123),

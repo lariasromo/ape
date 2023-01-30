@@ -1,7 +1,6 @@
 package com.libertexgroup.configs
 
-import zio.json.{DecoderOps, DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
-import zio.{Has, ZIO, ZLayer, system}
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class StreamConfig (
                         durationMinutes: Long

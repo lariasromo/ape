@@ -2,21 +2,20 @@ package com.libertexgroup.algebras.writers.clickhouse
 import com.libertexgroup.algebras.writers.clickhouse.JDBCUtils.connect
 import com.libertexgroup.configs.ClickhouseConfig
 import com.libertexgroup.models.ClickhouseModel
-import zio.clock.Clock
+import zio.{Scope, ZIO}
 import zio.stream.ZStream
-import zio.{Has, ZIO}
 
 import scala.util.{Failure, Success, Try}
 
-class DefaultWriter[E] extends ClickhouseWriter[E, E with Clock with Has[ClickhouseConfig], ClickhouseModel] {
-  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[E with Clock with Has[ClickhouseConfig], Throwable, Unit] =
+class DefaultWriter[E] extends ClickhouseWriter[E, E with Scope with ClickhouseConfig, ClickhouseModel] {
+  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[ClickhouseConfig with Scope with E, Throwable, Unit] =
     for {
-      config <- ZIO.access[Has[ClickhouseConfig]](_.get)
+      config <- ZIO.service[ClickhouseConfig]
       _ <- stream
         .groupedWithin(config.batchSize, config.syncDuration)
-        .mapM(batch => for {
+        .mapZIO(batch => for {
           conn <- connect
-          error <- conn.use(conn => for {
+          error <- ZIO.scoped(for {
             error <- ZIO.fromEither {
               Try {
                 val sql = batch.head.sql
