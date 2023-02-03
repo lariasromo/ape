@@ -8,8 +8,8 @@ import zio.stream.ZStream
 import scala.util.{Failure, Success, Try}
 
 class DefaultWriter[E] extends ClickhouseWriter[E, E with Scope with ClickhouseConfig, ClickhouseModel] {
-  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]): ZIO[ClickhouseConfig with Scope with E, Throwable, Unit] =
-    for {
+  override def apply(stream: ZStream[E, Throwable, ClickhouseModel]):
+                      ZIO[Scope with ClickhouseConfig with E, Throwable, Unit] = for {
       config <- ZIO.service[ClickhouseConfig]
       _ <- stream
         .groupedWithin(config.batchSize, config.syncDuration)

@@ -1,4 +1,5 @@
-ThisBuild / version := "0.1.3.1"
+
+ThisBuild / version := "0.3.0"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -20,6 +21,8 @@ val zioLibraries = Seq(
 
 libraryDependencies ++= Seq(
   "org.apache.parquet" % "parquet-avro" % "1.12.0",
+  "com.softwaremill.sttp.client3" %% "core" % "3.8.0",
+  "com.softwaremill.sttp.client3" %% "zio" % "3.8.0",
   "org.apache.avro" % "avro" % "1.10.2",
   "com.google.guava" % "guava" % "11.0.2",
   "org.apache.hadoop" % "hadoop-client" % "2.4.0",
@@ -45,6 +48,11 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 enablePlugins(DockerPlugin)
 enablePlugins(JavaAppPackaging)
+
+assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+  case _         => MergeStrategy.first
+}
 
 // Libertex Artifactory maven repositories (artifact publishing configuration)
 publishTo := {

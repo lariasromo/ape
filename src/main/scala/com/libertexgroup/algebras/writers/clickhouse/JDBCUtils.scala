@@ -13,40 +13,26 @@ import scala.util.{Failure, Success, Try}
 object JDBCUtils {
   case class ConnectionWithZStream(connection: ClickHouseConnection, ZStream: ZStream[Any, Throwable, ResultSet])
 
-  def queryToStreamCloseable(query: String): ZIO[ClickhouseConfig with Any with Scope, Nothing, ConnectionWithZStream]
-  =  ZIO.acquireRelease {
-    for {
-      config <- ZIO.service[ClickhouseConfig]
-    } yield {
-      val connection = getConnection(config.jdbcUrl, config.username, config.password)
-      ConnectionWithZStream(connection, toStream(connection.createStatement().executeQuery(query)))
+  def query2Chunk[T:ClassTag](query: String)(implicit row2Object: ResultSet => T): ZIO[ClickhouseConfig, Nothing, Chunk[T]]
+  = ZIO.scoped {
+      for {
+        conn <- connect
+      } yield toChunk(conn.createStatement().executeQuery(query))
     }
-  } { r => ZIO.succeed(r.connection.close()) }
 
-  def toStream(resultSet: ResultSet): ZStream[Any, Throwable, ResultSet] =
-    ZStream.fromIterator(
-      new Iterator[ResultSet] {
-        def hasNext = resultSet.next()
-        def next() = resultSet
+  def toChunk[T:ClassTag](resultSet: ResultSet)(implicit row2Object: ResultSet => T): Chunk[T] =
+    Chunk.fromIterator(
+      new Iterator[T] {
+        def hasNext: Boolean = resultSet.next()
+        def next(): T = row2Object(resultSet)
       }
     )
-
-  def query2Chunk[T:ClassTag](query: String)(implicit row2Object: ResultSet => T): ZIO[ClickhouseConfig with Any with Scope, Throwable, Chunk[T]]
-  = for {
-    closeableConn <- queryToStreamCloseable(query)
-    ds <- ZIO.scoped {
-      closeableConn.ZStream.map(row2Object).runCollect
-    }
-  } yield ds
 
   val connect: ZIO[ClickhouseConfig with Any with Scope, Nothing, ClickHouseConnection] =  ZIO
     .acquireRelease( for {
     config <- ZIO.service[ClickhouseConfig]
   } yield getConnection(config.jdbcUrl, config.username, config.password)
   )(c => ZIO.succeed(c.close()))
-
-  def getConnectionResource(DB_URL: String, USER: String, PASS: String): ZIO[Any with Scope, Nothing, ClickHouseConnection] =
-    ZIO.acquireRelease( ZIO.succeed(getConnection(DB_URL, USER, PASS)) )(c => ZIO.succeed(c.close()))
 
 
   def executeQuery(sql: String): ZIO[ClickhouseConfig with Any with Scope, Nothing, Unit] = for {
