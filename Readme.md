@@ -3,7 +3,7 @@
 The goal of this project is to generate a common approach when creating new data consuming microservices.
 
 
-[Readers](src/main/scala/com/libertexgroup/algebras/readers)
+[Readers](src/main/scala/com/libertexgroup/ape/readers)
 ------
 A `Reader` is a component that will start a stream of data using the `ZStream` interface.
 
@@ -14,9 +14,11 @@ Particular implementations could be `AnodotKafkaReader` or `FxbankReader` if spe
 otherwise just direct to the `KafkaDefaultReader` which produces a generic `GenericRecord`. See below...
 
 ```scala
-import com.libertexgroup.algebras.readers.Reader
+import com.libertexgroup.ape.readers.Reader
+
 //Example of a reader that reads from Kafka
 trait KafkaReader extends Reader
+
 object KafkaDefaultReader extends KafkaReader {
   override type Env = Has[KafkaConfig]
   override type Env2 = Any with Consumer with Clock
@@ -26,22 +28,23 @@ object KafkaDefaultReader extends KafkaReader {
 }
 ```
 
-[Transformers](src/main/scala/com/libertexgroup/algebras/transformers)
+[Transformers](src/main/scala/com/libertexgroup/ape/transformers)
 ------
 Following the same pattern as the reader interface we have the Transformers interface.
 
-This interface contains an `apply` method that takes a ZStream of type `I` and produces a new ZStream of type `OutputType` 
+This interface contains an `apply` method that takes a ZStream of type `I` and produces a new ZStream of type `OutputType`
 
 ```scala
-import com.libertexgroup.algebras.transformers.Transformer
+import com.libertexgroup.ape.transformers.Transformer
 
 class DefaultTransformer[E, I] extends Transformer[E, I] {
   type OutputType = Array[Byte]
+
   override def apply(stream: ZStream[E, Throwable, I]): ZStream[E, Throwable, OutputType] = ???
 }
 ```
 
-[Writers](src/main/scala/com/libertexgroup/algebras/writers)
+[Writers](src/main/scala/com/libertexgroup/ape/writers)
 ------
 
 A writer has a main method `apply` that uses a stream of type `InputType` and stores this stream effect-fully with an environment of type `EnvType` and able to fail with a `Throwable` side effect 
@@ -50,8 +53,9 @@ A good practice (like we do with readers) we keep a common trait for writers to 
 In most cases the same config we use for reading from a source can be reused to write to a target.
 
 Example...
+
 ```scala
-import com.libertexgroup.algebras.writers.Writer
+import com.libertexgroup.ape.writers.Writer
 
 trait S3Writer[T] extends Writer[T]
 
