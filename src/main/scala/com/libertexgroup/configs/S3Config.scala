@@ -1,7 +1,7 @@
 package com.libertexgroup.configs
 
-import com.libertexgroup.models.EncodingType
-import com.libertexgroup.models.EncodingType.EncodingType
+import com.libertexgroup.models.CompressionType
+import com.libertexgroup.models.CompressionType.CompressionType
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.model.S3Exception
@@ -15,13 +15,11 @@ case class S3Config (
                       location: Option[String],
                       s3Bucket: Option[String],
                       s3Host: String,
-                      encodingType: EncodingType,
+                      compressionType: CompressionType,
                       parallelism: Int,
                       awsAccessKey: String,
                       awsSecretKey: String,
   ) {
-
-
   val taskLocation: Task[String] = ZIO.getOrFail(location)
   val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
 }
@@ -33,7 +31,7 @@ object S3Config extends ReaderConfig {
     location <- env("S3_LOCATION")
     parallelism <- envOrElse("S3_PARALLELISM", "4")
     s3Bucket <- env("S3_BUCKET")
-    encodingType <- envOrElse("ENCODING_TYPE", "GZIP")
+    compressionType <- envOrElse("COMPRESSION_TYPE", "GZIP")
     s3Host <- envOrElse("S3_OVERRIDE_URL", "https://s3.eu-west-1.amazonaws.com")
   } yield S3Config (
     awsAccessKey = awsAccessKey,
@@ -41,7 +39,7 @@ object S3Config extends ReaderConfig {
     location = location,
     s3Bucket = s3Bucket,
     s3Host = s3Host,
-    encodingType = EncodingType.withName(encodingType),
+    compressionType = CompressionType.withName(compressionType),
     parallelism = Try(parallelism.toInt).toOption.getOrElse(4)
   )
 

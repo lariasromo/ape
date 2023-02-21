@@ -33,9 +33,10 @@ libraryDependencies ++= Seq(
   "com.sksamuel.avro4s" %% "avro4s-core" % "4.1.0",
   "com.clickhouse" % "clickhouse-jdbc" % "0.3.2-patch11",
   "io.d11"  %% "zhttp"     % "1.0.0.0-RC29",
+  "io.github.scottweaver" %% "zio-2-0-testcontainers-kafka" % "0.10.0" % "test",
+  "io.github.scottweaver" %% "zio-2-0-testcontainers-postgresql" % "0.10.0" % "test",
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
-  "com.dimafeng" %% "testcontainers-scala-kafka" % "0.40.10" % "test",
 ) ++ zioLibraries
 
 // Credentials to get access to Libertex Artifactory maven repositories

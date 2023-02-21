@@ -3,6 +3,7 @@ package com.libertexgroup.configs
 import zio.kafka.consumer.{Consumer, ConsumerSettings}
 import zio.{Duration, ZIO, ZLayer, durationInt}
 import zio.System.{env, envOrElse}
+import zio.kafka.consumer.Consumer.AutoOffsetStrategy
 
 import scala.util.Try
 
@@ -11,12 +12,14 @@ case class KafkaConfig(
                         kafkaBrokers: List[String],
                         consumerGroup: String,
                         flushSeconds: Duration,
-                        batchSize: Int
-                      )
+                        batchSize: Int,
+                        autoOffsetStrategy: AutoOffsetStrategy
+  )
 
 
 object KafkaConfig extends ReaderConfig {
   def make: ZIO[Any, SecurityException, KafkaConfig] = for {
+    offsetStrategy <- envOrElse("KAFKA_OFFSET_STRATEGY", "")
     kafkaBrokers <- envOrElse("KAFKA_BROKERS", "")
     consumerGroup <- envOrElse("KAFKA_CONSUMER_GROUP", "")
     topicName <- envOrElse("KAFKA_TOPIC", "")
@@ -27,7 +30,8 @@ object KafkaConfig extends ReaderConfig {
     kafkaBrokers.split(",").toList,
     consumerGroup,
     Try(flushSeconds.toInt).toOption.getOrElse(300).seconds,
-    Try(batchSize.toInt).toOption.getOrElse(1000)
+    Try(batchSize.toInt).toOption.getOrElse(1000),
+    if(offsetStrategy.equalsIgnoreCase("latest")) AutoOffsetStrategy.Latest else AutoOffsetStrategy.Earliest
   )
 
   def live: ZLayer[Any, SecurityException, KafkaConfig] = ZLayer.fromZIO(make)
