@@ -26,8 +26,6 @@ object KafkaContainerService extends TestContainerHelper[KafkaContainer]{
 
   override val stopContainer: KafkaContainer => UIO[Unit] = c => ZIO.succeedBlocking(c.stop())
 
-  def loadSampleData: Task[Unit] = ZIO.unit
-
   def kafkaConfigLayer(topicName:String): ZLayer[KafkaContainer, Nothing, KafkaConfig] = ZLayer.fromZIO {
     for {
       container <- ZIO.service[KafkaContainer]

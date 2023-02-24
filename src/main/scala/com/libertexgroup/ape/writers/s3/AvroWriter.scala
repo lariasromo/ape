@@ -6,7 +6,7 @@ import zio.s3.{MultipartUploadOptions, S3, UploadOptions, multipartUpload}
 import zio.stream.ZStream
 import zio.{ZIO, s3}
 
-class AvroWriter[E, T >:Null :SchemaFor :Decoder :Encoder] extends S3Writer[E, S3 with E with S3Config, T] {
+protected[writers] class AvroWriter[E, T >:Null :SchemaFor :Decoder :Encoder] extends S3Writer[E, E with S3 with S3Config, T] {
   override def apply(stream: ZStream[E, Throwable, T]): ZIO[S3 with E with S3Config, Throwable, Unit] =
     for {
       config <- ZIO.service[S3Config]

@@ -1,18 +1,27 @@
 package com.libertexgroup.ape.pipelines
 
-import com.libertexgroup.ape.readers.Reader
+import com.libertexgroup.ape.readers.{PipelineReaders, Reader}
 import com.libertexgroup.ape.transformers.Transformer
-import com.libertexgroup.ape.writers.Writer
+import com.libertexgroup.ape.writers.{PipelineWriters, Writer}
 import zio.{Console, Tag, ZIO}
 
-object Pipeline {
-  def apply[E0, E, T, T1, E1] (
-    reader: Reader[E0, E, T], transformer: Transformer[E, T, T1], writer: Writer[E, E1, T1]
-  ): ZIO[E1 with E0, Throwable, Unit] =
-    for {
+import scala.reflect.ClassTag
+
+class Pipeline[E, E1, T: ClassTag, T1: ClassTag, E2](
+                                  reader: Reader[E, E1, T],
+                                  transformer: Transformer[E1, T, T1],
+                                  writer: Writer[E1, E2, T1]
+                                ) {
+
+  def run = for {
     stream <- reader.apply
     transformedStream = transformer.apply(stream)
     _ <- writer.apply(transformedStream)
       .catchAll(e => Console.printLine(e.toString))
   } yield ()
+}
+
+object Pipeline{
+  val readers = new PipelineReaders()
+  val writers = new PipelineWriters()
 }

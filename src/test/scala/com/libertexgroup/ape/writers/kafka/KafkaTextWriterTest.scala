@@ -1,6 +1,7 @@
 package com.libertexgroup.ape.writers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
+import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.readers.kafka.StringReader
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
@@ -34,8 +35,8 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
         for {
           config <- ZIO.service[KafkaConfig]
           _ <- zio.Console.printLine("Sending text message")
-          _ <- new DefaultWriter().apply(data(config.topicName))
-          stream <- new StringReader().apply
+          _ <- Pipeline.writers.kafkaStringWriter.apply(data(config.topicName))
+          stream <- Pipeline.readers.kafkaStringReader.apply
           data <- stream
             .tap(d => {
               zio.Console.printLine(d.value())

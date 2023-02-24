@@ -1,5 +1,6 @@
 package com.libertexgroup.ape.readers.s3
 
+import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.configs.S3Config
@@ -9,11 +10,12 @@ import zio.{Scope, ZLayer}
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 
 object S3TextReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer] {
+  val reader = Pipeline.readers.s3TextReader
   override def spec: Spec[S3 with S3Config with MinioContainer with TestEnvironment with Scope, Any] = suite("S3ReaderTest")(
     test("Reads a text file"){
       for {
         _ <- MinioContainerService.loadSampleData
-        stream <- new TextReader().apply
+        stream <- reader.apply
         data <- stream.runCollect
         firstRecord = data.headOption
       } yield {

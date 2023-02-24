@@ -1,6 +1,6 @@
 package com.libertexgroup.ape.writers.s3
 
-import com.libertexgroup.ape.readers.s3.TextReader
+import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.utils.MinioContainerService.createBBucket
@@ -20,12 +20,15 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config] {
 
   val data: ZStream[Any, Nothing, String] = ZStream.fromChunk(sampleStrings)
 
+  val reader = Pipeline.readers.s3TextReader
+  val writer = Pipeline.writers.s3TextWriter
+
   override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] = suite("S3TextWriterTest")(
     test("Writes strings to S3"){
       for {
         _ <- createBBucket
-        _ <- new TextWriter().apply(data)
-        stream <- new TextReader().apply
+        _ <- writer.apply(data)
+        stream <- reader.apply
         data <- stream.runCollect
       } yield {
         assertTrue(data.nonEmpty)

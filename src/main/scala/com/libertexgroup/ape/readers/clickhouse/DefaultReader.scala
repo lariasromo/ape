@@ -7,8 +7,8 @@ import zio.stream.ZStream
 import java.sql.ResultSet
 import scala.reflect.ClassTag
 
-class DefaultReader[E1, T: ClassTag](sql:String)
-                          (implicit row2Object: ResultSet => T) extends ClickhouseReader[ClickhouseConfig, E1, T] {
+protected[readers] class DefaultReader[E1, T: ClassTag] (sql:String)(implicit row2Object: ResultSet => T)
+  extends com.libertexgroup.ape.readers.clickhouse.ClickhouseReader[ClickhouseConfig, E1, T] {
 
   override def apply: ZIO[ClickhouseConfig, Throwable, ZStream[E1, Throwable, T]] = for {
     chnk <- query2Chunk(sql)

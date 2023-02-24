@@ -8,7 +8,7 @@ import zio.{Scope, ZIO}
 
 import scala.util.{Failure, Success, Try}
 
-class DefaultWriter[E] extends JDBCWriter[E, E with Scope with JDBCConfig, JDBCModel] {
+protected[writers] class DefaultWriter[E] extends JDBCWriter[E, E with Scope with JDBCConfig, JDBCModel] {
   override def apply(stream: ZStream[E, Throwable, JDBCModel]):
                       ZIO[Scope with JDBCConfig with E, Throwable, Unit] = for {
       config <- ZIO.service[JDBCConfig]
