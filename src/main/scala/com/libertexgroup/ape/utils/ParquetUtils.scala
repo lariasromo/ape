@@ -7,7 +7,6 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter}
-import com.github.mjakubowski84.parquet4s.{ ParquetReader, ParquetWriter }
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.apache.parquet.io.OutputFile
 import zio.s3.S3ObjectSummary
@@ -60,12 +59,13 @@ object ParquetUtils {
       }}
   }
 
+
   def recordsToParquetBytes[T >:Null: SchemaFor :Encoder :Decoder](records: Chunk[T]): ZIO[Any, Nothing, Array[Byte]] = {
     val stream = new ByteArrayOutputStream();
     val buffer = new BufferedOutputStream(stream);
     val out: OutputFile = new ParquetBufferedWriter(buffer);
     val schema: Schema = AvroSchema[T]
-    val writer = AvroParquetWriter.builder[Record](out)
+    val writer = AvroParquetWriter.builder[GenericRecord](out)
       .withPageSize(1024)
       .withSchema(schema)
       .build()

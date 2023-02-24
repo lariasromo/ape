@@ -8,10 +8,10 @@ import zio.stream.ZStream
 import java.sql.ResultSet
 import scala.reflect.ClassTag
 
-class DefaultReader[T: ClassTag](sql:String)
-                                (implicit row2Object: ResultSet => T) extends JDBCReader[JDBCConfig, Any, T] {
+protected[readers] class DefaultReader[E, T: ClassTag](sql:String)(implicit row2Object: ResultSet => T)
+  extends com.libertexgroup.ape.readers.jdbc.JDBCReader[JDBCConfig, E, T] {
 
-  override def apply: ZIO[JDBCConfig, Throwable, ZStream[Any, Throwable, T]] = for {
+  override def apply: ZIO[JDBCConfig, Throwable, ZStream[E, Throwable, T]] = for {
     chnk <- query2Chunk(sql)
   } yield ZStream.fromChunk(chnk)
 }

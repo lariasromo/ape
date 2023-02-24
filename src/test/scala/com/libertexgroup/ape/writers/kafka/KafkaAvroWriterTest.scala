@@ -2,6 +2,7 @@ package com.libertexgroup.ape.writers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.models.dummy
+import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.readers.kafka.AvroReader
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.ape.writers.kafka.KafkaTextWriterTest.{suite, test}
@@ -29,14 +30,17 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
       )
     })
 
+  val writer = Pipeline.writers.kafkaAvroWriter[dummy]
+  val reader = Pipeline.readers.kafkaAvroReader[dummy]
+
   override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with Producer with TestEnvironment with Scope, Any] =
     suite("KafkaAvroWriterTest")(
       test("Writes avro messages"){
         for {
           config <- ZIO.service[KafkaConfig]
           _ <- zio.Console.printLine("Sending dummy message")
-          _ <- new AvroWriter[Any, dummy]().apply(data(config.topicName))
-          stream <- new AvroReader[dummy]().apply
+          _ <- writer.apply(data(config.topicName))
+          stream <- reader.apply
           data <- stream.map(_.value()).runHead
         } yield {
           val result = data.flatten

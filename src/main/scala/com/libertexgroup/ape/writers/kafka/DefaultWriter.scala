@@ -6,9 +6,9 @@ import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
-class DefaultWriter[E] extends KafkaWriter[E, Any with Producer with E with KafkaConfig, String, String] {
+protected[writers] class DefaultWriter[E] extends KafkaWriter[E, E with Producer with KafkaConfig, String, String] {
   override def apply(stream: ZStream[E, Throwable, ProducerRecord[String, String]]):
-    ZIO[Any with Producer with E with KafkaConfig, Throwable, Unit] =
+    ZIO[E with Producer with KafkaConfig, Throwable, Unit] =
     for {
       config <- ZIO.service[KafkaConfig]
       _ <- stream.tap(v => {

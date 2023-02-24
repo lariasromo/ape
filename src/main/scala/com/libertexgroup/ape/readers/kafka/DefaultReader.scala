@@ -7,9 +7,10 @@ import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
-class DefaultReader extends KafkaReader[KafkaConfig, Consumer, ConsumerRecord[String, Array[Byte]]] {
-  override def apply:
-  ZIO[KafkaConfig, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, Array[Byte]]]] =
+protected[readers] class DefaultReader
+  extends com.libertexgroup.ape.readers.kafka.KafkaReader[KafkaConfig, Consumer, ConsumerRecord[String, Array[Byte]]] {
+
+  override def apply: ZIO[KafkaConfig, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, Array[Byte]]]] =
     for {
         kafkaConfig <- ZIO.service[KafkaConfig]
     } yield Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )

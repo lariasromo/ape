@@ -9,7 +9,9 @@ import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
-class AvroReader[T >:Null :SchemaFor :Decoder :Encoder] extends KafkaReader[KafkaConfig, Consumer, ConsumerRecord[String, Option[T]]] {
+protected[readers] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder]
+  extends com.libertexgroup.ape.readers.kafka.KafkaReader[KafkaConfig, Consumer, ConsumerRecord[String, Option[T]]] {
+
   override def apply: ZIO[KafkaConfig, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, Option[T]]]] =
     for {
         kafkaConfig <- ZIO.service[KafkaConfig]

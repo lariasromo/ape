@@ -1,15 +1,15 @@
 package com.libertexgroup.ape.readers.websocket
 
-import com.libertexgroup.ape.readers.Reader
 import com.libertexgroup.models.websocket.Message
 import sttp.ws.WebSocket
-import zio.{Task, ZIO}
 import zio.stream.ZStream
+import zio.{Task, ZIO}
 
 import java.time.ZoneOffset
 
 
-class DefaultReader(ws: WebSocket[Task]) extends Reader[Any, Any, Message] {
+protected[readers] class DefaultReader[E1, E2](ws: WebSocket[Task])
+  extends com.libertexgroup.ape.readers.Reader[E1, E2, Message] {
   def apply: ZIO[Any, Nothing, ZStream[Any, Throwable, Message]] = for {
     stream <- ZIO.succeed {
       ZStream
