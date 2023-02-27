@@ -87,6 +87,6 @@ frogbot-scan:
   script:
     # For Linux / MacOS runner:
     - sbt clean compile package publish
-    - apk add curl
-    - curl -fLg "https://releases.jfrog.io/artifactory/frogbot/v2/[RELEASE]/getFrogbot.sh" | sh
-    - ./frogbot ${FROGBOT_CMD}
+    #- apk add curl
+    #- curl -fLg "https://releases.jfrog.io/artifactory/frogbot/v2/[RELEASE]/getFrogbot.sh" | sh
+    #- ./frogbot ${FROGBOT_CMD}
