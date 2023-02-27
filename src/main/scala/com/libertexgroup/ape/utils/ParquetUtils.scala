@@ -49,13 +49,14 @@ object ParquetUtils {
     val hp = HadoopInputFile.fromPath(path, conf)
     ZStream.acquireReleaseWith(
       ZIO.succeed(
-        AvroParquetReader.builder[T](hp).build()
+        AvroParquetReader.builder[Record](hp).build()
       )
     )(x => ZIO.succeed(x.close()))
       .flatMap { is => {
-        val read = is.read()
+        val read: Record = is.read()
+        val entity: T = FromRecord.apply[T].from(read)
         //val record = FromRecord.apply[T].from(read)
-        ZStream.succeed(read)
+        ZStream.succeed(entity)
       }}
   }
 
