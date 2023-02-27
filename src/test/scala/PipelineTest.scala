@@ -1,19 +1,24 @@
-import zio.blocking.Blocking
-import zio.clock.Clock
-import zio.test.{Assert, DefaultRunnableSpec, ZSpec, assertTrue}
-import zio.{ZIO, system}
+import zio.{Scope, ZIO, ZLayer}
+import zio.test.{Spec, TestEnvironment, TestResult, ZIOSpec, ZIOSpecDefault, assertTrue}
 
 
-object PipelineTest extends DefaultRunnableSpec {
-  val test: ZIO[Clock with Blocking with Any with system.System, Any, Assert] = for {
+object PipelineTest extends ZIOSpecDefault {
+  val test: ZIO[Any, Nothing, TestResult] = for {
     testResult <- ZIO.succeed(true)
   } yield {
     assertTrue(testResult)
   }
 
-  override def spec: ZSpec[Environment, Failure] = suite("PipelineTest")(
-    testM("Hello world") {
-      test
-    }
-  )
+//  override def spec: ZSpec[Environment, Failure] = suite("PipelineTest")(
+//    testM("Hello world") {
+//      test
+//    }
+//  )
+
+//
+//  override def bootstrap: ZLayer[Any, Any, Nothing] = ZLayer(ZIO.succeed())
+
+  override def spec: Spec[TestEnvironment with Scope, Any] = test("Hello world") {
+    test
+  }
 }
