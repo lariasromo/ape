@@ -3,6 +3,68 @@
 The goal of this project is to generate a common approach when creating new data consuming microservices.
 
 
+## Getting started
+To create a sample pipeline that reads from Kafka, grabs some fields and saves back to Kafka in avro format do the 
+following:
+
+1. Define your input class A (this class can come from a schema registry or produced using an avro schema with some 
+   online tool) and your reader
+```scala
+import com.libertexgroup.ape.pipelines.Pipeline
+
+case class Message(value:String)
+val reader = Pipeline.readers.kafkaAvroReader[Message]
+```
+2. Define an output class B and a simple transformer A => B
+```scala
+case class Message2(value:String)
+implicit val transformer: Message => Message2 = msg => {
+   Message2(value = msg.value)
+} 
+```
+3. Define your writer
+```scala
+import com.libertexgroup.ape.pipelines.Pipeline
+val writer = Pipeline.writers.kafkaAvroWriter[Message2]
+```
+4. Create your pipeline
+```scala
+val pipeline = reader --> writer
+```
+5. Run your pipeline using the `run` method
+```scala
+for {
+   _ <- pipeline.run
+} yield ()
+```
+## List of Readers (v1)
+**Reader description below
+ - `clickhouseDefaultReader`: Reads from clickhouse database using a sql statement
+ - `jdbcDefaultReader`: Reads from jdbc supporting database using a sql statement 
+ - `kafkaDefaultReader`: Reads from kafka using a `KafkaConfig`, messages with bytes 
+ - `kafkaAvroReader`: Reads from kafka using a `KafkaConfig` layer, upcoming messages are transformed to objects using a 
+   case class as reference
+ - `kafkaStringReader`: Reads from kafka using a `KafkaConfig`, upcoming messages are transformed to objects using a case
+   class as reference 
+ - `s3ParquetReader`: Reads parquet files from S3
+ - `s3AvroReader`: Reads avro datum files from S3
+ - `s3TextReader`: Reads plaintext from S3
+ - `websocketReader`: Reads from a websocket (requires a `Websocket[Task]` object) see https://sttp.softwaremill.com/en/latest/examples.html#open-a-websocket-using-zio
+ - 
+## List of Writers (v1)
+**Writer description below
+ - `clickhouseWriter`: Writes to a Clickhouse table using `ClickhouseConfig`, which allows writes grouping by batch 
+   size or time. The input models need to implement the `CLickhouseModel` interface.
+ - `jDBCWriter`: Writes to a jdbc supporting table using `JDBCConfig`, which allows writes grouping by batch
+   size or time. The input models need to implement the `JDBCModel` interface.
+ - `kafkaStringWriter`: Writes strings to kafka
+ - `kafkaAvroWriter`: Writes avro bytes to kafka
+ - `s3AvroWriter`: Writes avro bytes to S3
+ - `s3ParquetWriter`: Writes parquet files to S3
+ - `s3TextWriter`: Writes text files to S3
+ - `consoleWriter`/`consoleStringWriter`: Writes the output to the console (useful for testing purposes)
+
+
 [Readers](src/main/scala/com/libertexgroup/ape/readers)
 ------
 A `Reader` is a component that will start a stream of data using the `ZStream` interface.
