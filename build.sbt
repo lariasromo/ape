@@ -1,5 +1,5 @@
 
-ThisBuild / version := "0.3.0"
+ThisBuild / version := "1.0.0"
 
 ThisBuild / scalaVersion := "2.13.10"
 
