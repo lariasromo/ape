@@ -4,6 +4,7 @@ import com.libertexgroup.ape
 import com.libertexgroup.configs.{ClickhouseConfig, JDBCConfig, KafkaConfig, S3Config}
 import com.libertexgroup.models.websocket.Message
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
+import io.circe
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import sttp.ws.WebSocket
@@ -40,6 +41,12 @@ class PipelineReaders() {
 
   def s3TypedParquetReader[T >: Null : SchemaFor : Decoder : Encoder : ClassTag]: Reader[S3 with S3Config, S3, T] =
     new ape.readers.s3.TypedParquetReader[T]()
+
+  def s3JsonLinesReader[T >: Null :ClassTag](implicit e: String => T): Reader[S3 with S3Config, S3, T] =
+    new ape.readers.s3.JsonLinesReader[T]()
+
+  def s3JsonLinesCirceReader[T >: Null :ClassTag :circe.Decoder]: Reader[S3 with S3Config, S3, T] =
+    new ape.readers.s3.JsonLinesCirceReader[T]()
 
   def websocketReader(ws: WebSocket[Task]): Reader[Any, Any, Message] =
     new ape.readers.websocket.DefaultReader(ws)

@@ -1,5 +1,4 @@
-
-ThisBuild / version := "1.0.0"
+ThisBuild / version := "1.1.0"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -9,6 +8,13 @@ lazy val root = (project in file("."))
   )
 
 val zioVersion = "2.0.6"
+val circeVersion = "0.14.3"
+
+val circe = Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % circeVersion)
 
 val zioLibraries = Seq(
   "dev.zio" %% "zio"       % zioVersion,
@@ -37,7 +43,7 @@ libraryDependencies ++= Seq(
   "io.github.scottweaver" %% "zio-2-0-testcontainers-postgresql" % "0.10.0" % "test",
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
-) ++ zioLibraries
+) ++ zioLibraries ++ circe
 
 // Credentials to get access to Libertex Artifactory maven repositories
 credentials += Credentials(Path.userHome / ".sbt" / "artifactory_credentials")
