@@ -8,14 +8,16 @@ import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.avro.generic.GenericRecord
 import software.amazon.awssdk.services.s3.model.S3Exception
 import zio.s3.{ListObjectOptions, S3, S3ObjectSummary}
-import zio.stream.{ZPipeline, ZStream}
-import zio.{Chunk, ZIO}
+import zio.stream.{Take, ZPipeline, ZSink, ZStream}
+import zio.{Chunk, Queue, ZIO}
+
+import scala.util.Try
 
 package object s3 {
   def listFiles(bucket: String, location: String): ZIO[S3, S3Exception, Chunk[S3ObjectSummary]] =
     zio.s3.listObjects(bucket, ListObjectOptions.from(location, 100)).map(_.objectSummaries)
 
-  def readPlainText(bucket: String, location: String): ZIO[S3 with S3Config, S3Exception, ZStream[S3, Exception, String]] =
+  def readPlainText(bucket: String, location: String): ZIO[S3 with S3Config, Throwable, ZStream[S3, Exception, String]] =
     for {
       config <- ZIO.service[S3Config]
       chunk <- listFiles(bucket, location)
@@ -30,7 +32,8 @@ package object s3 {
           }).via(ZPipeline.utf8Decode >>> ZPipeline.splitLines)
         })
         .fold(ZStream.empty)(_ ++ _)
-    } yield lines
+      newStream <- if(config.enableBackPressure) readWithBackPressure(lines) else ZIO.succeed(lines)
+    } yield newStream
 
   def decompressStream(compressionType: CompressionType,
                        stream: ZStream[S3, S3Exception, Byte]): ZStream[S3, Exception, Byte] =
@@ -62,7 +65,8 @@ package object s3 {
     location <- config.taskLocation
     chunk <- listFiles(bucket, location)
     stream = ZStream.fromChunk(chunk).flatMap(file => readParquetWithType[T](config, file))
-  } yield stream
+    newStream <- if(config.enableBackPressure) readWithBackPressure(stream) else ZIO.succeed(stream)
+  } yield newStream
 
   def readParquetGenericRecords: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, GenericRecord]] = for {
     config <- ZIO.service[S3Config]
@@ -70,6 +74,14 @@ package object s3 {
     location <- config.taskLocation
     chunk <- listFiles(bucket, location)
     stream = ZStream.fromChunk(chunk).flatMap(file => readParquetGenericRecord(config, file))
-  } yield stream
+    newStream <- if(config.enableBackPressure) readWithBackPressure(stream) else ZIO.succeed(stream)
+  } yield newStream
+
+  def readWithBackPressure[E, T](stream:ZStream[E, Throwable, T]): ZIO[E, Throwable, ZStream[Any, Nothing, T]]
+  =
+    for {
+      queue <- Queue.unbounded[T]
+      count <- stream.tap(msg => queue.offer(msg)).map(_ => 1).runSum
+    } yield ZStream.range(0, count).mapZIO(_ => queue.take).ensuring(queue.shutdown)
 
 }

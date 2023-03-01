@@ -8,9 +8,9 @@ package object writers {
   val sampleRecords: Chunk[dummy] = Chunk(
     dummy("value1", "value2"),
     dummy("value3", "value4"),
-    dummy("value4", "value5"),
-    dummy("value6", "value7"),
-    dummy("value8", "value9"),
+    dummy("value5", "value6"),
+    dummy("value7", "value8"),
+    dummy("value9", "value10"),
   )
 
   val sampleData: ZStream[Any, Nothing, dummy] = ZStream.fromChunk(sampleRecords)

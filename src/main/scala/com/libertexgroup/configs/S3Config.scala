@@ -17,6 +17,7 @@ case class S3Config (
                       s3Host: String,
                       compressionType: CompressionType,
                       parallelism: Int,
+                      enableBackPressure: Boolean,
                       awsAccessKey: String,
                       awsSecretKey: String,
   ) {
@@ -33,6 +34,7 @@ object S3Config extends ReaderConfig {
     s3Bucket <- env("S3_BUCKET")
     compressionType <- envOrElse("COMPRESSION_TYPE", "GZIP")
     s3Host <- envOrElse("S3_OVERRIDE_URL", "https://s3.eu-west-1.amazonaws.com")
+    enableBackPressure <- envOrElse("S3_BACK_PRESSURE", "false")
   } yield S3Config (
     awsAccessKey = awsAccessKey,
     awsSecretKey = awsSecretKey,
@@ -40,7 +42,8 @@ object S3Config extends ReaderConfig {
     s3Bucket = s3Bucket,
     s3Host = s3Host,
     compressionType = CompressionType.withName(compressionType),
-    parallelism = Try(parallelism.toInt).toOption.getOrElse(4)
+    parallelism = Try(parallelism.toInt).toOption.getOrElse(4),
+    enableBackPressure = enableBackPressure.equalsIgnoreCase("true")
   )
 
   val makeFromS3Config: ZIO[S3Config, errors.InvalidSettings, Layer[S3Exception, S3]] =
