@@ -58,20 +58,18 @@ package object s3 {
       ZStream.fromIterable(byteChunks.decode[T]())
     }
 
-  def readParquet[T >:Null: SchemaFor :Encoder :Decoder]:
+  def readParquet[T >:Null: SchemaFor :Encoder :Decoder](location:String):
   ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, T]] = for {
     config <- ZIO.service[S3Config]
     bucket <- config.taskS3Bucket
-    location <- config.taskLocation
     chunk <- listFiles(bucket, location)
     stream = ZStream.fromChunk(chunk).flatMap(file => readParquetWithType[T](config, file))
     newStream <- if(config.enableBackPressure) readWithBackPressure(stream) else ZIO.succeed(stream)
   } yield newStream
 
-  def readParquetGenericRecords: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, GenericRecord]] = for {
+  def readParquetGenericRecords(location:String): ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, GenericRecord]] = for {
     config <- ZIO.service[S3Config]
     bucket <- config.taskS3Bucket
-    location <- config.taskLocation
     chunk <- listFiles(bucket, location)
     stream = ZStream.fromChunk(chunk).flatMap(file => readParquetGenericRecord(config, file))
     newStream <- if(config.enableBackPressure) readWithBackPressure(stream) else ZIO.succeed(stream)

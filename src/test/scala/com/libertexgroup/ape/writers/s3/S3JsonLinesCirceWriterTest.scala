@@ -14,7 +14,8 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZLayer}
 
 object S3JsonLinesCirceWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config] {
-  val reader = Pipeline.readers.s3JsonLinesCirceReader[dummy]
+  val location = "json"
+  val reader = Pipeline.readers.s3JsonLinesCirceReader[dummy](location)
   val writer = Pipeline.writers.s3JsonLinesCirceWriter[dummy]
 
   override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] = suite("S3JsonLinesCirceWriterTest")(
@@ -32,5 +33,5 @@ object S3JsonLinesCirceWriterTest extends ZIOSpec[S3 with MinioContainer with S3
   )
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
-    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some("json"))
+    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location))
 }

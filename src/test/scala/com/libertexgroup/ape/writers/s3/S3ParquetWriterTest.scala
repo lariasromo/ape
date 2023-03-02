@@ -14,9 +14,9 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer, durationInt}
 
 object S3ParquetWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config] {
+  val location = "parquet"
   val writer = Pipeline.writers.s3ParquetWriter[dummy](1, 1.minute)
-
-  val reader = Pipeline.readers.s3TypedParquetReader[dummy]
+  val reader = Pipeline.readers.s3TypedParquetReader[dummy](location)
 
   override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] = suite("S3ParquetWriterTest")(
     test("Writes entities to parquet"){
@@ -34,5 +34,5 @@ object S3ParquetWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config]
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
     MinioContainerService.s3Layer >+>
-      MinioContainerService.configLayer(CompressionType.NONE, Some("parquet"))
+      MinioContainerService.configLayer(CompressionType.NONE, Some(location))
 }

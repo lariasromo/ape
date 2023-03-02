@@ -13,8 +13,9 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object S3BytesWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config] {
+  val location = "bytes"
   val writer = Pipeline.writers.s3AvroWriter[dummy]
-  val reader = Pipeline.readers.s3AvroReader[dummy]
+  val reader = Pipeline.readers.s3AvroReader[dummy](location)
 
   override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] = suite("S3BytesWriterTest")(
     test("Writes entities to bytes"){
@@ -31,5 +32,5 @@ object S3BytesWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config] {
   )
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
-    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some("bytes"))
+    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location))
 }
