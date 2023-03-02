@@ -12,7 +12,8 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object S3JsonLinesCirceReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer] {
-  val reader = Pipeline.readers.s3JsonLinesCirceReader[dummy]
+  val location = "json"
+  val reader = Pipeline.readers.s3JsonLinesCirceReader[dummy](location)
   override def spec: Spec[S3 with S3Config with MinioContainer with TestEnvironment with Scope, Any] = suite("S3JsonLinesCirceReaderTest")(
     test("Reads a json file"){
       for {
@@ -28,5 +29,5 @@ object S3JsonLinesCirceReaderTest extends ZIOSpec[S3 with S3Config with MinioCon
   )
 
   override def bootstrap: ZLayer[Any, Any, S3 with S3Config with MinioContainer] =
-    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some("json"))
+    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location))
 }

@@ -13,7 +13,8 @@ import zio.stream.ZStream
  * The GenericRecord interface allows to interact with parquet values
  * If the file is just a text file each line will be a string stored in an attribute named `value`
  */
-protected[readers] class ParquetReader
-  extends com.libertexgroup.ape.readers.s3.S3Reader[S3 with S3Config, S3, GenericRecord] {
-  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Throwable, GenericRecord]] = readParquetGenericRecords
+protected[readers] class ParquetReader(location:String)
+  extends S3Reader[S3 with S3Config, S3, GenericRecord] {
+  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Throwable, GenericRecord]] =
+    readParquetGenericRecords(location)
 }

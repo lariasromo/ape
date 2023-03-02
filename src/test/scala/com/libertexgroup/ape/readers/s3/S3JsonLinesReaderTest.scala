@@ -12,7 +12,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object S3JsonLinesReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer] {
-  val reader = Pipeline.readers.s3JsonLinesReader[dummy]
+  val reader = Pipeline.readers.s3JsonLinesReader[dummy]("json")
   override def spec: Spec[S3 with S3Config with MinioContainer with TestEnvironment with Scope, Any] = suite("S3JsonLinesReaderTest")(
     test("Reads a json file"){
       for {

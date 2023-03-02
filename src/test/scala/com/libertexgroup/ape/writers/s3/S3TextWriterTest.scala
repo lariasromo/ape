@@ -19,8 +19,8 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config] {
   )
 
   val data: ZStream[Any, Nothing, String] = ZStream.fromChunk(sampleStrings)
-
-  val reader = Pipeline.readers.s3TextReader
+  val location = "bytes"
+  val reader = Pipeline.readers.s3TextReader(location)
   val writer = Pipeline.writers.s3TextWriter
 
   override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] = suite("S3TextWriterTest")(
@@ -38,5 +38,5 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config] {
   )
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
-    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some("bytes"))
+    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location))
 }

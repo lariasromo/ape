@@ -11,7 +11,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object S3ParquetReaderTest extends ZIOSpec[S3 with MinioContainer with S3Config] {
-  val reader = Pipeline.readers.s3ParquetReader
+  val reader = Pipeline.readers.s3ParquetReader("parquet")
   override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] = suite("S3ReaderTest")(
     test("Reads a parquet file"){
       for {
