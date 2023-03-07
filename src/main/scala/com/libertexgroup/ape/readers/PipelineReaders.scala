@@ -1,18 +1,22 @@
 package com.libertexgroup.ape.readers
 
 import com.libertexgroup.ape
+import com.libertexgroup.ape.readers.s3.{LBXLogstashKafkaReader, S3Reader}
+import com.libertexgroup.ape.utils.S3Utils.pathConverter
 import com.libertexgroup.configs.{ClickhouseConfig, JDBCConfig, KafkaConfig, S3Config}
+import com.libertexgroup.models.s3.KafkaRecordS3
 import com.libertexgroup.models.websocket.Message
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import io.circe
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import sttp.ws.WebSocket
-import zio.Task
+import zio.{Duration, Task}
 import zio.kafka.consumer.Consumer
 import zio.s3.S3
 
 import java.sql.ResultSet
+import java.time.LocalDateTime
 import scala.reflect.ClassTag
 
 // Readers
@@ -48,6 +52,13 @@ class PipelineReaders() {
 
   def s3JsonLinesCirceReader[T >: Null :ClassTag :circe.Decoder](location:String): Reader[S3 with S3Config, S3, T] =
     new ape.readers.s3.JsonLinesCirceReader[T](location)
+
+  def s3LbxLogstashKafkaReader(locationPattern:LocalDateTime => List[String],
+                                spacedDuration: Duration): Reader[S3Config, S3 with S3Config, KafkaRecordS3] =
+    new ape.readers.s3.LBXLogstashKafkaReader(locationPattern, spacedDuration)
+
+  def s3LbxLogstashWithPathConverterReader(location: String, spacedDuration: Duration): Reader[S3Config, S3 with S3Config, KafkaRecordS3] =
+    new ape.readers.s3.LBXLogstashKafkaReader(pathConverter(location, spacedDuration), spacedDuration)
 
   def websocketReader(ws: WebSocket[Task]): Reader[Any, Any, Message] =
     new ape.readers.websocket.DefaultReader(ws)

@@ -13,5 +13,5 @@ package object writers {
     dummy("value9", "value10"),
   )
 
-  val sampleData: ZStream[Any, Nothing, dummy] = ZStream.fromChunk(sampleRecords)
+  val sampleData: ZStream[Any, Throwable, dummy] = ZStream.fromChunk(sampleRecords)
 }
