@@ -27,12 +27,10 @@ class LBXLogstashKafkaReader(locationPattern:ZonedDateTime => List[String], spac
           val lm: ZonedDateTime = f.lastModified.atZone(ZoneId.of("UTC"))
           (f, f.lastModified.atZone(ZoneId.of("UTC")), now)
         })
-        .tap{ case(file, date, now) => printLine(s"key: ${file.key} " +
-          s"lastModified: ${date.toEpochSecond}, " +
-          s"now: ${now.toEpochSecond}")
-        }.filter{ case(_, date, now) => (now.minus(spacedDuration)).toEpochSecond <= date.toEpochSecond }
+        .filter{ case(_, date, now) => (now.minus(spacedDuration)).toEpochSecond <= date.toEpochSecond }
         .map{ case(file, _, _) => file }
-  } yield stream
+        .tap{ file => printLine(s"Got file: ${file.key}") }
+    } yield stream
 
   override def apply: ZIO[S3Config, Throwable, ZStream[S3 with S3Config, Throwable, KafkaRecordS3]] = ZIO.succeed {
     ZStream
