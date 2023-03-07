@@ -16,11 +16,12 @@ import scala.reflect.ClassTag
 protected[readers] class JsonLinesReader[T :ClassTag](location:String)(implicit decode: String => T)
   extends S3Reader[S3 with S3Config, S3, T] {
 
-  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Exception, T]] =
+  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Throwable, T]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
       stream <- readPlainText(bucket, location)
-      newStream <- if(config.enableBackPressure) readWithBackPressure(stream) else ZIO.succeed(stream)
-    } yield newStream.map(decode)
+      decodedStream = stream.map(decode)
+      newStream <- if(config.enableBackPressure) readWithBackPressure(decodedStream) else ZIO.succeed(decodedStream)
+    } yield newStream
 }
