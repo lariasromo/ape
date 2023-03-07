@@ -14,8 +14,8 @@ import scala.reflect.ClassTag
 
 class PipelineWriters() {
   // Writers
-  def clickhouseWriter: Writer[Any, Any with Scope with ClickhouseConfig, ClickhouseModel] =
-    new ape.writers.clickhouse.DefaultWriter[Any]
+  def clickhouseWriter[E]: Writer[E, E with Scope with ClickhouseConfig, ClickhouseModel] =
+    new ape.writers.clickhouse.DefaultWriter[E]
 
   def jDBCWriter: Writer[Any, Any with Scope with JDBCConfig, JDBCModel] =
     new ape.writers.jdbc.DefaultWriter[Any]
