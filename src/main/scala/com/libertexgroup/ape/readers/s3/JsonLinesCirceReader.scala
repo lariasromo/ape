@@ -16,7 +16,7 @@ import scala.reflect.ClassTag
 protected[readers] class JsonLinesCirceReader[T: Decoder :ClassTag](location:String)
   extends S3Reader[S3 with S3Config, S3, T] {
 
-  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Exception, T]] =
+  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Throwable, T]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket

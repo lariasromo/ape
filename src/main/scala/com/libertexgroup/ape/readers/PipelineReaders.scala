@@ -16,7 +16,7 @@ import zio.kafka.consumer.Consumer
 import zio.s3.S3
 
 import java.sql.ResultSet
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, ZonedDateTime}
 import scala.reflect.ClassTag
 
 // Readers
@@ -53,7 +53,7 @@ class PipelineReaders() {
   def s3JsonLinesCirceReader[T >: Null :ClassTag :circe.Decoder](location:String): Reader[S3 with S3Config, S3, T] =
     new ape.readers.s3.JsonLinesCirceReader[T](location)
 
-  def s3LbxLogstashKafkaReader(locationPattern:LocalDateTime => List[String],
+  def s3LbxLogstashKafkaReader(locationPattern:ZonedDateTime => List[String],
                                 spacedDuration: Duration): Reader[S3Config, S3 with S3Config, KafkaRecordS3] =
     new ape.readers.s3.LBXLogstashKafkaReader(locationPattern, spacedDuration)
 
