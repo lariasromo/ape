@@ -1,4 +1,4 @@
-ThisBuild / version := "1.2.6"
+ThisBuild / version := "1.3.0"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
     name := "pipelineEngine"
   )
 
-val zioVersion = "2.0.6"
+val zioVersion = "2.0.10"
 val circeVersion = "0.14.3"
 
 val circe = Seq(
@@ -17,8 +17,9 @@ val circe = Seq(
 ).map(_ % circeVersion)
 
 val zioLibraries = Seq(
-  "dev.zio" %% "zio"       % zioVersion,
-  "dev.zio" %% "zio-kafka" % zioVersion,
+  "dev.zio" %% "zio"            % zioVersion,
+  "dev.zio" %% "zio-concurrent" % zioVersion,
+  "dev.zio" %% "zio-kafka" % "2.0.6",
   "dev.zio" %% "zio-s3"    % "0.4.2.3",
   "dev.zio" %% "zio-json"  % "0.4.2",
   "dev.zio" %% "zio-test"     % zioVersion % "test",

@@ -13,7 +13,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import sttp.ws.WebSocket
 import zio.{Duration, Task}
 import zio.kafka.consumer.Consumer
-import zio.s3.S3
+import zio.s3.{S3, S3ObjectSummary}
+import zio.stream.ZStream
 
 import java.sql.ResultSet
 import java.time.{LocalDateTime, ZonedDateTime}
@@ -54,10 +55,10 @@ class PipelineReaders() {
     new ape.readers.s3.JsonLinesCirceReader[T](location)
 
   def s3LbxLogstashKafkaReader(locationPattern:ZonedDateTime => List[String],
-                                spacedDuration: Duration): Reader[S3Config, S3 with S3Config, KafkaRecordS3] =
+                                spacedDuration: Duration): Reader[S3Config, S3 with S3Config,  (S3ObjectSummary, ZStream[S3, Throwable, KafkaRecordS3])] =
     new ape.readers.s3.LBXLogstashKafkaReader(locationPattern, spacedDuration)
 
-  def s3LbxLogstashWithPathConverterReader(location: String, spacedDuration: Duration): Reader[S3Config, S3 with S3Config, KafkaRecordS3] =
+  def s3LbxLogstashWithPathConverterReader(location: String, spacedDuration: Duration): Reader[S3Config, S3 with S3Config,  (S3ObjectSummary, ZStream[S3, Throwable, KafkaRecordS3])] =
     new ape.readers.s3.LBXLogstashKafkaReader(pathConverter(location, spacedDuration), spacedDuration)
 
   def websocketReader(ws: WebSocket[Task]): Reader[Any, Any, Message] =
