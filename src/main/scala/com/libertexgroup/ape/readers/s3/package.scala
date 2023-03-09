@@ -81,10 +81,5 @@ package object s3 {
     for {
       queue <- Queue.unbounded[T]
       count <- stream.tap(msg => queue.offer(msg)).runCount
-      _ <- printLine(s"Offered ${count} messages to queue")
-    } yield ZStream.range(0, count.toInt)
-      .tap(m => printLine(s"Taking message: $m from queue"))
-      .mapZIO(_ => queue.take)
-      .ensuring(queue.shutdown)
-
+    } yield ZStream.range(0, count.toInt).mapZIO(_ => queue.take).ensuring(queue.shutdown)
 }
