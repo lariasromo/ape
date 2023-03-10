@@ -7,12 +7,12 @@ import zio.Console.printLine
 import zio.concurrent.ConcurrentMap
 import zio.s3.{ListObjectOptions, S3, S3ObjectSummary, listObjects}
 import zio.stream.ZStream
-import zio.{Duration, Queue, Schedule, ZIO}
+import zio.{Queue, Schedule, ZIO}
 
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
-class LBXLogstashKafkaReader(locationPattern:ZonedDateTime => List[String], spacedDuration: Duration)
+class LBXLogstashKafkaReader(locationPattern:ZIO[S3Config, Nothing, ZonedDateTime => List[String]])
   extends S3Reader[S3 with S3Config, S3 with S3Config, (S3ObjectSummary, ZStream[S3, Throwable, KafkaRecordS3])] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
@@ -22,19 +22,21 @@ class LBXLogstashKafkaReader(locationPattern:ZonedDateTime => List[String], spac
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
       s3FilesQueue <- Queue.unbounded[S3ObjectSummary]
+      locPattern <- locationPattern
       //We leverage 2 streams in parallel, the first stream lists files from S3 in the background and sends
       // metadata to a queue.
       //The second stream gets constructed from the previous queue, this second stream may have sinks that perform
       // heavy operations. This way this stream won't delay the first stream.
       _ <- ZStream
-        .fromSchedule(Schedule.spaced(spacedDuration))
+        .fromSchedule(Schedule.spaced(config.filePeekDuration))
         .mapZIO(_ => currentDateTime)
         // we use a concurrent map to keep track of visited s3 paths, every run will get a new set of files in addition
         // of previously explored files since they all shared the same key (divided by hour)
         // If we find files in the map with a pat different than the one we are currently visiting, it is safe to
         // delete other paths to keep the map optimal
-        .tap{now => trackedFiles.removeIf((_, date) => date.toEpochSecond < now.minus(spacedDuration.multipliedBy(3)).toEpochSecond)}
-        .flatMap(now => ZStream.fromIterable(locationPattern(now.toZonedDateTime)).map(e => (now, e)))
+        .tap{now => trackedFiles
+          .removeIf((_, date) => date.toEpochSecond < now.minus(config.fileCacheExpiration).toEpochSecond)}
+        .flatMap(now => ZStream.fromIterable(locPattern(now.toZonedDateTime)).map(e => (now, e)))
         .mapZIO{case(now, location) => for {
           objs <- listObjects(bucket, ListObjectOptions.from(location, 100))
         } yield ZStream.fromChunk(objs.objectSummaries)

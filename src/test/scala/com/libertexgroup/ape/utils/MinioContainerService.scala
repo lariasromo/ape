@@ -23,7 +23,8 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     parallelism = 5,
     awsAccessKey = container.getAwsAccessKey,
     awsSecretKey = container.getAwsSecretKey,
-    enableBackPressure = true
+    enableBackPressure = true,
+    fileCacheExpiration = null, filePeekDuration = null, filePeekDurationMargin = null
   )
 
   def configLayer(compressionType: CompressionType, location: Option[String]): ZLayer[MinioContainer, Nothing, S3Config] =
