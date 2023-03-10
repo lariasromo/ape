@@ -54,11 +54,12 @@ class PipelineReaders() {
   def s3JsonLinesCirceReader[T >: Null :ClassTag :circe.Decoder](location:String): Reader[S3 with S3Config, S3, T] =
     new ape.readers.s3.JsonLinesCirceReader[T](location)
 
-  def s3LbxLogstashKafkaReader(locationPattern:ZonedDateTime => List[String],
-                                spacedDuration: Duration): Reader[S3Config, S3 with S3Config,  (S3ObjectSummary, ZStream[S3, Throwable, KafkaRecordS3])] =
+  def s3LbxLogstashKafkaReader(locationPattern:ZonedDateTime => List[String], spacedDuration: Duration):
+  Reader[S3 with S3Config, S3 with S3Config,  (S3ObjectSummary, ZStream[S3, Throwable, KafkaRecordS3])] =
     new ape.readers.s3.LBXLogstashKafkaReader(locationPattern, spacedDuration)
 
-  def s3LbxLogstashWithPathConverterReader(location: String, spacedDuration: Duration): Reader[S3Config, S3 with S3Config,  (S3ObjectSummary, ZStream[S3, Throwable, KafkaRecordS3])] =
+  def s3LbxLogstashWithPathConverterReader(location: String, spacedDuration: Duration):
+  Reader[S3 with S3Config, S3 with S3Config, (S3ObjectSummary, ZStream[S3, Throwable, KafkaRecordS3])] =
     new ape.readers.s3.LBXLogstashKafkaReader(pathConverter(location, spacedDuration), spacedDuration)
 
   def websocketReader(ws: WebSocket[Task]): Reader[Any, Any, Message] =
