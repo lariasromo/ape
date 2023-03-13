@@ -16,7 +16,7 @@ object JDBCWriterTest  extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
     data <- query2Chunk[dummy]("SELECT * FROM dummy;")
   } yield data
 
-  val writer = Pipeline.writers.jDBCWriter
+  val writer = Pipeline.writers.jDBCWriter[Any]
 
   override def spec: Spec[JDBCConfig with PostgreSQLContainer with TestEnvironment with Scope, Any] =
     suite("JDBCWriterTest")(
