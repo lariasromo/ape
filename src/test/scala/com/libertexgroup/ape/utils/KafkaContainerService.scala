@@ -12,6 +12,9 @@ object KafkaContainerService extends TestContainerHelper[KafkaContainer]{
   def sendBytes: ZIO[KafkaConfig, Throwable, RecordMetadata] =
     SimpleKafkaProducer.sendRecord("Some key", "Some value".getBytes)
 
+  def sendJsonMessage: ZIO[KafkaConfig, Throwable, RecordMetadata] =
+    SimpleKafkaProducer.sendRecordCirce("Some key", dummy("Some", "value"))
+
   def sendPlaintextMessage: ZIO[KafkaConfig, Throwable, RecordMetadata] =
     SimpleKafkaProducer.sendRecord("Some key", "Some value")
 

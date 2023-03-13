@@ -44,6 +44,8 @@ for {
  - `kafkaDefaultReader`: Reads from kafka using a `KafkaConfig`, messages with bytes 
  - `kafkaAvroReader`: Reads from kafka using a `KafkaConfig` layer, upcoming messages are transformed to objects using a 
    case class as reference
+ - `kafkaJsonCirceReader`: Reads from kafka using a `KafkaConfig` layer, upcoming messages are transformed to objects using a 
+   case class as reference
  - `kafkaStringReader`: Reads from kafka using a `KafkaConfig`, upcoming messages are transformed to objects using a case
    class as reference 
  - `s3ParquetReader`: Reads parquet files from S3
