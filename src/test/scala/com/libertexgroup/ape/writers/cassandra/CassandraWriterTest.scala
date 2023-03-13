@@ -10,7 +10,7 @@ import zio.{Scope, ZLayer}
 
 
 object CassandraWriterTest  extends ZIOSpec[CassandraConfig with CassandraContainer] {
-  val writer = Pipeline.writers.cassandraWriter
+  val writer = Pipeline.writers.cassandraWriter[Any]
 
   override def spec: Spec[CassandraConfig with CassandraContainer with TestEnvironment with Scope, Any] =
     suite("CassandraWriterTest")(

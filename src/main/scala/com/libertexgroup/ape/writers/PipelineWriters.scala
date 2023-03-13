@@ -20,8 +20,8 @@ class PipelineWriters() {
   def clickhouseWriter[E]: Writer[E, E with Scope with ClickhouseConfig, ClickhouseModel] =
     new ape.writers.clickhouse.DefaultWriter[E]
 
-  def jDBCWriter: Writer[Any, Any with Scope with JDBCConfig, JDBCModel] =
-    new ape.writers.jdbc.DefaultWriter[Any]
+  def jDBCWriter[E]: Writer[E, E with Scope with JDBCConfig, JDBCModel] =
+    new ape.writers.jdbc.DefaultWriter[E]
 
   def kafkaStringWriter: Writer[Any, Any with Producer with KafkaConfig, ProducerRecord[String, String]] =
     new ape.writers.kafka.DefaultWriter[Any]
@@ -44,8 +44,8 @@ class PipelineWriters() {
   def s3JsonLinesCirceWriter[T: circe.Encoder]: Writer[Any, Any with S3 with S3Config, T] =
     new ape.writers.s3.JsonLinesCirceWriter[Any, T]
 
-  def cassandraWriter: Writer[Any, Any with Scope with CassandraConfig, CassandraModel] =
-    new ape.writers.cassandra.DefaultWriter[Any]
+  def cassandraWriter[E]: Writer[E, E with Scope with CassandraConfig, CassandraModel] =
+    new ape.writers.cassandra.DefaultWriter[E]
 
   def consoleWriter[E, T]: Writer[E, E, T] = new ape.writers.ConsoleWriter[E, T]
 
