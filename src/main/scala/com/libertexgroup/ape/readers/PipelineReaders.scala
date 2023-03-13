@@ -37,6 +37,9 @@ class PipelineReaders() {
   def kafkaStringReader: Reader[KafkaConfig, Consumer, ConsumerRecord[String, String]] =
     new ape.readers.kafka.StringReader()
 
+  def kafkaJsonCirceReader[T >:Null :io.circe.Decoder : ClassTag]: Reader[KafkaConfig, Consumer, ConsumerRecord[String, T]] =
+    new ape.readers.kafka.JsonCirceReader[T]()
+
   def s3ParquetReader(location:String): Reader[S3 with S3Config, S3, GenericRecord] =
     new ape.readers.s3.ParquetReader(location)
 

@@ -2,6 +2,7 @@ package com.libertexgroup.ape.utils
 
 import com.libertexgroup.configs.KafkaConfig
 import com.sksamuel.avro4s.{Encoder, SchemaFor}
+import io.circe.syntax.EncoderOps
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, RecordMetadata}
 import zio.ZIO
 
@@ -55,6 +56,20 @@ object SimpleKafkaProducer {
       import AvroUtils.implicits._
       val bytes: Array[Byte] = value.encode().orNull
       val producer = new KafkaProducer[String, Array[Byte]](props)
+
+      sendRecordScoped(producer, bytes)
+  })
+
+  def sendRecordCirce[T: SchemaFor : io.circe.Encoder](key: String, value:T): ZIO[KafkaConfig, Throwable, RecordMetadata] =
+    ZIO
+    .service[KafkaConfig]
+    .flatMap(kafkaConfig => {
+      val props:Properties = new Properties()
+      props.put("bootstrap.servers",kafkaConfig.kafkaBrokers.mkString(","))
+      props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+      props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+      val bytes: String = value.asJson.noSpaces
+      val producer = new KafkaProducer[String, String](props)
 
       sendRecordScoped(producer, bytes)
   })
