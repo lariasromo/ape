@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.writers.clickhouse
 import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.connect
 import com.libertexgroup.configs.ClickhouseConfig
-import com.libertexgroup.models.ClickhouseModel
+import com.libertexgroup.models.clickhouse.ClickhouseModel
 import zio.{Scope, ZIO}
 import zio.stream.ZStream
 

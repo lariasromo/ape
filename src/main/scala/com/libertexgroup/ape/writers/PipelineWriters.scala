@@ -1,8 +1,11 @@
 package com.libertexgroup.ape.writers
 
 import com.libertexgroup.ape
-import com.libertexgroup.configs.{ClickhouseConfig, JDBCConfig, KafkaConfig, S3Config}
-import com.libertexgroup.models.{ClickhouseModel, JDBCModel}
+import com.libertexgroup.ape.writers.cassandra.DefaultWriter
+import com.libertexgroup.configs.{CassandraConfig, ClickhouseConfig, JDBCConfig, KafkaConfig, S3Config}
+import com.libertexgroup.models.cassandra.CassandraModel
+import com.libertexgroup.models.clickhouse.ClickhouseModel
+import com.libertexgroup.models.jdbc.JDBCModel
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import io.circe
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -40,6 +43,9 @@ class PipelineWriters() {
 
   def s3JsonLinesCirceWriter[T: circe.Encoder]: Writer[Any, Any with S3 with S3Config, T] =
     new ape.writers.s3.JsonLinesCirceWriter[Any, T]
+
+  def cassandraWriter: Writer[Any, Any with Scope with CassandraConfig, CassandraModel] =
+    new ape.writers.cassandra.DefaultWriter[Any]
 
   def consoleWriter[E, T]: Writer[E, E, T] = new ape.writers.ConsoleWriter[E, T]
 

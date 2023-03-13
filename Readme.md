@@ -63,6 +63,8 @@ for {
    size or time. The input models need to implement the `CLickhouseModel` interface.
  - `jDBCWriter`: Writes to a jdbc supporting table using `JDBCConfig`, which allows writes grouping by batch
    size or time. The input models need to implement the `JDBCModel` interface.
+ - `cassandraWriter`: Writes to a cassandra table using `CassandraConfig`, which allows writes grouping by batch
+   size or time. The input models need to implement the `CassandraModel` interface.
  - `kafkaStringWriter`: Writes strings to kafka
  - `kafkaAvroWriter`: Writes avro bytes to kafka
  - `s3AvroWriter`: Writes avro bytes to S3
