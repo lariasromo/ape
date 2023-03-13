@@ -1,4 +1,4 @@
-ThisBuild / version := "1.3.5"
+ThisBuild / version := "1.3.6"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -27,6 +27,7 @@ val zioLibraries = Seq(
 )
 
 libraryDependencies ++= Seq(
+  "io.github.palanga" %% "zio-cassandra" % "0.10.0",
   "org.apache.parquet" % "parquet-avro" % "1.12.0",
   "com.softwaremill.sttp.client3" %% "core" % "3.8.0",
   "com.softwaremill.sttp.client3" %% "zio" % "3.8.0",
@@ -44,6 +45,7 @@ libraryDependencies ++= Seq(
   "io.github.scottweaver" %% "zio-2-0-testcontainers-postgresql" % "0.10.0" % "test",
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
+  "com.dimafeng" %% "testcontainers-scala-cassandra" % "0.40.10" % "test",
 ) ++ zioLibraries ++ circe
 
 // Credentials to get access to Libertex Artifactory maven repositories

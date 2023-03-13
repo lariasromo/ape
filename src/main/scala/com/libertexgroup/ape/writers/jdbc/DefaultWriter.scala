@@ -2,7 +2,7 @@ package com.libertexgroup.ape.writers.jdbc
 
 import com.libertexgroup.ape.utils.GenericJDBCUtils.connect
 import com.libertexgroup.configs.JDBCConfig
-import com.libertexgroup.models.JDBCModel
+import com.libertexgroup.models.jdbc.JDBCModel
 import zio.stream.ZStream
 import zio.{Scope, ZIO}
 

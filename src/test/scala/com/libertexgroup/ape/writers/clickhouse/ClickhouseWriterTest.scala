@@ -6,7 +6,7 @@ import com.libertexgroup.ape.utils.ClickhouseContainerService
 import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.query2Chunk
 import com.libertexgroup.ape.writers.{Writer, sampleData, sampleRecords}
 import com.libertexgroup.configs.ClickhouseConfig
-import com.libertexgroup.models.ClickhouseModel
+import com.libertexgroup.models.clickhouse.ClickhouseModel
 import org.testcontainers.containers.ClickHouseContainer
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
