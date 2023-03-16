@@ -1,4 +1,4 @@
-ThisBuild / version := "1.3.7"
+ThisBuild / version := "1.4.1"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -19,6 +19,7 @@ val circe = Seq(
 val zioLibraries = Seq(
   "dev.zio" %% "zio"            % zioVersion,
   "dev.zio" %% "zio-concurrent" % zioVersion,
+//  "dev.zio" %% "zio-config"     % zioVersion,
   "dev.zio" %% "zio-kafka" % "2.0.6",
   "dev.zio" %% "zio-s3"    % "0.4.2.3",
   "dev.zio" %% "zio-json"  % "0.4.2",

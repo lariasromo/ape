@@ -13,7 +13,7 @@ class Pipeline[E, E1, T: ClassTag, T1: ClassTag, E2](
                                   writer: Writer[E1, E2, T1]
                                 ) {
 
-  def run = for {
+  def run: ZIO[E with E2, Throwable, Unit] = for {
     stream <- reader.apply
     transformedStream = transformer.apply(stream)
     _ <- writer.apply(transformedStream)

@@ -20,9 +20,9 @@ case class S3Config (
                       enableBackPressure: Boolean,
                       awsAccessKey: String,
                       awsSecretKey: String,
-                      fileCacheExpiration: zio.Duration,
-                      filePeekDuration: zio.Duration,
-                      filePeekDurationMargin: zio.Duration
+                      fileCacheExpiration: Option[zio.Duration],
+                      filePeekDuration: Option[zio.Duration],
+                      filePeekDurationMargin: Option[zio.Duration]
   ) {
   val taskLocation: Task[String] = ZIO.getOrFail(location)
   val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
@@ -50,9 +50,9 @@ object S3Config extends ReaderConfig {
     compressionType = CompressionType.withName(compressionType),
     parallelism = Try(parallelism.toInt).toOption.getOrElse(4),
     enableBackPressure = enableBackPressure.equalsIgnoreCase("true"),
-    fileCacheExpiration = Duration fromJava java.time.Duration.parse(fileCacheExpiration),
-    filePeekDuration = Duration fromJava java.time.Duration.parse(filePeekDuration),
-    filePeekDurationMargin = Duration fromJava java.time.Duration.parse(filePeekDurationMargin),
+    fileCacheExpiration = Some(Duration fromJava java.time.Duration.parse(fileCacheExpiration)),
+    filePeekDuration = Some(Duration fromJava java.time.Duration.parse(filePeekDuration)),
+    filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
   )
 
   val makeFromS3Config: ZIO[Any with Scope with S3Config, ConnectionError, Live] =

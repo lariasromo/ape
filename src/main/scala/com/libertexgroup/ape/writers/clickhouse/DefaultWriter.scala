@@ -3,7 +3,7 @@ import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.connect
 import com.libertexgroup.configs.ClickhouseConfig
 import com.libertexgroup.models.clickhouse.ClickhouseModel
 import zio.{Scope, ZIO}
-import zio.stream.ZStream
+import zio.stream.{ZSink, ZStream}
 
 import scala.util.{Failure, Success, Try}
 
@@ -35,6 +35,6 @@ protected[writers] class DefaultWriter[E] extends ClickhouseWriter[E, E with Sco
             }
           } yield error )
         } yield error )
-        .runDrain
+        .runScoped(ZSink.drain)
     } yield ()
 }

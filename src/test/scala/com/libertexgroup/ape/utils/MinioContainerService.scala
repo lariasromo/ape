@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.s3.errors.ConnectionError
 import zio.s3.{S3, UploadOptions, createBucket, putObject}
 import zio.stream.ZStream
-import zio.{Scope, Task, UIO, ZIO, ZLayer}
+import zio.{Scope, Task, UIO, ZIO, ZLayer, durationInt}
 
 import scala.reflect.io.File
 
@@ -24,7 +24,7 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     awsAccessKey = container.getAwsAccessKey,
     awsSecretKey = container.getAwsSecretKey,
     enableBackPressure = true,
-    fileCacheExpiration = null, filePeekDuration = null, filePeekDurationMargin = null
+    fileCacheExpiration = None, filePeekDuration = None, filePeekDurationMargin = None
   )
 
   def configLayer(compressionType: CompressionType, location: Option[String]): ZLayer[MinioContainer, Nothing, S3Config] =
