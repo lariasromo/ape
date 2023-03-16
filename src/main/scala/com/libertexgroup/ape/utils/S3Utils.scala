@@ -11,7 +11,7 @@ object S3Utils {
   } yield {
       val conv: ZonedDateTime => List[String] = date => {
       val zero: Int => String = i => if (i < 10) s"0$i" else i.toString
-      val margin = config.filePeekDurationMargin
+      val margin = config.filePeekDurationMargin.orNull
       date.minus(margin).toEpochSecond
         .to(date.toEpochSecond)
         .map(s => LocalDateTime.ofEpochSecond(s, 0, ZoneOffset.UTC))

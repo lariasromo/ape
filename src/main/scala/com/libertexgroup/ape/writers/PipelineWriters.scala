@@ -11,11 +11,13 @@ import io.circe
 import org.apache.kafka.clients.producer.ProducerRecord
 import zio.kafka.producer.Producer
 import zio.s3.S3
-import zio.{Console, Duration, Scope}
+import zio.{Console, Duration, Queue, Scope}
 
 import scala.reflect.ClassTag
 
 class PipelineWriters() {
+  def queueWriter[E, T: ClassTag](queue:Queue[T]): Writer[E, E, T] = new ape.writers.QueueWriter[E, T](queue)
+
   // Writers
   def clickhouseWriter[E]: Writer[E, E with Scope with ClickhouseConfig, ClickhouseModel] =
     new ape.writers.clickhouse.DefaultWriter[E]
@@ -23,11 +25,13 @@ class PipelineWriters() {
   def jDBCWriter[E]: Writer[E, E with Scope with JDBCConfig, JDBCModel] =
     new ape.writers.jdbc.DefaultWriter[E]
 
-  def kafkaStringWriter: Writer[Any, Any with Producer with KafkaConfig, ProducerRecord[String, String]] =
-    new ape.writers.kafka.DefaultWriter[Any]
+//  KafkaWriter[E, E with Producer with KafkaConfig with Scope, String, String]
+//  Writer[E, E with Producer with KafkaConfig with Scope, ProducerRecord[String, String]]
+  def kafkaStringWriter[E]: Writer[E, E with Producer with KafkaConfig with Scope, ProducerRecord[String, String]] =
+    new ape.writers.kafka.DefaultWriter[E]
 
-  def kafkaAvroWriter[T: SchemaFor : Encoder]: Writer[Any, Any with Producer with KafkaConfig, ProducerRecord[String, T]] =
-    new ape.writers.kafka.AvroWriter[Any, T]
+  def kafkaAvroWriter[E, T: SchemaFor : Encoder]: Writer[E, E with Producer with KafkaConfig with Scope, ProducerRecord[String, T]] =
+    new ape.writers.kafka.AvroWriter[E, T]
 
   def s3AvroWriter[T >: Null : SchemaFor : Decoder : Encoder : ClassTag]: Writer[Any, Any with S3 with S3Config, T] =
     new ape.writers.s3.AvroWriter[Any, T]
@@ -47,7 +51,7 @@ class PipelineWriters() {
   def cassandraWriter[E]: Writer[E, E with Scope with CassandraConfig, CassandraModel] =
     new ape.writers.cassandra.DefaultWriter[E]
 
-  def consoleWriter[E, T]: Writer[E, E, T] = new ape.writers.ConsoleWriter[E, T]
+  def consoleWriter[E, T]: Writer[E, E with Scope, T] = new ape.writers.ConsoleWriter[E, T]
 
-  def consoleStringWriter[E]: Writer[E, E, String] = new ape.writers.ConsoleWriter[E, String]
+  def consoleStringWriter[E]: Writer[E, E with Scope, String] = new ape.writers.ConsoleWriter[E, String]
 }

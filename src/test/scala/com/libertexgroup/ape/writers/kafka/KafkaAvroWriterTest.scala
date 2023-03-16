@@ -30,7 +30,7 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
       )
     })
 
-  val writer = Pipeline.writers.kafkaAvroWriter[dummy]
+  val writer = Pipeline.writers.kafkaAvroWriter[Any, dummy]
   val reader = Pipeline.readers.kafkaAvroReader[dummy]
 
   override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with Producer with TestEnvironment with Scope, Any] =
