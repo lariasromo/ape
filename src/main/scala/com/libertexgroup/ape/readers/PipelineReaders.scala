@@ -21,6 +21,8 @@ import scala.reflect.ClassTag
 
 // Readers
 class PipelineReaders() {
+  def noOpReader[E, T: ClassTag](stream: ZStream[Any, Throwable, T]) = new ape.readers.NoOpReader[E, T](stream)
+
   def clickhouseDefaultReader[T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[ClickhouseConfig, Any, T] =
     new ape.readers.clickhouse.DefaultReader[Any, T](sql)
 
