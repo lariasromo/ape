@@ -34,7 +34,6 @@ class FileReaderContinuous(locationPattern:ZIO[S3Config, Nothing, ZonedDateTime 
     )
     .mapZIO {
       case(now, location) => for {
-        _ <- printLine("Listing files from location: " + location)
         objs <- listObjects(bucket, ListObjectOptions.from(location, 100))
       } yield ZStream.fromChunk(objs.objectSummaries)
         .filterZIO {
