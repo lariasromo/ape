@@ -1,92 +1,44 @@
 .job_rules: &job_rules
+ #the image which will use for this build stage
+ #https://git.fxclub.org/alexandria/devops/sbt-build-image
+  image:
+    name: 895855336803.dkr.ecr.eu-west-1.amazonaws.com/alexandria/dindsbt:0.0.9
+  #GitLab runner tag
   tags:
     - alexandria
+  #Branch names, where pipeline will run
   only:
     - master
+    - zio1
+    - zio2.x
+  #Avoiding pipeline run after git tag stage
+  except:
+    - tags
+
     
 stages:
-  # - build_and_push
-  - frogbot-scan
+  - build
+  - tag
 
-frogbot-scan:
-  stage: frogbot-scan
-  tags:
-    - alexandria
-  image:
-    name: 895855336803.dkr.ecr.eu-west-1.amazonaws.com/alexandria/dindsbt:0.0.4
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-      when: manual
-      variables:
-        FROGBOT_CMD: "scan-pull-request"
-        JF_GIT_BASE_BRANCH: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
-      # Creating fix pull requests will be triggered by any push to the default branch.
-      # You can change it to any other branch you want, for example:
-      # if: $CI_COMMIT_BRANCH == "dev"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      variables:
-        FROGBOT_CMD: "create-fix-pull-requests"
-        JF_GIT_BASE_BRANCH: $CI_COMMIT_BRANCH
-  variables:
-    # [Mandatory only for projects which use npm, yarn 2, NuGet and .NET to download their dependencies]
-    # The command that installs the project dependencies (e.g "npm i", "nuget restore" or "dotnet restore")
-    #JF_INSTALL_DEPS_CMD: "npm i"
- 
-    # [Mandatory]
-    # JFrog platform URL (This functionality requires version 3.29.0 or above of Xray)
-    JF_URL: $JF_URL
- 
-    # [Mandatory if JF_ACCESS_TOKEN is not provided]
-    # JFrog user and password with 'read' permissions for Xray
-    # JF_USER: $JF_USER
-    # JF_PASSWORD: $JF_PASSWORD
- 
-    # [Mandatory]
-    # GitLab accesses token with the following permissions scopes: api, read_api, read_user, read_repository
-    JF_GIT_TOKEN: $USER_TOKEN
- 
-    # Predefined GitLab variables. There's no need to set them.
-    JF_GIT_PROVIDER: gitlab
-    JF_GIT_OWNER: $CI_PROJECT_NAMESPACE
-    JF_GIT_REPO: $CI_PROJECT_NAME
-    JF_GIT_PULL_REQUEST_ID: $CI_MERGE_REQUEST_IID
- 
-    # Uncomment the below options if you'd like to use them.
- 
-    # [Optional, default: https://gitlab.com]
-    # API endpoint to GitLab
-    JF_GIT_API_ENDPOINT: https://git.fxclub.org/
- 
-    # [Mandatory if JF_USER and JF_PASSWORD are not provided]
-    # JFrog access token with 'read' permissions for Xray
-    JF_ACCESS_TOKEN: $JF_ACCESS_TOKEN
- 
-    # [Optional, default: "."]
-    # Relative path to the project in the git repository
-    # JF_WORKING_DIR: path/to/project/dir
- 
-    # [Optional]
-    # Xray Watches. Learn more about them here: https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches
-    # JF_WATCHES: <watch-1>,<watch-2>...<watch-n>
- 
-    # [Optional]
-    # JFrog project. Learn more about it here: https://www.jfrog.com/confluence/display/JFROG/Projects
-    # JF_PROJECT: <project-key>
- 
-    # [Optional, default: "FALSE"]
-    # Displays all existing vulnerabilities, including the ones that were added by the pull request.
-    JF_INCLUDE_ALL_VULNERABILITIES: "TRUE"
- 
-    # [Optional, default: "TRUE"]
-    # Fails the Frogbot task if any security issue is found.
-    JF_FAIL: "FALSE"
- 
-    # [Optional, default: "TRUE"]
-    # Use Gradle Wrapper (gradlew/gradlew.bat) to run Gradle
-    # JF_USE_WRAPPER: "TRUE"
+build:
+  stage: build
+  <<: *job_rules
   script:
-    # For Linux / MacOS runner:
-    - sbt clean compile package publish
-    #- apk add curl
-    #- curl -fLg "https://releases.jfrog.io/artifactory/frogbot/v2/[RELEASE]/getFrogbot.sh" | sh
-    #- ./frogbot ${FROGBOT_CMD}
+      #creating artifactory_credentials for using in sbt (variables getting from GiLab alexandria group variables)
+      - |
+        cat <<EOF > $HOME/.sbt/artifactory_credentials
+        realm=Artifactory Realm
+        host=lbx.jfrog.io
+        user=$JFROG_ARTIFACTORY_SERVICE_USERNAME
+        password=$JFROG_ARTIFACTORY_SERVICE_PASSWORD
+        EOF
+      #sbt stage
+      - sbt clean compile package publish
+
+tag:
+  stage: tag
+  <<: *job_rules
+  script:
+    - export SERVICE_VERSION=`cat build.sbt | grep "version :=" | awk -F '"' '{print $2}'`
+    - git tag $SERVICE_VERSION
+    - git push https://$TOKEN_USERNAME:$TOKEN_PASSWORD@$CI_SERVER_HOST/$CI_PROJECT_PATH.git ${SERVICE_VERSION}
