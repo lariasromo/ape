@@ -3,16 +3,14 @@ package com.libertexgroup.ape.writers.kafka
 import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.pipelines.Pipeline
-import com.libertexgroup.ape.readers.kafka.AvroReader
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
-import com.libertexgroup.ape.writers.kafka.KafkaTextWriterTest.{suite, test}
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import zio.{Chunk, Scope, ZIO, ZLayer}
 import zio.kafka.consumer.Consumer
 import zio.kafka.producer.Producer
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
+import zio.{Chunk, Scope, ZIO, ZLayer}
 
 import java.time.{LocalDateTime, ZoneOffset}
 

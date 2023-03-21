@@ -7,7 +7,6 @@ import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
 import zio.kafka.consumer.Consumer
-import zio.test.TestAspect.sequential
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
@@ -26,9 +25,13 @@ object KafkaAvroReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
         }).take(1).runCollect
       } yield {
         assertTrue(data.nonEmpty)
-        val (k, v) = (data.head.key(), data.head.value())
-        assertTrue(k.equals("Some key"))
-        assertTrue(v.contains(dummy("Some", "value")))
+        val foundRecord = data
+          .filter { record => {
+            val (k, v) = (record.key(), record.value())
+            k.equals("Some key") && v.contains(dummy("Some", "value"))
+          }
+        }
+        assertTrue(foundRecord.nonEmpty)
       }
     }
   )

@@ -5,14 +5,13 @@ import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
 import zio.kafka.consumer.Consumer
-import zio.test.TestAspect.sequential
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
   val reader = Pipeline.readers.kafkaDefaultReader
   override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
-    suite("KafkaReaderTest")(
+    suite("KafkaBytesReaderTest")(
       test("Reads bytes"){
         for {
           _ <- zio.Console.printLine("Sending bytes")

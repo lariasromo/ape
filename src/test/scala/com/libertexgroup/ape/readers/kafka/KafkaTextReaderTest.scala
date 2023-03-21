@@ -5,7 +5,6 @@ import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
 import zio.kafka.consumer.Consumer
-import zio.test.TestAspect.sequential
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 

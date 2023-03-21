@@ -1,5 +1,5 @@
-import zio.{Scope, ZIO, ZLayer}
-import zio.test.{Spec, TestEnvironment, TestResult, ZIOSpec, ZIOSpecDefault, assertTrue}
+import zio.test.{Spec, TestEnvironment, TestResult, ZIOSpecDefault, assertTrue}
+import zio.{Scope, ZIO}
 
 
 object PipelineTest extends ZIOSpecDefault {

@@ -1,9 +1,10 @@
 package com.libertexgroup.ape.utils
 
 import com.clickhouse.jdbc.{ClickHouseConnection, ClickHouseDataSource}
-import com.libertexgroup.configs.ClickhouseConfig
+import com.libertexgroup.configs.{ClickhouseConfig, MultiClickhouseConfig}
+import zio.Console.printLine
 import zio.stream.ZStream
-import zio.{Chunk, Scope, ZIO}
+import zio.{Chunk, Scope, ZIO, ZLayer}
 
 import java.sql.ResultSet
 import java.util.Properties
@@ -14,12 +15,30 @@ object ClickhouseJDBCUtils {
   case class ConnectionWithZStream(connection: ClickHouseConnection, ZStream: ZStream[Any, Throwable, ResultSet])
 
   def query2Chunk[T: ClassTag](query: String)
-                              (implicit row2Object: ResultSet => T): ZIO[ClickhouseConfig, Nothing, Chunk[T]] =
+                              (implicit row2Object: ResultSet => T): ZIO[ClickhouseConfig, Throwable, Chunk[T]] =
     ZIO.scoped {
       for {
+        conf <- ZIO.service[ClickhouseConfig]
         conn <- connect
-      } yield toChunk(conn.createStatement().executeQuery(query))
+        chk <- ZIO.fromTry(Try(toChunk(conn.createStatement().executeQuery(query))))
+          .catchAll(_ => printLine("No data found on node: " + conf) *> ZIO.succeed(Chunk.empty))
+      } yield chk
     }
+
+  def query2ChunkMulti[T: ClassTag](query: String)
+                              (implicit row2Object: ResultSet => T): ZIO[MultiClickhouseConfig, Throwable, Chunk[T]] = {
+    for {
+      confs <- ZIO.service[MultiClickhouseConfig]
+      chks <- ZIO.foreachPar(confs.chConfigs)(conf => query2Chunk(query).provideSomeLayer(ZLayer.succeed(conf)))
+    } yield Chunk.fromIterable(chks).flatten
+  }
+
+
+  val connect: ZIO[ClickhouseConfig with Scope, Nothing, ClickHouseConnection] = ZIO
+    .acquireRelease(for {
+      config <- ZIO.service[ClickhouseConfig]
+    } yield getConnection(config.jdbcUrl, config.username, config.password)
+    )(c => ZIO.succeed(c.close()))
 
   def queryIterator[T](resultSet: ResultSet)(implicit row2Object: ResultSet => T): Iterator[T] = {
     new Iterator[T] {
@@ -31,14 +50,7 @@ object ClickhouseJDBCUtils {
   def toChunk[T: ClassTag](resultSet: ResultSet)(implicit row2Object: ResultSet => T): Chunk[T] =
     Chunk.fromIterator(queryIterator(resultSet))
 
-  val connect: ZIO[ClickhouseConfig with Any with Scope, Nothing, ClickHouseConnection] = ZIO
-    .acquireRelease(for {
-      config <- ZIO.service[ClickhouseConfig]
-    } yield getConnection(config.jdbcUrl, config.username, config.password)
-    )(c => ZIO.succeed(c.close()))
-
-
-  def executeQuery(sql: String): ZIO[ClickhouseConfig with Any with Scope, Nothing, Unit] = for {
+  def executeQuery(sql: String): ZIO[ClickhouseConfig with Scope, Nothing, Unit] = for {
     conRes <- connect
     _ <- ZIO.scoped {
       ZIO.succeed {
@@ -54,6 +66,13 @@ object ClickhouseJDBCUtils {
       }
     }
   } yield ()
+
+  def executeQueryMulti(sql: String): ZIO[MultiClickhouseConfig, Nothing, Unit] =
+    ZIO.service[MultiClickhouseConfig].flatMap(config =>
+      ZIO.foreach(config.chConfigs)(config =>
+        ZIO.scoped(executeQuery(sql)).provideSomeLayer(ZLayer.succeed(config))
+      ) *> ZIO.unit
+    )
 
   def getConnection(DB_URL: String, USER: String, PASS: String): ClickHouseConnection = {
     try {

@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.s3.errors.ConnectionError
 import zio.s3.{S3, UploadOptions, createBucket, putObject}
 import zio.stream.ZStream
-import zio.{Scope, Task, UIO, ZIO, ZLayer, durationInt}
+import zio.{Scope, Task, UIO, ZIO, ZLayer}
 
 import scala.reflect.io.File
 
@@ -49,7 +49,9 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     _ <- getFileTree(File("src/test/resources/sample_data/s3").jfile)
       .tap(file => for {
         _ <- putObject( bucket,
-          file.getPath.replace("src/test/resources/sample_data/s3", ""),
+          file.getPath
+              .replace("\\", "/")
+              .replace("src/test/resources/sample_data/s3", ""),
           file.length,
           ZStream.fromFileURI(file.toURI),
           UploadOptions.fromContentType("application/json")

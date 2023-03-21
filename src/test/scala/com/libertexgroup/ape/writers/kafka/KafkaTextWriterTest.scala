@@ -2,7 +2,6 @@ package com.libertexgroup.ape.writers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.pipelines.Pipeline
-import com.libertexgroup.ape.readers.kafka.StringReader
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord

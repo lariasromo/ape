@@ -4,7 +4,6 @@ import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.RecordMetadata
-import zio.kafka.consumer.Consumer
 import zio.kafka.consumer.Consumer.AutoOffsetStrategy
 import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 

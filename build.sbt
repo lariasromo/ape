@@ -1,4 +1,4 @@
-ThisBuild / version := "1.4.3"
+ThisBuild / version := "1.5.0"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -73,3 +73,5 @@ publishTo := {
   else
     Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release-local")
 }
+
+Test / parallelExecution := false

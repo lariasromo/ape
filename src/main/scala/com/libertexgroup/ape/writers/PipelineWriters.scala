@@ -1,8 +1,7 @@
 package com.libertexgroup.ape.writers
 
 import com.libertexgroup.ape
-import com.libertexgroup.ape.writers.cassandra.DefaultWriter
-import com.libertexgroup.configs.{CassandraConfig, ClickhouseConfig, JDBCConfig, KafkaConfig, S3Config}
+import com.libertexgroup.configs._
 import com.libertexgroup.models.cassandra.CassandraModel
 import com.libertexgroup.models.clickhouse.ClickhouseModel
 import com.libertexgroup.models.jdbc.JDBCModel
@@ -11,7 +10,7 @@ import io.circe
 import org.apache.kafka.clients.producer.ProducerRecord
 import zio.kafka.producer.Producer
 import zio.s3.S3
-import zio.{Console, Duration, Queue, Scope}
+import zio.{Duration, Queue, Scope}
 
 import scala.reflect.ClassTag
 
@@ -19,7 +18,7 @@ class PipelineWriters() {
   def queueWriter[E, T: ClassTag](queue:Queue[T]): Writer[E, E, T] = new ape.writers.QueueWriter[E, T](queue)
 
   // Writers
-  def clickhouseWriter[E]: Writer[E, E with Scope with ClickhouseConfig, ClickhouseModel] =
+  def clickhouseWriter[E]: Writer[E, E with Scope with MultiClickhouseConfig, ClickhouseModel] =
     new ape.writers.clickhouse.DefaultWriter[E]
 
   def jDBCWriter[E]: Writer[E, E with Scope with JDBCConfig, JDBCModel] =
