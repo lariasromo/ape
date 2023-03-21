@@ -73,5 +73,3 @@ publishTo := {
   else
     Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release-local")
 }
-
-Test / parallelExecution := false
