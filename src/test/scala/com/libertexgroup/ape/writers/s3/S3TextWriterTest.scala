@@ -5,13 +5,12 @@ import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileReaderServic
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.utils.MinioContainerService.createBBucket
-import com.libertexgroup.ape.writers.s3.S3ParquetWriterTest.location
 import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.CompressionType
 import zio.s3.S3
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Chunk, Scope, ZIO, ZLayer}
+import zio.{Chunk, Scope, ZLayer}
 
 object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService] {
   val sampleStrings: Chunk[String] = Chunk(

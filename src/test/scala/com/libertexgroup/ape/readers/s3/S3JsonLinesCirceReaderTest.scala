@@ -9,7 +9,7 @@ import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.CompressionType
 import zio.s3.S3
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Scope, ZIO, ZLayer}
+import zio.{Scope, ZLayer}
 
 object S3JsonLinesCirceReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer with S3FileReaderService] {
   val location = "json"

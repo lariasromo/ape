@@ -1,4 +1,4 @@
-package com.libertexgroup.ape.pipelines
+package com.libertexgroup.ape
 
 import com.libertexgroup.ape.readers.{PipelineReaders, Reader}
 import com.libertexgroup.ape.transformers.Transformer
@@ -7,8 +7,8 @@ import zio.{Console, ZIO}
 
 import scala.reflect.ClassTag
 
-@deprecated("For simplicity, please use the class com.libertexgroup.ape.Ape")
-class Pipeline[E, E1, T: ClassTag, T1: ClassTag, E2](
+//this will replace Pipeline class
+class Ape[E, E1, T: ClassTag, T1: ClassTag, E2](
                                   reader: Reader[E, E1, T],
                                   transformer: Transformer[E1, T, T1],
                                   writer: Writer[E1, E2, T1]
@@ -22,7 +22,8 @@ class Pipeline[E, E1, T: ClassTag, T1: ClassTag, E2](
   } yield ()
 }
 
-object Pipeline{
+
+object Ape {
   val readers = new PipelineReaders()
   val writers = new PipelineWriters()
 }
