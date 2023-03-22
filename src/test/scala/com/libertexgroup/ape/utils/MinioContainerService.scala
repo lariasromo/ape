@@ -21,8 +21,6 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     s3Host = container.getHostAddress.toString,
     compressionType = compressionType,
     parallelism = 5,
-    awsAccessKey = container.getAwsAccessKey,
-    awsSecretKey = container.getAwsSecretKey,
     enableBackPressure = true,
     fileCacheExpiration = None, filePeekDuration = None, filePeekDurationMargin = None
   )
