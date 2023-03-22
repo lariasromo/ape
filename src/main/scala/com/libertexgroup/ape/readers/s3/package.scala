@@ -56,8 +56,14 @@ package object s3 {
 
   def readFileStream[T](stream: ZStream[S3, Throwable, T]) = for {
     queue <- Queue.unbounded[T]
+    rand <- ZIO.random
+    queueName <- rand.nextPrintableChar
+    _ <- printLine(s"Reading stream with back pressure (using queue ${queueName})")
     count <- stream.tap(msg => queue.offer(msg)).runCount
-  } yield ZStream.range(0, count.toInt).mapZIO(_ => queue.take).ensuring(queue.shutdown)
+  } yield ZStream
+    .range(0, count.toInt)
+    .mapZIO(_ => queue.take)
+    .ensuring(queue.shutdown <* printLine(s"Shutting down queue ${queueName}").catchAll(_ => ZIO.unit))
 
   def readWithBackPressure[E, T](inputStream:ZStream[E, Throwable, S3FileWithContent[T]]):
       ZStream[S3 with E, Throwable, S3FileWithContent[T]] = for {

@@ -32,7 +32,8 @@ object MultiClickhouseConfig {
     databaseName = envs.getOrElse(s"CLICKHOUSE_DATABASE_NAME$suffix", throw new Exception(s"CLICKHOUSE_DATABASE_NAME$suffix variable is missing")),
     username = envs.getOrElse(s"CLICKHOUSE_USERNAME$suffix", throw new Exception(s"CLICKHOUSE_USERNAME$suffix variable is missing")),
     password = envs.getOrElse(s"CLICKHOUSE_PASSWORD$suffix", throw new Exception(s"CLICKHOUSE_PASSWORD$suffix variable is missing")),
-    batchSize = 1000, syncDuration = 5.minutes
+    batchSize = 1000, syncDuration = 5.minutes,
+    clusterName = envs.get(s"CLICKHOUSE_CLUSTER_NAME")
   )
 
   def getCHConfigsFromEnv: ZIO[Any, SecurityException, List[ClickhouseConfig]] = for {
@@ -51,14 +52,15 @@ object MultiClickhouseConfig {
 
   def getChConfigsFromOneNode: ZIO[ClickhouseConfig, Throwable, List[ClickhouseConfig]] =
     for {
-      clusterName <- zio.System.env("CLUSTER_NAME")
       config <- ZIO.service[ClickhouseConfig]
       nodes <- query2Chunk[Node](
         s"""SELECT host_address, 8123 as port
            |FROM system.clusters
-           |WHERE cluster = '${clusterName}'"""
+           |WHERE cluster = '${config.clusterName.getOrElse(throw new Exception("CLICKHOUSE_CLUSTER_NAME is not set"))}'
+           |AND replica_num = 1"""
           .stripMargin
       )
+      _ <- ZIO.when(nodes.isEmpty)(throw new Exception("Clickhouse nodes are empty"))
     } yield nodes.map(n =>
       ClickhouseConfig(
         host = n.host_address,
@@ -66,7 +68,9 @@ object MultiClickhouseConfig {
         databaseName = config.databaseName,
         username = config.username,
         password = config.password,
-        batchSize = 1000, syncDuration = 5.minutes
+        batchSize = config.batchSize,
+        syncDuration = config.syncDuration,
+        clusterName = config.clusterName
       )).toList
 
   def makeFromCHConfig(conf: ClickhouseConfig): MultiClickhouseConfig = MultiClickhouseConfig(List(conf))

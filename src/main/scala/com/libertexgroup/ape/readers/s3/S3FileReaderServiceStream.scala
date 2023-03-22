@@ -14,7 +14,7 @@ class S3FileReaderServiceStream (override val fileStream: ZStream[S3Config with 
 object S3FileReaderServiceStream {
 
   def fin(queue: Queue[S3ObjectSummary]): ZIO[Any, Nothing, Unit] = for {
-    _ <- printLine("Shutting down queue").catchAll(_ => ZIO.succeed())
+    _ <- printLine("Shutting down queue").catchAll(e => printLine(e.getMessage).catchAll(_=>ZIO.unit))
     _ <- queue.shutdown
   } yield ()
 

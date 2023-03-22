@@ -28,7 +28,7 @@ class FileReaderContinuous(locationPattern:ZIO[S3Config, Nothing, ZonedDateTime 
     .mapZIO(_ => currentDateTime)
     .tap{now => trackedFiles.removeIf((_, date) => date.toEpochSecond < now.minus(config.fileCacheExpiration.orNull).toEpochSecond)}
     .flatMap(now => {
-      val locs = locPattern(now.toZonedDateTime)
+      val locs = locPattern(now.toZonedDateTime).distinct
       ZStream.fromIterable(locs).map(loc => (now, loc))
     }
     )

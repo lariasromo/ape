@@ -42,7 +42,8 @@ object ClickhouseContainerService extends TestContainerHelper[ClickHouseContaine
         port=container.getMappedPort(8123),
         databaseName="default",
         username=container.getUsername,
-        password=container.getPassword
+        password=container.getPassword,
+        clusterName = None
       )
     )
   )
