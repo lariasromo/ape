@@ -16,42 +16,20 @@ import org.mockito.Mockito.{verify, when}
 import org.mockito.MockitoSugar.mock
 import zio.http.model.Scheme.HTTP
 import zio.test.{Assertion, Spec, ZIOSpecDefault, ZTestLogger, assertZIO}
-import zio.{Scope, ZIO, ZLayer}
+import zio.{Chunk, Scope, ZIO, ZLayer}
 import zio.http.model.{Headers, Method, Status, Version}
 import java.net.InetAddress
+
+import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-/*suite("sentWithLogging")(
-test("write logs with request and response)") {
-
-val request = Request.post(Body.fromString("""{"prop": "value"}"""), URL.empty)
-val mockServer = mock[Client]
-when(mockServer.request(any[Request]())(any(), any()))
-.thenReturn(ZIO.succeed(Response.text("Hi!")))
-
-val responseLogs = for {
-_ <- HttpUtil.sentWithLogging(request,requestId = ZIO.succeed("myId"))
-logs <- ZTestLogger.logOutput
-_ = verify(mockServer).request(any[Request]())(any(), any())
-} yield logs
-.map(_.message()).toList
-
-assertZIO(responseLogs.provide(ZLayer.succeed(mockServer)))(Assertion.equalTo(List(
-"Request > POST / Http_1_1",
-"Request Body > '{\"prop\": \"value\"}'",
-"Request Headers > 'X-Request-ID: myId'",
-"Response Status > Ok",
-"Response Body > 'Hi!'",
-"Response Headers > 'content-type: text/plain'"
-)))
-}
-)*/
 
 object RestAPiReaderTest extends ZIOSpecDefault{
 
 
 
 
-  val reader = Pipeline.readers.restApiReader()
+  val reader = Pipeline.readers.restApiReaderByte()
+  val readerString = Pipeline.readers.restApiReaderString()
 
   override def spec = suite("RestAPiReaderTest")(
     test("write logs with request and response)") {
@@ -78,20 +56,6 @@ object RestAPiReaderTest extends ZIOSpecDefault{
     }
  ,
       test("send real request)") {
-
-
-/*        curl -X POST -H "Content-Type: application/json" \
-          >     -d '{"iso3Code": { "value": "COL"}}' \
-        >    https://rest-service-marketingtables.fcil-env.com/api/v2.0/findNewBusinessUnitByCountryCodeIso3
-
-        val bodyString = Body.fromString("\"iso3Code\": { \"value\": \"COL\"}}")
-        val url = URL.fromString("https://rest-service-marketingtables.fcil-env.com/api/v2.0/findNewBusinessUnitByCountryCodeIso3")*/
-/*
-        val request =  basicRequest
-          .post(urlOfDeposits())
-          .header("Content-Type","application/json")
-          .body(bodyString)
-          .response(asJson[Option[DepositFlatten]])*/
 
         val bodyString = "{\"iso3Code\": { \"value\": \"COL\"}}"
         val BodyFromString = Body.fromString(bodyString)
@@ -128,9 +92,45 @@ object RestAPiReaderTest extends ZIOSpecDefault{
       }
 
     }
+
+    ,
+    test("send real request String)") {
+
+
+      val bodyString = "{\"iso3Code\": { \"value\": \"COL\"}}"
+      val BodyFromString = Body.fromString(bodyString)
+
+      val url = URL.fromString("https://rest-service-marketingtables.fcil-env.com/api/v2.0/findNewBusinessUnitByCountryCodeIso3")
+
+      //        val remoteAd = InetAddress.getByName("https://rest-service-marketingtables.fcil-env.com")
+      val request = Request(
+        BodyFromString,
+        Headers( "Content-Type","application/json"),
+        Method.POST,
+        url.toOption.get,
+        Version.Http_1_1,
+        None
+
+
+
+
+
+      )
+
+
+      for {
+        stream <- readerString.sendRequest(request).provideLayer(zio.http.Client.default)
+        data <- stream.runCollect
+        //new String( data.toArray, StandardCharsets.UTF_16))
+      } yield {
+
+        assertTrue(data.nonEmpty)
+        assertTrue(data.head == "{\"codeiso3\":\"COL\",\"bu\":\"BU LatAm\",\"code\":\"CO\",\"country\":\"Colombia\"}" )
+      }
+
+    }
   )
 
 
 
-  //override def bootstrap: ZLayer[Any, Any, Nothing] = ???
 }

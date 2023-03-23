@@ -1,9 +1,9 @@
 package com.libertexgroup.ape.utils
 
-import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 import com.dimafeng.testcontainers.PostgreSQLContainer
 import com.libertexgroup.ape.utils.GenericJDBCUtils.executeQuery
 import com.libertexgroup.configs.JDBCConfig
+import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 
 
 object PostgresContainerService extends TestContainerHelper[PostgreSQLContainer]{

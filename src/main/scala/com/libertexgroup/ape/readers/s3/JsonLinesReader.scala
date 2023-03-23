@@ -13,15 +13,15 @@ import scala.reflect.ClassTag
  * The GenericRecord interface allows to interact with parquet values
  * If the file is just a text file each line will be a string stored in an attribute named `value`
  */
-protected[readers] class JsonLinesReader[T :ClassTag](location:String)(implicit decode: String => T)
-  extends S3Reader[S3 with S3Config, S3, T] {
+protected[readers] class JsonLinesReader[T :ClassTag](implicit decode: String => T)
+  extends S3Reader[S3Config, S3 with S3Config, S3FileWithContent[T]] {
 
-  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[S3, Throwable, T]] =
+  override def apply: ZIO[S3FileReaderService with S3Config, Throwable,
+    ZStream[S3 with S3Config, Throwable, S3FileWithContent[T]]] =
     for {
       config <- ZIO.service[S3Config]
-      bucket <- config.taskS3Bucket
-      stream <- readPlainText(bucket, location)
-      decodedStream = stream.map(decode)
-      newStream <- if(config.enableBackPressure) readWithBackPressure(decodedStream) else ZIO.succeed(decodedStream)
+      s3FilesQueue <- fileStream
+      decodedStream = s3FilesQueue.map(file => (file, readPlainText(config.compressionType, file).map(decode)))
+      newStream = if(config.enableBackPressure) readWithBackPressure(decodedStream) else decodedStream
     } yield newStream
 }

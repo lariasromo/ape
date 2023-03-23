@@ -19,8 +19,8 @@ object ParquetUtils {
   def readParquetGenericRecord(config: S3Config, file: S3ObjectSummary): ZStream[Any, Nothing, GenericRecord] = {
     val path = new Path(s"s3a://${file.bucketName}/${file.key}")
     val conf = new Configuration()
-    conf.set("fs.s3a.access.key", config.awsAccessKey)
-    conf.set("fs.s3a.secret.key", config.awsSecretKey)
+//    conf.set("fs.s3a.access.key", config.awsAccessKey)
+//    conf.set("fs.s3a.secret.key", config.awsSecretKey)
     conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
     conf.set("fs.s3a.endpoint", config.s3Host)
     conf.setBoolean("fs.s3a.path.style.access", true)
@@ -39,8 +39,8 @@ object ParquetUtils {
   def readParquetWithType[T >:Null: SchemaFor :Encoder :Decoder](config: S3Config, file: S3ObjectSummary): ZStream[Any, Nothing, T] = {
     val path = new Path(s"s3a://${file.bucketName}/${file.key}")
     val conf = new Configuration()
-    conf.set("fs.s3a.access.key", config.awsAccessKey)
-    conf.set("fs.s3a.secret.key", config.awsSecretKey)
+//    conf.set("fs.s3a.access.key", config.awsAccessKey)
+//    conf.set("fs.s3a.secret.key", config.awsSecretKey)
     conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
     conf.set("fs.s3a.endpoint", config.s3Host)
     conf.setBoolean("fs.s3a.path.style.access", true)

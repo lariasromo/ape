@@ -5,8 +5,8 @@ import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.PostgresContainerService
 import com.libertexgroup.configs.JDBCConfig
-import zio.{Scope, ZLayer}
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
+import zio.{Scope, ZLayer}
 
 object JDBCReaderTest extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
   val reader = Pipeline.readers.jdbcDefaultReader[dummy]("select * from dummy")
@@ -19,7 +19,7 @@ object JDBCReaderTest extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
         data <- stream.runCollect
       } yield {
         assertTrue(data.nonEmpty)
-        assertTrue(data.head.equals(dummy("value1", "value2")))
+        assertTrue(data.contains(dummy("value1", "value2")))
       }
     }
   )

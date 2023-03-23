@@ -1,15 +1,9 @@
 package com.libertexgroup.ape.readers.rest
 
-import java.net.InetAddress
-
-import com.libertexgroup.ape.readers.Reader
-import com.libertexgroup.configs.{HttpClientConfig, S3Config}
 import com.fxclub.commons.http.HttpUtil
-import zio.{ZIO, ZLayer}
-import zio.stream.ZStream
+import zio.ZIO
 import zio.http._
-import zio.http.model.Headers.Header
-import zio.http.model.{Headers, Method, Status, Version}
+import zio.stream.ZStream
 
 
 protected[readers] class RestAPIReaderByte[E,T](

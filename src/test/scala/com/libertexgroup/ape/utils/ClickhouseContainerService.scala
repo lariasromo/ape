@@ -1,13 +1,13 @@
 package com.libertexgroup.ape.utils
 
 import com.clickhouse.jdbc.ClickHouseConnection
-import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.executeQuery
-import com.libertexgroup.configs.ClickhouseConfig
+import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.executeQueryMulti
+import com.libertexgroup.configs.{ClickhouseConfig, MultiClickhouseConfig}
 import org.testcontainers.containers.ClickHouseContainer
 import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 
 object ClickhouseContainerService extends TestContainerHelper[ClickHouseContainer] {
-  def createDummyTable: ZIO[ClickhouseConfig, Nothing, Unit] =
+  def createDummyTable: ZIO[MultiClickhouseConfig, Nothing, Unit] =
     runScoped("CREATE TABLE dummy(a text, b text) ENGINE Log;")
 
   override val startContainer: Task[ClickHouseContainer] = ZIO.attemptBlocking {
@@ -23,29 +23,32 @@ object ClickhouseContainerService extends TestContainerHelper[ClickHouseContaine
     stmt1.executeUpdate()
   }
 
-  def runScoped(sql:String) = ZIO.scoped(executeQuery(sql))
+  def runScoped(sql:String): ZIO[MultiClickhouseConfig, Nothing, Unit] = ZIO.scoped(executeQueryMulti(sql))
 
-  def loadSampleData: ZIO[ClickhouseConfig, Throwable, Unit] = for {
+  def loadSampleData: ZIO[MultiClickhouseConfig, Nothing, Unit] = for {
     _ <- createDummyTable
     _ <- runScoped("INSERT INTO dummy(a, b) VALUES ('value1', 'value2');")
     _ <- runScoped("INSERT INTO dummy(a, b) VALUES ('value3', 'value4');")
   } yield ()
 
-  val clickhouseConfigLayer: ZLayer[ClickHouseContainer, Nothing, ClickhouseConfig] = ZLayer.fromZIO(
+  val clickhouseConfigLayer: ZLayer[ClickHouseContainer, Nothing, MultiClickhouseConfig] = ZLayer.fromZIO(
     for {
       container <- ZIO.service[ClickHouseContainer]
-    } yield ClickhouseConfig(
-      batchSize=100,
-      syncDuration=1.minute,
-      host=container.getHost,
-      port=container.getMappedPort(8123),
-      databaseName="default",
-      username=container.getUsername,
-      password=container.getPassword
+    } yield MultiClickhouseConfig.makeFromCHConfig(
+      ClickhouseConfig(
+        batchSize=100,
+        syncDuration=1.minute,
+        host=container.getHost,
+        port=container.getMappedPort(8123),
+        databaseName="default",
+        username=container.getUsername,
+        password=container.getPassword,
+        clusterName = None
+      )
     )
   )
 
-  override val layer: ZLayer[Any, Throwable, ClickhouseConfig with ClickHouseContainer] = ZLayer.scoped {
+  override val layer: ZLayer[Any, Throwable, MultiClickhouseConfig with ClickHouseContainer] = ZLayer.scoped {
     ZIO.acquireRelease(startContainer)(stopContainer)
   }  >+> clickhouseConfigLayer
 }

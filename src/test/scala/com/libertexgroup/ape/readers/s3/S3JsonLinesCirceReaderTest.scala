@@ -11,23 +11,26 @@ import zio.s3.S3
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object S3JsonLinesCirceReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer] {
+object S3JsonLinesCirceReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer with S3FileReaderService] {
   val location = "json"
-  val reader = Pipeline.readers.s3JsonLinesCirceReader[dummy](location)
-  override def spec: Spec[S3 with S3Config with MinioContainer with TestEnvironment with Scope, Any] = suite("S3JsonLinesCirceReaderTest")(
-    test("Reads a json file"){
-      for {
-        _ <- MinioContainerService.loadSampleData
-        stream <- reader.apply
-        data <- stream.runCollect
-      } yield {
-        assertTrue(data.nonEmpty)
-        assertTrue(data.size > 1)
-        assertTrue(data.equals(sampleRecords))
-      }
-    },
-  )
+  val reader = Pipeline.readers.s3JsonLinesCirceReader[dummy]
+  override def spec: Spec[S3 with S3Config with MinioContainer with S3FileReaderService with TestEnvironment with Scope, Any] =
+    suite("S3JsonLinesCirceReaderTest")(
+      test("Reads a json file"){
+        for {
+          stream <- reader.apply
+          d <- stream.runCollect
+          stream1 <- d.tapEach(s => s._2.runCollect).mapZIO(_._2.runCollect)
+          data = stream1.flatten
+        } yield {
+          assertTrue(data.nonEmpty)
+          assertTrue(data.size > 1)
+          assertTrue(data.equals(sampleRecords))
+        }
+      },
+    )
 
-  override def bootstrap: ZLayer[Any, Any, S3 with S3Config with MinioContainer] =
-    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location))
+  override def bootstrap: ZLayer[Any, Throwable, S3 with MinioContainer with S3Config with S3FileReaderService] =
+    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
+      ( ZLayer.fromZIO(MinioContainerService.loadSampleData) >>> S3FileReaderServiceStatic.live(location))
 }

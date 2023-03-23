@@ -21,10 +21,8 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     s3Host = container.getHostAddress.toString,
     compressionType = compressionType,
     parallelism = 5,
-    awsAccessKey = container.getAwsAccessKey,
-    awsSecretKey = container.getAwsSecretKey,
     enableBackPressure = true,
-    fileCacheExpiration = null, filePeekDuration = null, filePeekDurationMargin = null
+    fileCacheExpiration = None, filePeekDuration = None, filePeekDurationMargin = None
   )
 
   def configLayer(compressionType: CompressionType, location: Option[String]): ZLayer[MinioContainer, Nothing, S3Config] =
@@ -49,7 +47,9 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     _ <- getFileTree(File("src/test/resources/sample_data/s3").jfile)
       .tap(file => for {
         _ <- putObject( bucket,
-          file.getPath.replace("src/test/resources/sample_data/s3", ""),
+          file.getPath
+              .replace("\\", "/")
+              .replace("src/test/resources/sample_data/s3", ""),
           file.length,
           ZStream.fromFileURI(file.toURI),
           UploadOptions.fromContentType("application/json")
