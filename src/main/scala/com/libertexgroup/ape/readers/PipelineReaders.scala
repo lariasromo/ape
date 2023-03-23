@@ -15,13 +15,19 @@ import zio.{Duration, Task, ZIO}
 import zio.kafka.consumer.Consumer
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
-
 import java.sql.ResultSet
 import java.time.{LocalDateTime, ZonedDateTime}
+
+
+import zio.http.model.{Headers, Method, Status, Version}
+
 import scala.reflect.ClassTag
 
 // Readers
 class PipelineReaders() {
+
+  def restApiReader() = new ape.readers.rest.RestAPIReaderByte
+
   def clickhouseDefaultReader[T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[ClickhouseConfig, Any, T] =
     new ape.readers.clickhouse.DefaultReader[Any, T](sql)
 
