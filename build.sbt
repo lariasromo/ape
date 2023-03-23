@@ -1,4 +1,4 @@
-ThisBuild / version := "1.3.7"
+ThisBuild / version := "1.3.7.1"
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -9,6 +9,10 @@ lazy val root = (project in file("."))
 
 val zioVersion = "2.0.10"
 val circeVersion = "0.14.3"
+
+val commonsLibrary = Seq(
+  "com.fxclub.commons" %% "http-trace" % "3.0.0"
+)
 
 val circe = Seq(
   "io.circe" %% "circe-core",
@@ -46,10 +50,11 @@ libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-cassandra" % "0.40.10" % "test",
-) ++ zioLibraries ++ circe
+  "org.mockito" %% "mockito-scala" % "1.17.12" % "test",
+) ++ zioLibraries ++ circe ++ commonsLibrary
 
 // Credentials to get access to Libertex Artifactory maven repositories
-credentials += Credentials(Path.userHome / ".sbt" / "artifactory_credentials")
+credentials += Credentials(new File("/home/priskas-v/.sbt/artifactory_credentials"))
 
 // Libertex Artifactory repository resolver
 resolvers += "Artifactory Realm" at s"https://artifactory.fxclub.org/artifactory/alexandria-release"
