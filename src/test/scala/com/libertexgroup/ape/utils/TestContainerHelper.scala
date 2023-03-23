@@ -1,6 +1,6 @@
 package com.libertexgroup.ape.utils
 
-import zio.{Scope, Tag, Task, UIO, ZIO, ZLayer}
+import zio.{Tag, Task, UIO, ZIO, ZLayer}
 
 abstract class TestContainerHelper[F: Tag] {
   val startContainer: Task[F]

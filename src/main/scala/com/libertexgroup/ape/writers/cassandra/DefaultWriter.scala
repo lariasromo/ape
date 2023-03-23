@@ -4,7 +4,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import com.libertexgroup.ape.utils.CassandraUtils.sessionFromCqlSession
 import com.libertexgroup.configs.CassandraConfig
 import com.libertexgroup.models.cassandra.CassandraModel
-import zio.stream.ZStream
+import zio.stream.{ZSink, ZStream}
 import zio.{Scope, ZIO}
 
 protected[writers] class DefaultWriter[E] extends CassandraWriter[E, E with Scope with CassandraConfig, CassandraModel] {
@@ -20,6 +20,6 @@ protected[writers] class DefaultWriter[E] extends CassandraWriter[E, E with Scop
             _ <- session.executePar(batch.toList.map(element => element.bind(ps)): _*)
           } yield () )
         } yield error )
-        .runDrain
+        .runScoped(ZSink.drain)
     } yield ()
 }

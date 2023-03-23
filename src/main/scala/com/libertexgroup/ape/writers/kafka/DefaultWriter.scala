@@ -1,14 +1,14 @@
 package com.libertexgroup.ape.writers.kafka
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import zio.{ZIO, ZLayer}
+import zio.{Scope, ZIO, ZLayer}
 import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.kafka.serde.Serde
-import zio.stream.ZStream
+import zio.stream.{ZSink, ZStream}
 
-protected[writers] class DefaultWriter[E] extends KafkaWriter[E, E with Producer with KafkaConfig, String, String] {
+protected[writers] class DefaultWriter[E] extends KafkaWriter[E, E with Producer with KafkaConfig with Scope, String, String] {
   override def apply(stream: ZStream[E, Throwable, ProducerRecord[String, String]]):
-    ZIO[E with Producer with KafkaConfig, Throwable, Unit] =
+    ZIO[E with Producer with KafkaConfig with Scope, Throwable, Unit] =
     for {
       config <- ZIO.service[KafkaConfig]
       _ <- stream.tap(v => {
@@ -19,7 +19,7 @@ protected[writers] class DefaultWriter[E] extends KafkaWriter[E, E with Producer
             keySerializer = Serde.string,
             valueSerializer = Serde.string
           )
-        }).runDrain
+        }).runScoped(ZSink.drain)
 
     } yield ()
 

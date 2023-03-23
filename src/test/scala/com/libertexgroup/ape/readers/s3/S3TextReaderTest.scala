@@ -6,19 +6,20 @@ import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.CompressionType
 import zio.s3.S3
-import zio.{Scope, ZLayer}
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
+import zio.{Scope, ZIO, ZLayer}
 
-object S3TextReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer] {
+object S3TextReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer with S3FileReaderService] {
   val location = "plaintext"
-  val reader = Pipeline.readers.s3TextReader(location)
-  override def spec: Spec[S3 with S3Config with MinioContainer with TestEnvironment with Scope, Any] = suite("S3ReaderTest")(
+  val reader = Pipeline.readers.s3TextReader
+  override def spec: Spec[S3 with S3Config with MinioContainer with S3FileReaderService with TestEnvironment with Scope, Any] = suite("S3ReaderTest")(
     test("Reads a text file"){
       for {
-        _ <- MinioContainerService.loadSampleData
         stream <- reader.apply
         data <- stream.runCollect
-        firstRecord = data.headOption
+        s <- ZIO.fromOption(data.headOption)
+        stream1 <- s._2.runCollect
+        firstRecord = stream1.headOption
       } yield {
         assertTrue(firstRecord.isDefined)
         assertTrue(firstRecord.exists(_.contains("Some string")))
@@ -26,6 +27,7 @@ object S3TextReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer] {
     },
   )
 
-  override def bootstrap: ZLayer[Any, Any, S3 with S3Config with MinioContainer] =
-    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location))
+  override def bootstrap: ZLayer[Any, Any, S3 with S3Config with MinioContainer with S3FileReaderService] =
+    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
+      ( ZLayer.fromZIO(MinioContainerService.loadSampleData) >>> S3FileReaderServiceStatic.live(location))
 }

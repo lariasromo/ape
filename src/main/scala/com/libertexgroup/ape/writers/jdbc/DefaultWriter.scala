@@ -3,7 +3,7 @@ package com.libertexgroup.ape.writers.jdbc
 import com.libertexgroup.ape.utils.GenericJDBCUtils.connect
 import com.libertexgroup.configs.JDBCConfig
 import com.libertexgroup.models.jdbc.JDBCModel
-import zio.stream.ZStream
+import zio.stream.{ZSink, ZStream}
 import zio.{Scope, ZIO}
 
 import scala.util.{Failure, Success, Try}
@@ -36,6 +36,6 @@ protected[writers] class DefaultWriter[E] extends JDBCWriter[E, E with Scope wit
             }
           } yield error )
         } yield error )
-        .runDrain
+        .runScoped(ZSink.drain)
     } yield ()
 }

@@ -1,4 +1,6 @@
-ThisBuild / version := "1.3.7.1"
+
+ThisBuild / version := "1.5.4"
+
 
 ThisBuild / scalaVersion := "2.13.10"
 
@@ -23,6 +25,7 @@ val circe = Seq(
 val zioLibraries = Seq(
   "dev.zio" %% "zio"            % zioVersion,
   "dev.zio" %% "zio-concurrent" % zioVersion,
+//  "dev.zio" %% "zio-config"     % zioVersion,
   "dev.zio" %% "zio-kafka" % "2.0.6",
   "dev.zio" %% "zio-s3"    % "0.4.2.3",
   "dev.zio" %% "zio-json"  % "0.4.2",
@@ -57,8 +60,8 @@ libraryDependencies ++= Seq(
 credentials += Credentials(new File("/home/priskas-v/.sbt/artifactory_credentials"))
 
 // Libertex Artifactory repository resolver
-resolvers += "Artifactory Realm" at s"https://artifactory.fxclub.org/artifactory/alexandria-release"
-resolvers += "Artifactory Realm snapshot" at s"https://artifactory.fxclub.org/artifactory/alexandria-snapshot"
+resolvers += "Artifactory Realm" at s"https://lbx.jfrog.io/artifactory/alexandria-release"
+resolvers += "Artifactory Realm snapshot" at s"https://lbx.jfrog.io/artifactory/alexandria-snapshot"
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 enablePlugins(DockerPlugin)
@@ -75,5 +78,5 @@ publishTo := {
   if (isSnapshot.value)
     Some("Artifactory Realm snapshot" at artifactory + "artifactory/alexandria-snapshot")
   else
-    Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release-local")
+    Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release")
 }

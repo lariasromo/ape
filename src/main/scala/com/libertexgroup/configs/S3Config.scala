@@ -2,11 +2,13 @@ package com.libertexgroup.configs
 
 import com.libertexgroup.models.CompressionType
 import com.libertexgroup.models.CompressionType.CompressionType
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.System.{env, envOrElse}
 import zio.s3.errors.ConnectionError
-import zio.s3.{Live, S3}
+import zio.s3.providers.default
+import zio.s3.{Live, S3, liveZIO}
 import zio.{Duration, Scope, Task, ZIO, ZLayer}
 
 import scala.util.Try
@@ -18,11 +20,9 @@ case class S3Config (
                       compressionType: CompressionType,
                       parallelism: Int,
                       enableBackPressure: Boolean,
-                      awsAccessKey: String,
-                      awsSecretKey: String,
-                      fileCacheExpiration: zio.Duration,
-                      filePeekDuration: zio.Duration,
-                      filePeekDurationMargin: zio.Duration
+                      fileCacheExpiration: Option[zio.Duration],
+                      filePeekDuration: Option[zio.Duration],
+                      filePeekDurationMargin: Option[zio.Duration]
   ) {
   val taskLocation: Task[String] = ZIO.getOrFail(location)
   val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
@@ -30,8 +30,6 @@ case class S3Config (
 
 object S3Config extends ReaderConfig {
   def make: ZIO[Any, SecurityException, S3Config] = for {
-    awsAccessKey <- envOrElse("AWS_ACCESS_KEY", "")
-    awsSecretKey <- envOrElse("AWS_SECRET_KEY", "")
     location <- env("S3_LOCATION")
     parallelism <- envOrElse("S3_PARALLELISM", "4")
     fileCacheExpiration <- envOrElse("S3_FILE_CACHE_EXPIRATION", "PT1H")
@@ -42,33 +40,31 @@ object S3Config extends ReaderConfig {
     s3Host <- envOrElse("S3_OVERRIDE_URL", "https://s3.eu-west-1.amazonaws.com")
     enableBackPressure <- envOrElse("S3_BACK_PRESSURE", "false")
   } yield S3Config (
-    awsAccessKey = awsAccessKey,
-    awsSecretKey = awsSecretKey,
     location = location,
     s3Bucket = s3Bucket,
     s3Host = s3Host,
     compressionType = CompressionType.withName(compressionType),
     parallelism = Try(parallelism.toInt).toOption.getOrElse(4),
     enableBackPressure = enableBackPressure.equalsIgnoreCase("true"),
-    fileCacheExpiration = Duration fromJava java.time.Duration.parse(fileCacheExpiration),
-    filePeekDuration = Duration fromJava java.time.Duration.parse(filePeekDuration),
-    filePeekDurationMargin = Duration fromJava java.time.Duration.parse(filePeekDurationMargin),
+    fileCacheExpiration = Some(Duration fromJava java.time.Duration.parse(fileCacheExpiration)),
+    filePeekDuration = Some(Duration fromJava java.time.Duration.parse(filePeekDuration)),
+    filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
   )
 
-  val makeFromS3Config: ZIO[Any with Scope with S3Config, ConnectionError, Live] =
+  val makeS3Default: ZIO[Scope, Throwable, Live] =
     for {
-      config <- ZIO.service[S3Config]
-      region <- ZIO.succeed(Region.EU_WEST_1)
-      creds <- zio.s3.providers.basic(config.awsAccessKey, config.awsSecretKey)
+      reg <- envOrElse("AWS_REGION", "eu-west-1")
       service <- ZIO.fromAutoCloseable(ZIO.attempt(
         S3AsyncClient
-        .builder()
-        .credentialsProvider(creds)
-        .region(region).build()))
+          .builder()
+          .credentialsProvider(DefaultCredentialsProvider.create())
+          .region(Region.of(reg)).build()))
         .mapBoth(e => ConnectionError(e.getMessage, e.getCause), new zio.s3.Live(_))
     } yield service
 
+  def liveS3Default: ZLayer[Any, Throwable, S3] = ZLayer.scoped {
+    makeS3Default
+  }
 
-  val liveFromS3Config: ZLayer[S3Config, ConnectionError, S3] = ZLayer.scoped(makeFromS3Config)
   val live: ZLayer[Any, Throwable, S3Config] = ZLayer.fromZIO(make)
 }
