@@ -13,19 +13,8 @@ import zio.http.model.{Headers, Method, Status, Version}
 
 
 protected[readers] class RestAPIReaderByte[E,T](
-                                            /* method: Method,
-                                             headers: List[(String,String)],
-                                             bodyString: String,
-                                             version: Version = Version.`HTTP/1.1`,
-                                             remoteAddress: Option[InetAddress] = Option.empty*/
-                                           ) extends AbstractRestApiReader[Client,E,Byte] {
+                                           ) extends RestApiReader[Client,E,Byte] {
 
-
- /* def createHeadersFromListTuple(headersList: List[(String,String)]) = createHeadersFromListTupleHelper(headersList,Headers.empty)
-  def createHeadersFromListTupleHelper(headersList: List[(String,String)], headers: Headers): Headers = {
-    if (headersList.isEmpty) headers
-    else headers.++( Header(headersList.head._1,headersList.head._2)).combine(createHeadersFromListTupleHelper(headersList.tail,headers))
-  }*/
 
    def sendRequest(request: Request): ZIO[Client, Throwable, ZStream[Any, Throwable, Byte]] = {
 
