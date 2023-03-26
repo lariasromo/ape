@@ -2,12 +2,15 @@ package com.libertexgroup.ape.writers.s3
 
 import com.libertexgroup.configs.S3Config
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
+import zio.ZIO
 import zio.s3.{MultipartUploadOptions, S3, UploadOptions, multipartUpload}
 import zio.stream.ZStream
-import zio.{ZIO, s3}
 
-protected[writers] class AvroWriter[E, T >:Null :SchemaFor :Decoder :Encoder] extends S3Writer[E, E with S3 with S3Config, T] {
-  override def apply(stream: ZStream[E, Throwable, T]): ZIO[S3 with E with S3Config, Throwable, Unit] =
+import scala.reflect.ClassTag
+
+protected[writers] class AvroWriter[E, T >:Null :SchemaFor :Decoder :Encoder : ClassTag]
+  extends S3Writer[E with S3 with S3Config, E, T, T] {
+  override def apply(stream: ZStream[E, Throwable, T]): ZIO[E with S3 with S3Config, Throwable, ZStream[E, Throwable, T]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
@@ -24,6 +27,5 @@ protected[writers] class AvroWriter[E, T >:Null :SchemaFor :Decoder :Encoder] ex
         MultipartUploadOptions.fromUploadOptions(UploadOptions.fromContentType("application/zip"))
       )(config.parallelism)
         .catchAll(_ => ZIO.unit)
-    } yield ()
-
+    } yield stream
 }

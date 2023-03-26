@@ -1,8 +1,7 @@
 package com.libertexgroup.ape.readers.s3
 
 import com.libertexgroup.configs.S3Config
-import io.circe.{Decoder, jawn}
-import zio.{Queue, ZIO}
+import zio.ZIO
 import zio.s3.S3
 import zio.stream.ZStream
 

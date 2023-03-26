@@ -1,14 +1,16 @@
 package com.libertexgroup.ape.writers.s3
 
 import com.libertexgroup.configs.S3Config
-import io.circe.{Encoder, Json}
+import io.circe.Encoder
 import io.circe.syntax.EncoderOps
 import zio.ZIO
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
 import zio.stream.ZStream
 
-protected[writers] class JsonLinesCirceWriter[E, T: Encoder] extends S3Writer[E, E with S3 with S3Config, T] {
-  override def apply(stream: ZStream[E, Throwable, T]): ZIO[E with S3 with S3Config, Throwable, Unit] =
+import scala.reflect.ClassTag
+
+protected[writers] class JsonLinesCirceWriter[E, T: Encoder : ClassTag] extends S3Writer[E with S3 with S3Config, E, T, T] {
+  override def apply(stream: ZStream[E, Throwable, T]): ZIO[E with S3 with S3Config, Throwable, ZStream[E, Throwable, T]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
@@ -24,5 +26,5 @@ protected[writers] class JsonLinesCirceWriter[E, T: Encoder] extends S3Writer[E,
         MultipartUploadOptions.default
       )(config.parallelism)
         .catchAll(_ => ZIO.unit)
-    } yield ()
+    } yield stream
 }

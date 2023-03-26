@@ -1,6 +1,6 @@
 package com.libertexgroup.ape.readers.clickhouse
 
-import com.libertexgroup.ape.readers.Reader
+import com.libertexgroup.ape.Reader
 
 import scala.reflect.ClassTag
 

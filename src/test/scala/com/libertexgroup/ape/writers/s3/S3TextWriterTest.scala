@@ -1,10 +1,10 @@
 package com.libertexgroup.ape.writers.s3
 
-import com.libertexgroup.ape.pipelines.Pipeline
+import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileReaderServiceStatic}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
-import com.libertexgroup.ape.utils.MinioContainerService.createBBucket
+import com.libertexgroup.ape.utils.MinioContainerService.setup
 import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.CompressionType
 import zio.s3.S3
@@ -21,17 +21,14 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config wi
 
   val data: ZStream[Any, Nothing, String] = ZStream.fromChunk(sampleStrings)
   val location = "bytes"
-  val reader = Pipeline.readers.s3TextReader
-  val writer = Pipeline.writers.s3TextWriter
 
   override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService with TestEnvironment with Scope, Any] =
     suite("S3TextWriterTest")(
       test("Writes strings to S3"){
         for {
-          _ <- createBBucket
-          _ <- writer.apply(data)
-          stream <- reader.apply
-          data <- stream.runCollect
+          stream <- Ape.readers.s3TextReader.apply
+          files <- stream.runCollect
+          data <- ZStream.fromChunk(files).flatMap(_._2).runCollect
         } yield {
           assertTrue(data.nonEmpty)
           assertTrue(data.equals(sampleStrings))
@@ -39,7 +36,9 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config wi
       },
     )
 
+
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService] =
-    MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      S3FileReaderServiceStatic.live(location)
+      MinioContainerService.s3Layer >+>
+        MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
+        setup(Ape.writers.s3TextWriter[Any].runDrain(data)) >+> S3FileReaderServiceStatic.live(location)
 }

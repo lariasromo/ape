@@ -33,6 +33,22 @@ object ClickhouseJDBCUtils {
     } yield Chunk.fromIterable(chks).flatten
   }
 
+  def runConnect[T](effect: ClickHouseConnection => T): ZIO[ClickhouseConfig, Throwable, T] = for {
+    errors <- ZIO.scoped( for {
+      conn <- connect
+      errors <- ZIO.fromEither {
+        Try {
+          effect(conn)
+        } match {
+          case Failure(exception) => {
+            exception.printStackTrace()
+            Left(exception)
+          }
+          case Success(value) => Right(value)
+        }
+      }
+    } yield errors )
+  } yield errors
 
   val connect: ZIO[ClickhouseConfig with Scope, Nothing, ClickHouseConnection] = ZIO
     .acquireRelease(for {

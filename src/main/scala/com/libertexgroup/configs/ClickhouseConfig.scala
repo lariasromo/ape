@@ -1,7 +1,7 @@
 package com.libertexgroup.configs
 
-import zio.{Duration, ULayer, ZIO, ZLayer, durationInt}
 import zio.System.{env, envOrElse}
+import zio.{Duration, ZIO, ZLayer, durationInt}
 
 import scala.util.Try
 

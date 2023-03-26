@@ -1,13 +1,11 @@
 package com.libertexgroup.ape.readers.s3
 
-import com.libertexgroup.ape.readers.Reader
+import com.libertexgroup.ape.Reader
 import com.libertexgroup.configs.S3Config
-import zio.Console.printLine
-import zio.{Queue, ZIO}
+import zio.ZIO
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
 
-import java.io.IOException
 import scala.reflect.ClassTag
 
 abstract class S3Reader[E, E1, T :ClassTag] extends Reader[S3FileReaderService with E, E1, T] {

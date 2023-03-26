@@ -88,7 +88,6 @@ Particular implementations could be `AnodotKafkaReader` or `FxbankReader` if spe
 otherwise just direct to the `KafkaDefaultReader` which produces a generic `GenericRecord`. See below...
 
 ```scala
-import com.libertexgroup.ape.readers.Reader
 
 //Example of a reader that reads from Kafka
 trait KafkaReader extends Reader
@@ -129,15 +128,14 @@ In most cases the same config we use for reading from a source can be reused to 
 Example...
 
 ```scala
-import com.libertexgroup.ape.writers.Writer
 
 trait S3Writer[T] extends Writer[T]
 
 class DefaultWriter[E] extends S3Writer[E] {
-  override type EnvType = s3.S3 with E with Has[S3Config]
-  override type InputType = Array[Byte]
+   override type EnvType = s3.S3 with E with Has[S3Config]
+   override type InputType = Array[Byte]
 
-  override def apply(stream: ZStream[E, Throwable, InputType]): ZIO[EnvType, Throwable, Unit] = ???
+   override def apply(stream: ZStream[E, Throwable, InputType]): ZIO[EnvType, Throwable, Unit] = ???
 }
 ```
 

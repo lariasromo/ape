@@ -1,6 +1,6 @@
 package com.libertexgroup.ape.readers.s3
 
-import com.libertexgroup.ape.readers.Reader
+import com.libertexgroup.ape.Reader
 import com.libertexgroup.configs.S3Config
 import zio.Clock.currentDateTime
 import zio.s3.{ListObjectOptions, S3, S3ObjectSummary, listObjects}
@@ -11,7 +11,7 @@ import java.time.ZonedDateTime
 
 class FileReaderSimple(locationPattern:ZIO[S3 with S3Config, Nothing, ZonedDateTime => List[String]])
   extends Reader[S3 with S3Config, Any, S3ObjectSummary] {
-  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
+  def a: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[S3Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
@@ -24,5 +24,7 @@ class FileReaderSimple(locationPattern:ZIO[S3 with S3Config, Nothing, ZonedDateT
     )
 
   } yield ZStream.fromChunk(objs.flatten)
+
+  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = a
 }
 
