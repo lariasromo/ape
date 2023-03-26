@@ -8,11 +8,9 @@ import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.avro.generic.GenericRecord
 import software.amazon.awssdk.services.s3.model.S3Exception
 import zio.Console.printLine
-import zio.s3.{ListObjectOptions, S3, S3ObjectSummary}
-import zio.stream.{Take, ZPipeline, ZSink, ZStream}
-import zio.{Chunk, Queue, ZIO}
-
-import scala.util.Try
+import zio.s3.{S3, S3ObjectSummary}
+import zio.stream.{ZPipeline, ZStream}
+import zio.{Queue, ZIO}
 
 package object s3 {
   type S3FileWithContent[T] = (S3ObjectSummary, ZStream[S3, Throwable, T])

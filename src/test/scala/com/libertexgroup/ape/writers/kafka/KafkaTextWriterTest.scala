@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.writers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
-import com.libertexgroup.ape.pipelines.Pipeline
+import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -32,14 +32,9 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
     suite("KafkaTextWriterTest")(
       test("Writes plaintext messages"){
         for {
-          config <- ZIO.service[KafkaConfig]
-          _ <- zio.Console.printLine("Sending text message")
-          _ <- Pipeline.writers.kafkaStringWriter.apply(data(config.topicName))
-          stream <- Pipeline.readers.kafkaStringReader.apply
+          stream <- Ape.readers.kafkaStringReader.apply
           data <- stream
-            .tap(d => {
-              zio.Console.printLine(d.value())
-            })
+            .tap(d => zio.Console.printLine(d.value()))
             .runHead
         } yield {
           assertTrue(data.nonEmpty)
@@ -50,6 +45,14 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
       },
     )
 
+  val setup: ZIO[Producer with KafkaConfig, Throwable, Unit] = for {
+    config <- ZIO.service[KafkaConfig]
+    _ <- zio.Console.printLine("Sending text message")
+    _ <- Ape.writers.kafkaStringWriter.write(data(config.topicName))
+  } yield ()
+
   override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer with Producer] =
-    KafkaContainerService.topicLayer("text_topic") >+> (KafkaUtils.producerLayer ++ KafkaUtils.consumerLayer)
+    KafkaContainerService.topicLayer("text_topic") >+>
+      (KafkaUtils.producerLayer ++ KafkaUtils.consumerLayer) >+>
+      ZLayer.fromZIO(setup)
 }

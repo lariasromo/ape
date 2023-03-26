@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.readers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
-import com.libertexgroup.ape.pipelines.Pipeline
+import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
 import zio.kafka.consumer.Consumer
@@ -9,7 +9,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
-  val reader = Pipeline.readers.kafkaDefaultReader
+  val reader = Ape.readers.kafkaDefaultReader
   override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
     suite("KafkaBytesReaderTest")(
       test("Reads bytes"){

@@ -1,6 +1,5 @@
 package com.libertexgroup.ape.readers.s3
 
-import com.libertexgroup.ape.readers.Reader
 import com.libertexgroup.configs.S3Config
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import zio.ZIO

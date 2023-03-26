@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.readers.clickhouse
 
+import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.ClickhouseContainerService
 import com.libertexgroup.configs.MultiClickhouseConfig
 import org.testcontainers.containers.ClickHouseContainer
@@ -9,7 +9,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object ClickhouseReaderTest extends ZIOSpec[MultiClickhouseConfig with ClickHouseContainer] {
-  val reader = Pipeline.readers.clickhouseDefaultReader[dummy]("select * from dummy")
+  val reader = Ape.readers.clickhouseDefaultReader[dummy]("select * from dummy")
 
   override def spec: Spec[MultiClickhouseConfig with ClickHouseContainer with TestEnvironment with Scope, Any] =
     suite("ClickhouseReaderTest")(
