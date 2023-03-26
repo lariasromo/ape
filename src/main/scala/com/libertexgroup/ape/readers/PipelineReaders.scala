@@ -2,7 +2,8 @@ package com.libertexgroup.ape.readers
 
 import com.libertexgroup.ape
 import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileWithContent}
-import com.libertexgroup.ape.{Reader, UnitReader}
+import com.libertexgroup.ape.Reader
+import com.libertexgroup.ape.Reader.UnitReader
 import com.libertexgroup.configs._
 import com.libertexgroup.models.s3.KafkaRecordS3
 import com.libertexgroup.models.websocket.Message
