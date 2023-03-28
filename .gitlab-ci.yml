@@ -6,11 +6,6 @@
   #GitLab runner tag
   tags:
     - alexandria
-  #Branch names, where pipeline will run
-  only:
-    - master
-    - zio1
-    - zio2.x
   #Avoiding pipeline run after git tag stage
   except:
     - tags
@@ -39,6 +34,6 @@ tag:
   stage: tag
   <<: *job_rules
   script:
-    - export SERVICE_VERSION=`cat build.sbt | grep "version :=" | awk -F '"' '{print $2}'`
+    - export SERVICE_VERSION=${CI_COMMIT_REF_NAME}-`cat build.sbt | grep "version :=" | awk -F '"' '{print $2}'`
     - git tag $SERVICE_VERSION
     - git push https://$TOKEN_USERNAME:$TOKEN_PASSWORD@$CI_SERVER_HOST/$CI_PROJECT_PATH.git ${SERVICE_VERSION}
