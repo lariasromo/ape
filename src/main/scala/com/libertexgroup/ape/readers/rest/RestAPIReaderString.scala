@@ -6,12 +6,8 @@ import zio.{Chunk, ZIO}
 import zio.http.{Client, Request, Response}
 import zio.stream.ZStream
 
-protected[readers] class RestAPIReaderString[E,T](
-                                                 /* method: Method,
-                                                  headers: List[(String,String)],
-                                                  bodyString: String,
-                                                  version: Version = Version.`HTTP/1.1`,
-                                                  remoteAddress: Option[InetAddress] = Option.empty*/
+protected[readers] class RestAPIReaderString[E](
+                                                   request: Request
                                                ) extends RestApiReader[Client,E,String] {
 
 
@@ -30,6 +26,17 @@ protected[readers] class RestAPIReaderString[E,T](
     response.map(str => ZStream(str))
   }
 
-  override def apply: ZIO[Client, Throwable, ZStream[E, Throwable, String]] = ???
+  override def apply: ZIO[Client, Throwable, ZStream[E, Throwable, String]] = {
+    val response= for {
+      responseFromHttpUtil <- HttpUtil.sentWithLogging(request)
+      byteChunk <- responseFromHttpUtil.body.asStream.runCollect
+
+    } yield {
+      byteChunk.toArray.map(_.toChar).mkString
+
+    }
+
+    response.map(str => ZStream(str))
+  }
 }
 

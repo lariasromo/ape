@@ -15,12 +15,11 @@ import sttp.ws.WebSocket
 import zio.kafka.consumer.Consumer
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
-
-
 import zio.{Task, ZIO}
-
 import java.sql.ResultSet
 import java.time.ZonedDateTime
+
+import zio.http.Request
 
 import scala.reflect.ClassTag
 
@@ -29,9 +28,9 @@ class PipelineReaders() {
 
 
 
-  def restApiReaderByte() = new ape.readers.rest.RestAPIReaderByte
+  def restApiReaderByte(request: Request) = new ape.readers.rest.RestAPIReaderByte(request)
 
-  def restApiReaderString() = new ape.readers.rest.RestAPIReaderString
+  def restApiReaderString(request: Request) = new ape.readers.rest.RestAPIReaderString(request)
 
 
 
