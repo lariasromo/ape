@@ -53,8 +53,8 @@ libraryDependencies ++= Seq(
 credentials += Credentials(Path.userHome / ".sbt" / "artifactory_credentials")
 
 // Libertex Artifactory repository resolver
-resolvers += "Artifactory Realm" at s"https://artifactory.fxclub.org/artifactory/alexandria-release"
-resolvers += "Artifactory Realm snapshot" at s"https://artifactory.fxclub.org/artifactory/alexandria-snapshot"
+resolvers += "Artifactory Realm" at s"https://lbx.jfrog.io/artifactory/alexandria-release"
+resolvers += "Artifactory Realm snapshot" at s"https://lbx.jfrog.io/artifactory/alexandria-snapshot"
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 enablePlugins(DockerPlugin)
@@ -71,5 +71,5 @@ publishTo := {
   if (isSnapshot.value)
     Some("Artifactory Realm snapshot" at artifactory + "artifactory/alexandria-snapshot")
   else
-    Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release-local")
+    Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release")
 }
