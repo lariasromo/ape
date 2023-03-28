@@ -26,7 +26,7 @@ protected[readers] class RestAPIReaderString[E](
     response.map(str => ZStream(str))
   }
 
-  override def apply: ZIO[Client, Throwable, ZStream[E, Throwable, String]] = {
+  override def apply = {
     val response= for {
       responseFromHttpUtil <- HttpUtil.sentWithLogging(request)
       byteChunk <- responseFromHttpUtil.body.asStream.runCollect
