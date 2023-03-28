@@ -1,6 +1,8 @@
 package com.libertexgroup.ape.readers.rest
 
-import com.libertexgroup.ape.readers.Reader
+
+
+import com.libertexgroup.ape.Reader
 
 import scala.reflect.ClassTag
 

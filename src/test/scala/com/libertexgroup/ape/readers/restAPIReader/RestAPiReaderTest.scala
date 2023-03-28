@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets
 
 import com.libertexgroup.ape.models.dummy
 import zio.test.{Spec, TestEnvironment, ZIOSpec}
-import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.readers.jdbc.JDBCReaderTest.{reader, suite}
 import com.libertexgroup.ape.readers.restAPIReader.RestAPiReaderTest.test
 import com.libertexgroup.ape.utils.PostgresContainerService
@@ -20,6 +19,7 @@ import zio.{Chunk, Scope, ZIO, ZLayer}
 import zio.http.model.{Headers, Method, Status, Version}
 import java.net.InetAddress
 
+import com.libertexgroup.ape.Ape
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 
@@ -28,8 +28,7 @@ object RestAPiReaderTest extends ZIOSpecDefault{
 
 
 
-  val reader = Pipeline.readers.restApiReaderByte()
-  val readerString = Pipeline.readers.restApiReaderString()
+
 
   override def spec = suite("RestAPiReaderTest")(
     test("write logs with request and response)") {
@@ -41,9 +40,9 @@ object RestAPiReaderTest extends ZIOSpecDefault{
 
       val request = Request.post(Body.fromString("""{"prop": "value"}"""), URL.empty)
 
-
+      val reader = Ape.readers.restApiReaderByte(request)
       for {
-        stream <- reader.sendRequest(request).provideLayer(ZLayer.succeed(mockServer))
+        stream <- reader.apply.provideLayer(ZLayer.succeed(mockServer))
         data <- stream.runCollect
       // _<-  zio.Console.printLine("pipes " + data.toArray.map(_.toChar).mkString)//new String( data.toArray, StandardCharsets.UTF_16))
       } yield {
@@ -76,10 +75,10 @@ object RestAPiReaderTest extends ZIOSpecDefault{
 
 
         )
-
+        val reader = Ape.readers.restApiReaderByte(request)
 
       for {
-        stream <- reader.sendRequest(request).provideLayer(zio.http.Client.default)
+        stream <- reader.apply.provideLayer(zio.http.Client.default)
 
         data <- stream.runCollect
       _<-  zio.Console.printLine("data:  " +data.toString)
@@ -117,9 +116,9 @@ object RestAPiReaderTest extends ZIOSpecDefault{
 
       )
 
-
+      val reader = Ape.readers.restApiReaderString(request)
       for {
-        stream <- readerString.sendRequest(request).provideLayer(zio.http.Client.default)
+        stream <- reader.apply.provideLayer(zio.http.Client.default)
         data <- stream.runCollect
         //new String( data.toArray, StandardCharsets.UTF_16))
       } yield {

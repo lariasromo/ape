@@ -6,7 +6,8 @@ import zio.http._
 import zio.stream.ZStream
 
 
-protected[readers] class RestAPIReaderByte[E,T](
+protected[readers] class RestAPIReaderByte[E](
+                                                 request: Request
                                            ) extends RestApiReader[Client,E,Byte] {
 
 
@@ -20,5 +21,12 @@ protected[readers] class RestAPIReaderByte[E,T](
     response.map{res =>res.body.asStream}
   }
 
-  override def apply: ZIO[Client, Throwable, ZStream[E, Throwable, Byte]] = ???
+  override def apply: ZIO[Client, Throwable, ZStream[E, Throwable, Byte]] = {
+    val response = for {
+      response <- HttpUtil.sentWithLogging(request)
+    } yield {
+      response
+    }
+    response.map{res =>res.body.asStream}
+  }
 }
