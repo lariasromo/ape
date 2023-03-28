@@ -44,14 +44,31 @@ object GenericJDBCUtils {
   def toStream[T: ClassTag](resultSet: ResultSet)(implicit row2Object: ResultSet => T): ZStream[Any, Throwable, T] =
     ZStream.fromIterator(queryIterator(resultSet))
 
-  val connect: ZIO[JDBCConfig with Any with Scope, Nothing, Connection] = ZIO
+  val connect: ZIO[JDBCConfig with Scope, Nothing, Connection] = ZIO
     .acquireRelease(for {
       config <- ZIO.service[JDBCConfig]
     } yield getConnection(config.driverName, config.jdbcUrl, config.username, config.password)
     )(c => ZIO.succeed(c.close()))
 
 
-  def executeQuery(sql: String): ZIO[JDBCConfig with Any with Scope, Nothing, Unit] = for {
+  def runConnect[T](effect: Connection => T): ZIO[JDBCConfig, Throwable, T] = for {
+    errors <- ZIO.scoped( for {
+      conn <- connect
+      errors <- ZIO.fromEither {
+        Try {
+          effect(conn)
+        } match {
+          case Failure(exception) => {
+            exception.printStackTrace()
+            Left(exception)
+          }
+          case Success(value) => Right(value)
+        }
+      }
+    } yield errors )
+  } yield errors
+
+  def executeQuery(sql: String): ZIO[JDBCConfig with Scope, Nothing, Unit] = for {
     conRes <- connect
     _ <- ZIO.scoped {
       ZIO.succeed {

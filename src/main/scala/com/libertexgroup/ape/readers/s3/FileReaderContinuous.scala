@@ -1,8 +1,7 @@
 package com.libertexgroup.ape.readers.s3
 
-import com.libertexgroup.ape.readers.Reader
+import com.libertexgroup.ape.Reader
 import com.libertexgroup.configs.S3Config
-import software.amazon.awssdk.services.s3.model.S3Exception
 import zio.Clock.currentDateTime
 import zio.Console.printLine
 import zio.concurrent.ConcurrentMap
@@ -17,7 +16,7 @@ class FileReaderContinuous(locationPattern:ZIO[S3Config, Nothing, ZonedDateTime 
   extends Reader[S3Config, S3, S3ObjectSummary] {
     val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
-  override def apply: ZIO[S3Config, Throwable, ZStream[S3, Throwable, S3ObjectSummary]] = for {
+  def a: ZIO[S3Config, Throwable, ZStream[S3, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[S3Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
@@ -45,5 +44,7 @@ class FileReaderContinuous(locationPattern:ZIO[S3Config, Nothing, ZonedDateTime 
           } yield ! exists
         }
     }.flatMap{x=>x}
+
+  override def apply: ZIO[S3Config, Throwable, ZStream[S3, Throwable, S3ObjectSummary]] = a
 }
 

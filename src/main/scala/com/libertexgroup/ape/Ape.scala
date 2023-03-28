@@ -1,29 +1,25 @@
 package com.libertexgroup.ape
 
-import com.libertexgroup.ape.readers.{PipelineReaders, Reader}
-import com.libertexgroup.ape.transformers.Transformer
-import com.libertexgroup.ape.writers.{PipelineWriters, Writer}
-import zio.{Console, ZIO}
+import com.libertexgroup.ape.readers.PipelineReaders
+import com.libertexgroup.ape.writers.PipelineWriters
+import zio.ZIO
+import zio.stream.ZStream
 
 import scala.reflect.ClassTag
 
-//this will replace Pipeline class
-class Ape[E, E1, T: ClassTag, T1: ClassTag, E2](
-                                  reader: Reader[E, E1, T],
-                                  transformer: Transformer[E1, T, T1],
-                                  writer: Writer[E1, E2, T1]
-                                ) {
-
-  def run: ZIO[E with E2, Throwable, Unit] = for {
-    stream <- reader.apply
-    transformedStream = transformer.apply(stream)
-    _ <- writer.apply(transformedStream)
-      .catchAll(e => Console.printLine(e.toString))
-  } yield ()
+case class Ape[ZE, T] (stream: ZStream[ZE, Throwable, T]){
+  def run: ZIO[ZE, Throwable, Unit] = stream.runDrain
 }
 
-
 object Ape {
+  def apply[E, E1, ZE, T0, T](
+                               reader: Reader[E, ZE, T0],
+                               writer: Writer[E1, ZE, T0, T]
+                             ): ZIO[E with E1, Throwable, Ape[ZE, T]] = for {
+    s <- reader.apply
+    s2 <- writer.apply(s)
+  } yield Ape(s2)
+
   val readers = new PipelineReaders()
   val writers = new PipelineWriters()
 }

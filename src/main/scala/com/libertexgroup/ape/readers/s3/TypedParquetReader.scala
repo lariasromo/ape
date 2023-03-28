@@ -3,7 +3,7 @@ package com.libertexgroup.ape.readers.s3
 import com.libertexgroup.configs.S3Config
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import zio.ZIO
-import zio.s3.{S3, S3ObjectSummary, streamLines}
+import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
 
 import scala.reflect.ClassTag

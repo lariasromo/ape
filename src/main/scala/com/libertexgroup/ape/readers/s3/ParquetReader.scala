@@ -1,6 +1,5 @@
 package com.libertexgroup.ape.readers.s3
 
-import com.libertexgroup.ape.readers.Reader
 import com.libertexgroup.configs.S3Config
 import org.apache.avro.generic.GenericRecord
 import zio.ZIO

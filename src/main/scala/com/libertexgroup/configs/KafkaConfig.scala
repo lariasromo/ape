@@ -1,9 +1,9 @@
 package com.libertexgroup.configs
 
+import zio.System.envOrElse
+import zio.kafka.consumer.Consumer.AutoOffsetStrategy
 import zio.kafka.consumer.{Consumer, ConsumerSettings}
 import zio.{Duration, ZIO, ZLayer, durationInt}
-import zio.System.{env, envOrElse}
-import zio.kafka.consumer.Consumer.AutoOffsetStrategy
 
 import scala.util.Try
 

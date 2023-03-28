@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.readers.s3
 
+import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.readers.s3.S3JsonLinesCirceReaderTest.location
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
@@ -13,7 +13,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object S3JsonLinesReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer with S3FileReaderService] {
-  val reader = Pipeline.readers.s3JsonLinesReader[dummy]
+  val reader = Ape.readers.s3JsonLinesReader[dummy]
 
   override def spec: Spec[S3 with S3Config with MinioContainer with S3FileReaderService with TestEnvironment with Scope, Any] =
     suite("S3JsonLinesReaderTest")(
