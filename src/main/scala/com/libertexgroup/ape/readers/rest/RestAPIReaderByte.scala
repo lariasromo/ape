@@ -21,7 +21,7 @@ protected[readers] class RestAPIReaderByte[E](
     response.map{res =>res.body.asStream}
   }
 
-  override def apply: ZIO[Client, Throwable, ZStream[E, Throwable, Byte]] = {
+  override def apply = {
     val response = for {
       response <- HttpUtil.sentWithLogging(request)
     } yield {
