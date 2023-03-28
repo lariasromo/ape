@@ -1,8 +1,11 @@
 package com.libertexgroup.ape.writers
-import zio.{Console, Scope, ZIO}
-import zio.stream.{ZSink, ZStream}
+import com.libertexgroup.ape.Writer
+import zio.ZIO
+import zio.stream.ZStream
 
-protected[writers] class ConsoleWriter[E, T] extends Writer[E, E with Scope, T] {
-  override def apply(stream: ZStream[E, Throwable, T]): ZIO[E with Scope, Throwable, Unit] =
-    stream.tap(r => zio.Console.printLine(r.toString)).runScoped(ZSink.drain)
+import scala.reflect.ClassTag
+
+protected[writers] class ConsoleWriter[E, T: ClassTag] extends Writer[E, E, T, T] {
+  override def apply(i: ZStream[E, Throwable, T]): ZIO[E, Throwable, ZStream[E, Throwable, T]] =
+    ZIO.succeed(i.tap(r => zio.Console.printLine(r.toString)))
 }

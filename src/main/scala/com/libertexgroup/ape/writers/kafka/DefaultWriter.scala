@@ -1,26 +1,25 @@
 package com.libertexgroup.ape.writers.kafka
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import zio.{Scope, ZIO, ZLayer}
-import zio.kafka.producer.{Producer, ProducerSettings}
+import zio.ZIO
+import zio.kafka.producer.Producer
 import zio.kafka.serde.Serde
-import zio.stream.{ZSink, ZStream}
+import zio.stream.ZStream
 
-protected[writers] class DefaultWriter[E] extends KafkaWriter[E, E with Producer with KafkaConfig with Scope, String, String] {
-  override def apply(stream: ZStream[E, Throwable, ProducerRecord[String, String]]):
-    ZIO[E with Producer with KafkaConfig with Scope, Throwable, Unit] =
+protected[writers] class DefaultWriter[ET] extends KafkaWriter[KafkaConfig, Producer with ET, String, String] {
+  override def apply(stream: ZStream[Producer with ET, Throwable, ProducerRecord[String, String]]):
+  ZIO[KafkaConfig, Throwable, ZStream[Producer with ET, Throwable, ProducerRecord[String, String]]] =
     for {
       config <- ZIO.service[KafkaConfig]
-      _ <- stream.tap(v => {
-          Producer.produce[Any, String, String](
-            topic = config.topicName,
-            key = v.key(),
-            value = v.value(),
-            keySerializer = Serde.string,
-            valueSerializer = Serde.string
-          )
-        }).runScoped(ZSink.drain)
+      s = stream.tap(v => {
+        Producer.produce[Any, String, String](
+          topic = config.topicName,
+          key = v.key(),
+          value = v.value(),
+          keySerializer = Serde.string,
+          valueSerializer = Serde.string
+        )
+      })
 
-    } yield ()
-
+    } yield s
 }

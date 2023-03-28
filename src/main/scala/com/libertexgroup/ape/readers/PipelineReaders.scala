@@ -2,6 +2,8 @@ package com.libertexgroup.ape.readers
 
 import com.libertexgroup.ape
 import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileWithContent}
+import com.libertexgroup.ape.Reader
+import com.libertexgroup.ape.Reader.UnitReader
 import com.libertexgroup.configs._
 import com.libertexgroup.models.s3.KafkaRecordS3
 import com.libertexgroup.models.websocket.Message
@@ -26,12 +28,15 @@ import scala.reflect.ClassTag
 class PipelineReaders() {
 
 
+
   def restApiReaderByte() = new ape.readers.rest.RestAPIReaderByte
 
   def restApiReaderString() = new ape.readers.rest.RestAPIReaderString
 
 
-  def noOpReader[E, T: ClassTag](stream: ZStream[Any, Throwable, T]) = new ape.readers.NoOpReader[E, T](stream)
+
+  def noOpReader[E, ZE, T: ClassTag](stream: ZStream[ZE, Throwable, T]): Reader[Any, ZE, T] = new UnitReader(stream)
+
 
   def clickhouseDefaultReader[T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[MultiClickhouseConfig, Any, T] =
     new ape.readers.clickhouse.DefaultReader[Any, T](sql)

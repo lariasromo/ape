@@ -7,8 +7,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.System.{env, envOrElse}
 import zio.s3.errors.ConnectionError
-import zio.s3.providers.default
-import zio.s3.{Live, S3, liveZIO}
+import zio.s3.{Live, S3}
 import zio.{Duration, Scope, Task, ZIO, ZLayer}
 
 import scala.util.Try

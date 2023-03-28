@@ -5,6 +5,7 @@ import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.CompressionType.CompressionType
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
+import zio.Console.printLine
 import zio.s3.errors.ConnectionError
 import zio.s3.{S3, UploadOptions, createBucket, putObject}
 import zio.stream.ZStream
@@ -25,6 +26,14 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     fileCacheExpiration = None, filePeekDuration = None, filePeekDurationMargin = None
   )
 
+  def setup(eff: ZIO[S3 with S3Config, Throwable, Unit]): ZLayer[S3 with S3Config, Throwable, Unit] =
+    ZLayer.fromZIO{
+    for {
+      _ <- createBBucket
+      _ <- eff
+    } yield ()
+  }
+
   def configLayer(compressionType: CompressionType, location: Option[String]): ZLayer[MinioContainer, Nothing, S3Config] =
     ZLayer.fromZIO(config(compressionType, location))
 
@@ -39,7 +48,7 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
   def createBBucket: ZIO[S3 with S3Config, Throwable, String] = for {
     s3Config <- ZIO.service[S3Config]
     bucket <- s3Config.taskS3Bucket
-    _ <- createBucket(bucket)
+    _ <- createBucket(bucket).catchAll(ex => printLine(ex.getMessage))
   } yield bucket
 
   def loadSampleData: ZIO[S3 with S3Config, Throwable, Unit] =  for {

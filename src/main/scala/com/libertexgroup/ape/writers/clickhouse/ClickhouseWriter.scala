@@ -1,9 +1,5 @@
 package com.libertexgroup.ape.writers.clickhouse
 
-import com.libertexgroup.ape.writers.Writer
-import zio.{Chunk, ZIO}
-import zio.stream.ZStream
+import com.libertexgroup.ape.Writer
 
-trait ClickhouseWriter[E, E1, T] extends Writer[E, E1, T] {
-  override def apply(stream: ZStream[E, Throwable, T]): ZIO[E1, Throwable, Unit]
-}
+trait ClickhouseWriter[E, ET, T, T1] extends Writer[E, ET, T, T1]

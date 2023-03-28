@@ -1,8 +1,8 @@
 package com.libertexgroup.ape.writers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
+import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.pipelines.Pipeline
 import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -28,17 +28,11 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
       )
     })
 
-  val writer = Pipeline.writers.kafkaAvroWriter[Any, dummy]
-  val reader = Pipeline.readers.kafkaAvroReader[dummy]
-
   override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with Producer with TestEnvironment with Scope, Any] =
     suite("KafkaAvroWriterTest")(
       test("Writes avro messages"){
         for {
-          config <- ZIO.service[KafkaConfig]
-          _ <- zio.Console.printLine("Sending dummy message")
-          _ <- writer.apply(data(config.topicName))
-          stream <- reader.apply
+          stream <- Ape.readers.kafkaAvroReader[dummy].apply
           data <- stream.map(_.value()).runHead
         } yield {
           val result = data.flatten
@@ -48,7 +42,16 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
       },
     )
 
-  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer with Producer] =
-    KafkaContainerService.topicLayer("text_topic") >+> (KafkaUtils.producerLayer ++ KafkaUtils.consumerLayer)
+  val setup: ZIO[Producer with KafkaConfig, Throwable, Unit] = for {
+    config <- ZIO.service[KafkaConfig]
+    _ <- zio.Console.printLine("Sending dummy message")
+    _ <- Ape.writers.kafkaAvroWriter[Any, dummy].write(data(config.topicName))
+  } yield ()
+
+  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer with Producer] = {
+    KafkaContainerService.topicLayer("text_topic") >+>
+      (KafkaUtils.producerLayer ++ KafkaUtils.consumerLayer) >+>
+      ZLayer.fromZIO(setup)
+  }
 }
 
