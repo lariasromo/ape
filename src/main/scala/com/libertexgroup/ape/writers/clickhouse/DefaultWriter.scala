@@ -8,6 +8,7 @@ import zio.stream.ZStream
 import zio.{Chunk, ZIO, ZLayer}
 
 import java.sql.Statement
+import scala.util.{Failure, Success, Try}
 
 //protected[writers] class DefaultWriter[E] extends ClickhouseWriter[E, E with Scope with MultiClickhouseConfig, ClickhouseModel] {
 // The result of this writer are the records that failed to be inserted
@@ -18,7 +19,16 @@ protected[writers] class DefaultWriter[ET] extends ClickhouseWriter[MultiClickho
       row.prepare(stmt)
       stmt.addBatch()
     })
-    batch.zip(stmt.executeBatch())
+    val tryEx: Chunk[Int] = Try(stmt.executeBatch()) match {
+      case Failure(exception) => {
+        println(exception.getMessage)
+        // if the whole batch failed, mark all rows as failed
+        batch.map(_ => Statement.EXECUTE_FAILED)
+      }
+      case Success(value) => Chunk.fromArray(value)
+    }
+
+    batch.zip(tryEx)
       .filter { case(_, result) => result.equals(Statement.EXECUTE_FAILED) }
       .map { case(row, _) => row }
   }
