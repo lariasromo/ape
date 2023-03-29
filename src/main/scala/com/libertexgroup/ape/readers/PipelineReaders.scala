@@ -28,9 +28,9 @@ class PipelineReaders() {
 
 
 
-  def restApiReaderByte(request: Request) = new ape.readers.rest.RestAPIReaderByte(request)
+  def restApiReaderByte[E](request: Request) = new ape.readers.rest.RestAPIReaderByte[E](request)
 
-  def restApiReaderString(request: Request) = new ape.readers.rest.RestAPIReaderString(request)
+  def restApiReaderString[E](request: Request) = new ape.readers.rest.RestAPIReaderString[E](request)
 
 
 
