@@ -27,6 +27,7 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
     implicit val tt = t
     **
   }
+  def map[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
 
   def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
     new ZTWriter(this, t)
@@ -34,6 +35,7 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
     implicit val tt = t
     ***
   }
+  def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] = withZTransform(t)
 }
 
 object Writer {
@@ -82,6 +84,17 @@ object Writer {
     } yield transform(s)
   }
 
+  class UnitZWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+                                                       t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2])
+    extends Writer[E, ZE, T, T2]{
+    override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = ZIO.succeed(t(i))
+  }
+
+  class UnitTWriter[E, ZE, T: ClassTag, T2: ClassTag] (t: T => T2)
+    extends Writer[E, ZE, T, T2]{
+    override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] =
+      ZIO.succeed(i.map(t))
+  }
 }
 
 
