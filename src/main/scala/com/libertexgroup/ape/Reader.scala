@@ -16,13 +16,15 @@ abstract class Reader[E, ZE, T: ClassTag]{
     implicit val tt = t
     **
   }
-  
+  def map[T2: ClassTag](t: T => T2): Reader[E, ZE, T2] = withTransform(t)
+
   def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] = 
     new ZTReader(this, t)
   def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] = {
     implicit val tt = t
     ***
   }
+  def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] = withZTransform(t)
 }
 
 object Reader {
