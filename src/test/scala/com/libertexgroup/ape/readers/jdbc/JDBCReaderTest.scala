@@ -9,7 +9,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object JDBCReaderTest extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
-  val reader = Ape.readers.jdbcDefaultReader[dummy]("select * from dummy")
+  val reader = Ape.readers.jdbcDefaultReader[Any, dummy]("select * from dummy")
 
   override def spec: Spec[JDBCConfig with PostgreSQLContainer with TestEnvironment with Scope, Any] = suite("JDBCReaderTest")(
     test("Reads dummy data"){
