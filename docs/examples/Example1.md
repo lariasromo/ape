@@ -20,9 +20,9 @@ This example consists on a pipeline that will;
 
 ```scala
 import com.libertexgroup.ape.{Ape, Reader, Writer}
-import com.libertexgroup.configs.KafkaConfig
+import com.libertexgroup.configs.{CassandraConfig, JDBCConfig, KafkaConfig}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.{ZIO, ZIOAppDefault}
+import zio.{ZIO, ZIOAppDefault, ZLayer}
 import zio.kafka.consumer.Consumer
 import zio.stream.ZStream
 
@@ -30,22 +30,19 @@ object Main extends ZIOAppDefault {
 
   case class Transaction(status: String, transactionType: String, clientId: String)
 
-  val reader: Reader[KafkaConfig, Consumer, ConsumerRecord[String, Option[Transaction]]] =
-    Ape.readers.kafkaAvroReader[Transaction]
+  val pipe = Ape.readers.kafkaAvroReader[Transaction]
+      .mapZ(s => s
+        .map(_.value()) // Getting the value of the ConsumerRecord
+        .filter(_.isDefined) //filtering broken avro records
+        .map(_.orNull) // safely getting the options after the above filtering
+        .filter(r => Seq("SUCCESS", "SUCCEEDED").contains(r.status)) // filtering specific status values)
+      ) --> (Ape.writers.cassandraWriter ++ Ape.writers.jDBCWriter)
 
-  val validStatuses = Seq("SUCCESS", "SUCCEEDED")
-
-  val filter: ZStream[Consumer, Throwable, Option[Transaction]] => ZStream[Consumer, Throwable, Transaction] = s =>
-    s.filter(_.isDefined).map(_.orNull).filter(r => validStatuses.contains(r.status))
-
-//  val pipe = reader --> 
-//  (WriterZUnit(filter) --> (Ape.writers.cassandraWriter ++ Ape.writers.jDBCWriter))
-  val pipe: ZIO[KafkaConfig, Throwable, Ape[Consumer, Nothing]] = 
-    reader --> (Ape.writers.cassandraWriter ++ Ape.writers.jDBCWriter)
+  val layer: ZLayer[Any with System, Throwable, KafkaConfig with Consumer with CassandraConfig with JDBCConfig] = (KafkaConfig.live >+> KafkaConfig.liveConsumer) ++ CassandraConfig.live ++ JDBCConfig.live
 
   override def run = (for {
     p <- pipe
     _ <- p.run
-  } yield ()).provideLayer(KafkaConfig.live >+> KafkaConfig.kafkaConsumer)
+  } yield ()).provideLayer(layer)
 }
 ```
