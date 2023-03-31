@@ -2,39 +2,35 @@
 
 The goal of this project is to generate a common approach when creating new data consuming microservices.
 
-
 ## Getting started
 To create a sample pipeline that reads from Kafka, grabs some fields and saves back to Kafka in avro format do the 
 following:
 
 1. Define your input class A (this class can come from a schema registry or produced using an avro schema with some 
-   online tool) and your reader
+   online tool)
 ```scala
-import com.libertexgroup.ape.pipelines.Pipeline
-
 case class Message(value:String)
-val reader = Pipeline.readers.kafkaAvroReader[Message]
 ```
 2. Define an output class B and a simple transformer A => B
 ```scala
 case class Message2(value:String)
-implicit val transformer: Message => Message2 = msg => {
-   Message2(value = msg.value)
-} 
+val transformer: Message => Message2 = 
+   msg => Message2(value = msg.value)
 ```
-3. Define your writer
+3. Define your reader
 ```scala
-import com.libertexgroup.ape.pipelines.Pipeline
-val writer = Pipeline.writers.kafkaAvroWriter[Message2]
+val reader = Ape.readers.kafkaAvroReader[Message]
+        .map(transformer)
 ```
-4. Create your pipeline
+4. Define your writer
 ```scala
-val pipeline = reader --> writer
+val writer = Ape.writers.kafkaAvroWriter[Message2]
 ```
-5. Run your pipeline using the `run` method
+4. Create your pipeline and run it using the `run` method
 ```scala
 for {
-   _ <- pipeline.run
+   pipe <- reader --> writer
+   _ <- pipe.run
 } yield ()
 ```
 --------
