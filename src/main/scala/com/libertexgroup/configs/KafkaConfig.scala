@@ -3,7 +3,7 @@ package com.libertexgroup.configs
 import zio.System.envOrElse
 import zio.kafka.consumer.Consumer.AutoOffsetStrategy
 import zio.kafka.consumer.{Consumer, ConsumerSettings}
-import zio.{Duration, ZIO, ZLayer, durationInt}
+import zio.{Duration, Scope, ZIO, ZLayer, durationInt}
 
 import scala.util.Try
 
@@ -36,14 +36,16 @@ object KafkaConfig extends ReaderConfig {
 
   def live: ZLayer[Any, SecurityException, KafkaConfig] = ZLayer.fromZIO(make)
 
-  val kafkaConsumer: ZIO[KafkaConfig, Nothing, ZLayer[Any, Throwable, Consumer]] = for {
+  val kafkaConsumer: ZIO[Scope with KafkaConfig, Throwable, Consumer] = for {
     config <- ZIO.service[KafkaConfig]
     _ <- ZIO.when(config.kafkaBrokers.isEmpty || config.kafkaBrokers.head.isEmpty) {
       ZIO.fail(throw new Exception("Kafka Brokers are empty"))
     }
-  } yield ZLayer.scoped(
-    Consumer.make(
+    consumer <- Consumer.make(
       ConsumerSettings(config.kafkaBrokers).withGroupId(config.consumerGroup)
     )
-  )
+  } yield consumer
+
+  val liveConsumer: ZLayer[KafkaConfig, Throwable, Consumer] = ZLayer.scoped(kafkaConsumer)
+
 }
