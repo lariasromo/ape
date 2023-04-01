@@ -15,7 +15,7 @@ import sttp.ws.WebSocket
 import zio.kafka.consumer.Consumer
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
-import zio.{Task, ZIO}
+import zio.{Duration, Task, ZIO}
 
 import java.sql.ResultSet
 import java.time.ZonedDateTime
@@ -57,6 +57,10 @@ class PipelineReaders() {
 
   def s3FileReaderSimple[ET](lp:ZIO[S3 with S3Config, Nothing, ZonedDateTime => List[String]]):
   Reader[S3 with S3Config, Any, S3ObjectSummary] = new ape.readers.s3.FileReaderSimple(lp)
+
+  def s3FileReaderBounded[ET](locationPattern:ZIO[S3Config, Nothing, ZonedDateTime => List[String]],
+                              start:ZonedDateTime, end:ZonedDateTime, step:Duration):
+  Reader[S3 with S3Config, Any, S3ObjectSummary] = new ape.readers.s3.FileReaderBounded(locationPattern, start, end, step)
 
   def s3TypedParquetReader[T >: Null : SchemaFor : Decoder : Encoder : ClassTag]:
   Reader[S3FileReaderService with S3Config, S3Config with S3, S3FileWithContent[T]] = new ape.readers.s3.TypedParquetReader[T]
