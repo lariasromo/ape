@@ -21,7 +21,10 @@ object ClickhouseJDBCUtils {
         conf <- ZIO.service[ClickhouseConfig]
         conn <- connect
         chk <- ZIO.fromTry(Try(toChunk(conn.createStatement().executeQuery(query))))
-          .catchAll(_ => printLine("No data found on node: " + conf) *> ZIO.succeed(Chunk.empty))
+          .catchAll(ex => for {
+            _ <- printLine(ex.getMessage)
+            _ <- printLine("No data found on node: " + conf)
+          } yield Chunk.empty)
       } yield chk
     }
 
