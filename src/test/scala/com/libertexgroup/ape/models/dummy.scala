@@ -8,6 +8,7 @@ import io.circe._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.parser._
 import io.circe.syntax.EncoderOps
+import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -37,4 +38,6 @@ object dummy {
       rs.getString("b")
     )
   }
+  implicit val t: ConsumerRecord[String, Array[Byte]] => dummy = rec =>
+    dummy(rec.value().map(_.toChar).mkString, rec.value().map(_.toChar).mkString)
 }

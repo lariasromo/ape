@@ -1,11 +1,17 @@
 package com.libertexgroup.ape.utils
 
 import com.libertexgroup.configs.S3Config
-import zio.ZIO
+import zio.{Duration, ZIO}
 
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
 
 object S3Utils {
+  def dateRange(start: ZonedDateTime, end: ZonedDateTime, step: Duration) = {
+    val s = (start.toEpochSecond - start.toEpochSecond) / step.toSeconds
+    val e = (end.toEpochSecond - start.toEpochSecond) / step.toSeconds
+    (s to e).map(s => end.minus(step multipliedBy s))
+  }
+
   def pathConverter(path: String):ZIO[S3Config, Nothing, ZonedDateTime => List[String]] = for {
     config <- ZIO.service[S3Config]
   } yield {

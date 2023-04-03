@@ -9,7 +9,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object ClickhouseReaderTest extends ZIOSpec[MultiClickhouseConfig with ClickHouseContainer] {
-  val reader = Ape.readers.clickhouseDefaultReader[dummy]("select * from dummy")
+  val reader = Ape.readers.clickhouseDefaultReader[Any, dummy]("select * from dummy")
 
   override def spec: Spec[MultiClickhouseConfig with ClickHouseContainer with TestEnvironment with Scope, Any] =
     suite("ClickhouseReaderTest")(
