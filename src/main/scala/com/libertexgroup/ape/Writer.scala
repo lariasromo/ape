@@ -1,6 +1,6 @@
 package com.libertexgroup.ape
 
-import com.libertexgroup.ape.Writer.{TTWriter, ZTWriter}
+import com.libertexgroup.ape.Writer.{TTWriter, UnitTWriter, UnitZWriter, ZTWriter, concatenate}
 import com.libertexgroup.ape.readers.PipelineReaders
 import com.libertexgroup.ape.writers.PipelineWriters
 import zio.ZIO
@@ -20,20 +20,25 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
     Writer.sum(this, writer2)
   def -->[E2, T2: ClassTag](writer2: Writer[E2, ZE, T, T2]): Writer[E with E2, ZE, T0, T2] =
     Writer.concatenate(this, writer2)
+  def <--[E2, T00: ClassTag](writer2: Writer[E2, ZE, T00, T0]): Writer[E2 with E, ZE, T00, T] =
+    Writer.concatenate(writer2, this)
 
 
-  def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] = new TTWriter(this, t)
-  def withTransform[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = {
-    implicit val tt = t
-    **
-  }
+  def withTransform[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = new TTWriter(this, t)
+  def map[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
+  def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
 
-  def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
+  def preMap[T00: ClassTag](t: T00 => T0): Writer[E, ZE, T00, T] = concatenate(new UnitTWriter(t), this)
+
+  def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
     new ZTWriter(this, t)
-  def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] = {
-    implicit val tt = t
-    ***
-  }
+  def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
+    withZTransform(t)
+  def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
+    withZTransform(t)
+
+  def preMapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0]): Writer[E, ZE, T00, T] =
+    concatenate(new UnitZWriter(t), this)
 }
 
 object Writer {
@@ -82,6 +87,17 @@ object Writer {
     } yield transform(s)
   }
 
+  class UnitZWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+                                                       t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2])
+    extends Writer[E, ZE, T, T2]{
+    override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = ZIO.succeed(t(i))
+  }
+
+  class UnitTWriter[E, ZE, T: ClassTag, T2: ClassTag] (t: T => T2)
+    extends Writer[E, ZE, T, T2]{
+    override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] =
+      ZIO.succeed(i.map(t))
+  }
 }
 
 

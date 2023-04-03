@@ -15,7 +15,12 @@ import sttp.ws.WebSocket
 import zio.kafka.consumer.Consumer
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
+<<<<<<< HEAD
 import zio.{Task, ZIO}
+=======
+import zio.{Duration, Task, ZIO}
+
+>>>>>>> master
 import java.sql.ResultSet
 import java.time.ZonedDateTime
 
@@ -36,12 +41,12 @@ class PipelineReaders() {
 
   def noOpReader[E, ZE, T: ClassTag](stream: ZStream[ZE, Throwable, T]): Reader[Any, ZE, T] = new UnitReader(stream)
 
+  def clickhouseDefaultReader[ET, T: ClassTag](sql: String)(implicit r2o: ResultSet => T):
+  Reader[MultiClickhouseConfig, ET, T] = new ape.readers.clickhouse.DefaultReader[ET, T](sql)
 
-  def clickhouseDefaultReader[T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[MultiClickhouseConfig, Any, T] =
-    new ape.readers.clickhouse.DefaultReader[Any, T](sql)
 
-  def jdbcDefaultReader[T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[JDBCConfig, Any, T] =
-    new ape.readers.jdbc.DefaultReader[Any, T](sql)
+  def jdbcDefaultReader[ET, T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[JDBCConfig, ET, T] =
+    new ape.readers.jdbc.DefaultReader[ET, T](sql)
 
   def kafkaDefaultReader: Reader[KafkaConfig, Consumer, ConsumerRecord[String, Array[Byte]]] =
     new ape.readers.kafka.DefaultReader()
@@ -67,8 +72,12 @@ class PipelineReaders() {
   def s3FileReaderContinuous(lp:ZIO[S3Config, Nothing, ZonedDateTime => List[String]]):
   Reader[S3Config, S3, S3ObjectSummary] = new ape.readers.s3.FileReaderContinuous(lp)
 
-  def s3FileReaderSimple(lp:ZIO[S3 with S3Config, Nothing, ZonedDateTime => List[String]]):
+  def s3FileReaderSimple[ET](lp:ZIO[S3 with S3Config, Nothing, ZonedDateTime => List[String]]):
   Reader[S3 with S3Config, Any, S3ObjectSummary] = new ape.readers.s3.FileReaderSimple(lp)
+
+  def s3FileReaderBounded[ET](locationPattern:ZIO[S3Config, Nothing, ZonedDateTime => List[String]],
+                              start:ZonedDateTime, end:ZonedDateTime, step:Duration):
+  Reader[S3 with S3Config, Any, S3ObjectSummary] = new ape.readers.s3.FileReaderBounded(locationPattern, start, end, step)
 
   def s3TypedParquetReader[T >: Null : SchemaFor : Decoder : Encoder : ClassTag]:
   Reader[S3FileReaderService with S3Config, S3Config with S3, S3FileWithContent[T]] = new ape.readers.s3.TypedParquetReader[T]
