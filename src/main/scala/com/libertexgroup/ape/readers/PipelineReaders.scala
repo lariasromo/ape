@@ -1,9 +1,9 @@
 package com.libertexgroup.ape.readers
 
 import com.libertexgroup.ape
-import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileWithContent}
 import com.libertexgroup.ape.Reader
 import com.libertexgroup.ape.Reader.UnitReader
+import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileWithContent}
 import com.libertexgroup.configs._
 import com.libertexgroup.models.s3.KafkaRecordS3
 import com.libertexgroup.models.websocket.Message
@@ -12,32 +12,23 @@ import io.circe
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import sttp.ws.WebSocket
+import zio.http.{Client, Request}
 import zio.kafka.consumer.Consumer
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
-<<<<<<< HEAD
-import zio.{Task, ZIO}
-=======
 import zio.{Duration, Task, ZIO}
 
->>>>>>> master
 import java.sql.ResultSet
 import java.time.ZonedDateTime
-
-import zio.http.Request
-
 import scala.reflect.ClassTag
 
 // Readers
 class PipelineReaders() {
+  def restApiReaderByte[E](request: Request): Reader[Client,E,Byte] =
+    new ape.readers.rest.RestAPIReaderByte[E](request)
 
-
-
-  def restApiReaderByte[E](request: Request) = new ape.readers.rest.RestAPIReaderByte[E](request)
-
-  def restApiReaderString[E](request: Request) = new ape.readers.rest.RestAPIReaderString[E](request)
-
-
+  def restApiReaderString[E](request: Request): Reader[Client,E,String] =
+    new ape.readers.rest.RestAPIReaderString[E](request)
 
   def noOpReader[E, ZE, T: ClassTag](stream: ZStream[ZE, Throwable, T]): Reader[Any, ZE, T] = new UnitReader(stream)
 
