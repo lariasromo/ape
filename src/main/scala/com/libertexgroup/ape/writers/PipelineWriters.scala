@@ -20,7 +20,7 @@ class PipelineWriters() {
   def queueWriter[E, ZE, T: ClassTag](queue:Queue[T]): Writer[E, ZE, T, T] = new ape.writers.QueueWriter[E, ZE, T](queue)
 
   // Writers
-  def clickhouseWriter[ET, T <:ClickhouseModel :ClassTag]: Writer[MultiClickhouseConfig, ET, T, Chunk[T]] =
+  def clickhouseWriter[ET, T <:ClickhouseModel :ClassTag]: Writer[MultiClickhouseConfig, ET, T, Chunk[(T, Int)]] =
     new ape.writers.clickhouse.DefaultWriter[ET, T]
 
   def jDBCWriter[ET]: Writer[JDBCConfig, ET, JDBCModel, Chunk[JDBCModel]] =

@@ -13,8 +13,8 @@ import scala.util.{Failure, Success, Try}
 
 //protected[writers] class DefaultWriter[E] extends ClickhouseWriter[E, E with Scope with MultiClickhouseConfig, ClickhouseModel] {
 // The result of this writer are the records that failed to be inserted
-protected[writers] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag] extends ClickhouseWriter[MultiClickhouseConfig, ET, T, Chunk[T]] {
-  def insertRetrieveErrors(batch: Chunk[T]): ClickHouseConnection => Chunk[T] = conn => {
+protected[writers] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag] extends ClickhouseWriter[MultiClickhouseConfig, ET, T, Chunk[(T, Int)]] {
+  def insertRetrieveResults(batch: Chunk[T]): ClickHouseConnection => Chunk[(T, Int)] = conn => {
     val stmt = conn.prepareStatement(batch.head.sql)
     batch.foreach(row => {
       row.prepare(stmt)
@@ -30,16 +30,14 @@ protected[writers] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag] extend
     }
 
     batch.zip(tryEx)
-      .filter { case(_, result) => result.equals(Statement.EXECUTE_FAILED) }
-      .map { case(row, _) => row }
   }
 
-  def insertBatch(batch: Chunk[T], config:ClickhouseConfig): ZIO[Any, Throwable, Chunk[T]] = for {
-    errors <- runConnect(insertRetrieveErrors(batch)).provideSomeLayer(ZLayer.succeed(config))
+  def insertBatch(batch: Chunk[T], config:ClickhouseConfig): ZIO[Any, Throwable, Chunk[(T, Int)]] = for {
+    errors <- runConnect(insertRetrieveResults(batch)).provideSomeLayer(ZLayer.succeed(config))
   } yield errors
 
   override def apply(stream: ZStream[ET, Throwable, T]):
-  ZIO[MultiClickhouseConfig, Nothing, ZStream[ET, Throwable, Chunk[T]]] = for {
+  ZIO[MultiClickhouseConfig, Nothing, ZStream[ET, Throwable, Chunk[(T, Int)]]] = for {
       config <- ZIO.service[MultiClickhouseConfig]
       r = stream
         .grouped(config.chConfigs.length * config.chConfigs.head.batchSize)

@@ -50,8 +50,8 @@ object Writer {
     new Writer[E with E2, ZE, T0, (T, T2)] {
       override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E with E2, Throwable, ZStream[ZE, Throwable, (T, T2)]] =
         for {
-          s <- writer1.apply(i)
-          s2 <- writer2.apply(i)
+          s <- writer1(i)
+          s2 <- writer2(i)
         } yield s.zip(s2)
     }
 
@@ -64,8 +64,8 @@ object Writer {
     new Writer[E with E2, ZE, T0, T2] {
       override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E with E2, Throwable, ZStream[ZE, Throwable, T2]] =
         for {
-                s <- writer1.apply(i)
-                s2 <- writer2.apply(s)
+                s <- writer1(i)
+                s2 <- writer2(s)
               } yield s2
     }
 
