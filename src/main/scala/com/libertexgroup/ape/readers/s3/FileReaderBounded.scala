@@ -23,7 +23,7 @@ class FileReaderBounded(
     config <- ZIO.service[S3Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
-    _ <- printLine("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
+    _ <- printLine(s"Starting s3 bounded files from ${start} to ${end}")
     datesIter = S3Utils.dateRange(start, end, step)
     c <- Chunk
       .fromIterable(datesIter)
