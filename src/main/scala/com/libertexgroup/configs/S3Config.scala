@@ -1,7 +1,7 @@
 package com.libertexgroup.configs
 
-import com.libertexgroup.models.CompressionType
-import com.libertexgroup.models.CompressionType.CompressionType
+import com.libertexgroup.models.s3.CompressionType.CompressionType
+import com.libertexgroup.models.s3.CompressionType
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient

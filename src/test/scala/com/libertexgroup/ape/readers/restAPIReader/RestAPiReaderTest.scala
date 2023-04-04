@@ -40,9 +40,8 @@ object RestAPiReaderTest extends ZIOSpecDefault{
 
       val request = Request.post(Body.fromString("""{"prop": "value"}"""), URL.empty)
 
-      val reader = Ape.readers.restApiReaderByte(request)
       for {
-        stream <- reader.apply.provideLayer(ZLayer.succeed(mockServer))
+        stream <- Ape.readers.restApiReaderByte(request).apply.provideLayer(ZLayer.succeed(mockServer))
         data <- stream.runCollect
       // _<-  zio.Console.printLine("pipes " + data.toArray.map(_.toChar).mkString)//new String( data.toArray, StandardCharsets.UTF_16))
       } yield {
@@ -75,10 +74,9 @@ object RestAPiReaderTest extends ZIOSpecDefault{
 
 
         )
-        val reader = Ape.readers.restApiReaderByte(request)
 
       for {
-        stream<- reader.apply.provideLayer(zio.http.Client.default)
+        stream<- Ape.readers.restApiReaderByte(request).apply.provideLayer(zio.http.Client.default)
 
         data <- stream.runCollect
       _<-  zio.Console.printLine("data:  " +data.toString)
@@ -116,9 +114,8 @@ object RestAPiReaderTest extends ZIOSpecDefault{
 
       )
 
-      val reader = Ape.readers.restApiReaderString(request)
       for {
-        stream <- reader.apply
+        stream <- Ape.readers.restApiReaderString(request).apply
           .provideLayer(zio.http.Client.default)
         data <- stream.runCollect
         //new String( data.toArray, StandardCharsets.UTF_16))

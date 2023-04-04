@@ -6,7 +6,7 @@ import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.writers.sampleRecords
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.CompressionType
+import com.libertexgroup.models.s3.CompressionType
 import zio.s3.S3
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}

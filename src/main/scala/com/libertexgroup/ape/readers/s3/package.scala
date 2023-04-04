@@ -2,8 +2,8 @@ package com.libertexgroup.ape.readers
 
 import com.libertexgroup.ape.utils.ParquetUtils.{readParquetGenericRecord, readParquetWithType}
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.CompressionType
-import com.libertexgroup.models.CompressionType._
+import com.libertexgroup.models.s3.CompressionType._
+import com.libertexgroup.models.s3.CompressionType
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.avro.generic.GenericRecord
 import software.amazon.awssdk.services.s3.model.S3Exception
