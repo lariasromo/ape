@@ -2,7 +2,7 @@ package com.libertexgroup.ape.utils
 
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.CompressionType.CompressionType
+import com.libertexgroup.models.s3.CompressionType.CompressionType
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.Console.printLine
@@ -19,7 +19,7 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
   } yield S3Config(
     location = location,
     s3Bucket = Some("ape"),
-    s3Host = container.getHostAddress.toString,
+    s3Host = Some(container.getHostAddress.toString),
     compressionType = compressionType,
     parallelism = 5,
     enableBackPressure = true,

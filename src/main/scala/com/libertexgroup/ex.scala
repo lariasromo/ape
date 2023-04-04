@@ -4,12 +4,11 @@ import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileReaderServiceBounded}
 import com.libertexgroup.ape.utils.S3Utils
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.CompressionType
+import com.libertexgroup.models.s3.CompressionType
 import zio.s3.S3
 import zio.stream.ZSink
 import zio.{Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer, durationInt}
 
-import java.nio.file.Paths
 import java.time.ZonedDateTime
 
 object ex extends ZIOAppDefault{

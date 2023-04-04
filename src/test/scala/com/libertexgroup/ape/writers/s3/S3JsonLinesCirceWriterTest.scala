@@ -8,7 +8,7 @@ import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.utils.MinioContainerService.setup
 import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.CompressionType
+import com.libertexgroup.models.s3.CompressionType
 import zio.s3.S3
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
