@@ -46,8 +46,8 @@ object Reader {
     } yield transform(s)
   }
 
-  class UnitReader[ZE, T: ClassTag] (stream: ZStream[ZE, Throwable, T]) extends Reader[Any, ZE, T]{
-    override def apply: ZIO[Any, Throwable, ZStream[ZE, Throwable, T]] = ZIO.succeed(stream)
+  class UnitReader[E, ZE, T: ClassTag] (stream: ZStream[ZE, Throwable, T]) extends Reader[E, ZE, T]{
+    override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = ZIO.succeed(stream)
   }
 }
 

@@ -13,15 +13,15 @@ import zio.{Duration, Scope, Task, ZIO, ZLayer}
 import scala.util.Try
 
 case class S3Config (
-                      location: Option[String],
-                      s3Bucket: Option[String],
-                      s3Host: String,
                       compressionType: CompressionType,
                       parallelism: Int,
                       enableBackPressure: Boolean,
-                      fileCacheExpiration: Option[zio.Duration],
-                      filePeekDuration: Option[zio.Duration],
-                      filePeekDurationMargin: Option[zio.Duration]
+                      location: Option[String]=None,
+                      s3Bucket: Option[String]=None,
+                      s3Host: Option[String]=None,
+                      fileCacheExpiration: Option[zio.Duration]=None,
+                      filePeekDuration: Option[zio.Duration]=None,
+                      filePeekDurationMargin: Option[zio.Duration]=None
   ) {
   val taskLocation: Task[String] = ZIO.getOrFail(location)
   val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
@@ -36,7 +36,7 @@ object S3Config extends ReaderConfig {
     filePeekDurationMargin <- envOrElse("S3_FILE_PEEK_DURATION_MARGIN", "PT1H")
     s3Bucket <- env("S3_BUCKET")
     compressionType <- envOrElse("COMPRESSION_TYPE", "GZIP")
-    s3Host <- envOrElse("S3_OVERRIDE_URL", "https://s3.eu-west-1.amazonaws.com")
+    s3Host <- env("S3_OVERRIDE_URL")
     enableBackPressure <- envOrElse("S3_BACK_PRESSURE", "false")
   } yield S3Config (
     location = location,
