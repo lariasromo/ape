@@ -24,11 +24,13 @@ class FileReaderBounded(
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
     _ <- printLine("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
+    datesIter = S3Utils.dateRange(start, end, step)
     c <- Chunk
-      .fromIterable(S3Utils.dateRange(start, end, step))
+      .fromIterable(datesIter)
       .flatMap(now => {
-        val locs = locPattern(now).distinct
-        Chunk.fromIterable(locs)
+        val locs = locPattern(now)
+        val d = locs.distinct
+        Chunk.fromIterable(d)
       })
       .mapZIO(location => for {
         objs <- listObjects(bucket, ListObjectOptions.from(location, 100))

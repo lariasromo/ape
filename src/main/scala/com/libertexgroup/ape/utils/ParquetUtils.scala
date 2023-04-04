@@ -22,7 +22,9 @@ object ParquetUtils {
 //    conf.set("fs.s3a.access.key", config.awsAccessKey)
 //    conf.set("fs.s3a.secret.key", config.awsSecretKey)
     conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-    conf.set("fs.s3a.endpoint", config.s3Host)
+    if(config.s3Host.isDefined) {
+      conf.set("fs.s3a.endpoint", config.s3Host.get)
+    }
     conf.setBoolean("fs.s3a.path.style.access", true)
     conf.setBoolean(org.apache.parquet.avro.AvroReadSupport.READ_INT96_AS_FIXED, true)
 
@@ -42,7 +44,9 @@ object ParquetUtils {
 //    conf.set("fs.s3a.access.key", config.awsAccessKey)
 //    conf.set("fs.s3a.secret.key", config.awsSecretKey)
     conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-    conf.set("fs.s3a.endpoint", config.s3Host)
+    if(config.s3Host.isDefined) {
+      conf.set("fs.s3a.endpoint", config.s3Host.get)
+    }
     conf.setBoolean("fs.s3a.path.style.access", true)
     conf.setBoolean(org.apache.parquet.avro.AvroReadSupport.READ_INT96_AS_FIXED, true)
 
