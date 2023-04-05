@@ -18,9 +18,10 @@ protected[writers] class JsonLinesWriter[E, T: ClassTag](implicit enc: T => Stri
         .map(s => enc(s) + "\n")
         .map(_.getBytes)
         .flatMap(bytes => ZStream.fromIterable(bytes))
+      fileName <- zio.Random.nextUUID
       _ <- multipartUpload(
         bucket,
-        location,
+        s"${location}/${fileName}.json",
         bytesStream,
         MultipartUploadOptions.default
       )(config.parallelism)

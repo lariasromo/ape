@@ -15,9 +15,10 @@ protected[writers] class AvroWriter[E, T >:Null :SchemaFor :Decoder :Encoder : C
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
+      fileName <- zio.Random.nextUUID
       _ <- multipartUpload(
         bucket,
-        location,
+        s"${location}/${fileName}",
         stream
           .map(r => {
             import com.libertexgroup.ape.utils.AvroUtils.implicits._

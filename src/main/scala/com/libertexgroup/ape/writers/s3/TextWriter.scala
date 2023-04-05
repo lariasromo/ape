@@ -13,9 +13,10 @@ protected[writers] class TextWriter[E]
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
+      fileName <- zio.Random.nextUUID
       _ <- multipartUpload(
         bucket,
-        location,
+        s"${location}/${fileName}.txt",
         stream.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r)),
         MultipartUploadOptions.default
       )(config.parallelism)

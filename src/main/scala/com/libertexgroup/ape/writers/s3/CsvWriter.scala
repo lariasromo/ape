@@ -21,9 +21,10 @@ protected[writers] class CsvWriter[ZE, T: ClassTag](sep: String = ",")(implicit 
         .map(a => rfc.to(a).mkString(sep) + "\n")
         .map(_.getBytes)
         .flatMap(bytes => ZStream.fromIterable(bytes))
+      fileName <- zio.Random.nextUUID
       _ <- multipartUpload(
         bucket,
-        location,
+        s"${location}/${fileName}.csv",
         bytesStream,
         MultipartUploadOptions.default
       )(config.parallelism)
