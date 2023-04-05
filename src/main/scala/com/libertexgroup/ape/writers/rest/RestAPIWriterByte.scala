@@ -7,7 +7,7 @@ import zio.http._
 import zio.stream.ZStream
 
 
-protected[readers] class RestAPIWriterByte[E] extends RestApiWriter[Client,E,Request, Byte] {
+protected[writers] class RestAPIWriterByte[E] extends RestApiWriter[Client,E,Request, Byte] {
 
   override def apply(i: ZStream[E, Throwable, Request]): ZIO[Client, Throwable, ZStream[E, Throwable, Byte]] =
     for {
