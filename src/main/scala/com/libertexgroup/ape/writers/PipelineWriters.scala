@@ -10,6 +10,7 @@ import com.libertexgroup.models.jdbc.JDBCModel
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import io.circe
 import org.apache.kafka.clients.producer.ProducerRecord
+import purecsv.unsafe.converter.Converter
 import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.s3.S3
 import zio.{Chunk, Duration, Queue}
@@ -38,6 +39,11 @@ class PipelineWriters() {
 
   def s3ParquetWriter[ET, T >: Null : SchemaFor : Encoder : Decoder : ClassTag](chunkSize: Int, duration: Duration):
   Writer[ET with S3 with S3Config, ET, T, T] = new ape.writers.s3.ParquetWriter[ET, T](chunkSize, duration)
+
+  def s3CsvWriter[ET, T: ClassTag]: Writer[ET with S3 with S3Config, ET, T, T] = {
+    import purecsv.safe._
+    new ape.writers.s3.CsvWriter
+  }
 
   def s3TextWriter[ET]: Writer[ET with S3 with S3Config, ET, String, String] = new ape.writers.s3.TextWriter[ET]
 

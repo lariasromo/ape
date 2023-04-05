@@ -1,4 +1,4 @@
-ThisBuild / version := "2.0.8.1"
+ThisBuild / version := "2.0.9"
 
 
 ThisBuild / scalaVersion := "2.13.10"
@@ -33,6 +33,7 @@ val zioLibraries = Seq(
 )
 
 libraryDependencies ++= Seq(
+  "io.kontainers" %% "purecsv" % "1.3.10",
   "io.github.palanga" %% "zio-cassandra" % "0.10.0",
   "org.apache.parquet" % "parquet-avro" % "1.12.0",
   "com.softwaremill.sttp.client3" %% "core" % "3.8.0",
