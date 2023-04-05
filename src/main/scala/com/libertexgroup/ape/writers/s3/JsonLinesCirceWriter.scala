@@ -19,9 +19,10 @@ protected[writers] class JsonLinesCirceWriter[E, T: Encoder : ClassTag] extends 
         .map(s => s.asJson.noSpaces + "\n")
         .map(_.getBytes)
         .flatMap(bytes => ZStream.fromIterable(bytes))
+      fileName <- zio.Random.nextUUID
       _ <- multipartUpload(
         bucket,
-        location,
+        s"${location}/${fileName}.json",
         bytesStream,
         MultipartUploadOptions.default
       )(config.parallelism)
