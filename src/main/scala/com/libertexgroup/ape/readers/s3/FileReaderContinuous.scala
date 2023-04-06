@@ -12,11 +12,12 @@ import zio.{Schedule, ZIO}
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
-class FileReaderContinuous(locationPattern:ZIO[S3Config, Nothing, ZonedDateTime => List[String]])
-  extends Reader[S3Config, S3, S3ObjectSummary] {
-    val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
+protected [s3] class FileReaderContinuous[Config <: S3Config, AWSS3 <: S3]
+(locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]])
+  extends Reader[Config, AWSS3, S3ObjectSummary] {
+  val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
-  def a: ZIO[S3Config, Throwable, ZStream[S3, Throwable, S3ObjectSummary]] = for {
+  override def apply: ZIO[Config, Throwable, ZStream[AWSS3, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[S3Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
@@ -44,7 +45,5 @@ class FileReaderContinuous(locationPattern:ZIO[S3Config, Nothing, ZonedDateTime 
           } yield ! exists
         }
     }.flatMap{x=>x}
-
-  override def apply: ZIO[S3Config, Throwable, ZStream[S3, Throwable, S3ObjectSummary]] = a
 }
 

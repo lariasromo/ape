@@ -13,7 +13,8 @@ import scala.util.{Failure, Success, Try}
 
 //protected[writers] class DefaultWriter[E] extends ClickhouseWriter[E, E with Scope with MultiClickhouseConfig, ClickhouseModel] {
 // The result of this writer are the records that failed to be inserted
-protected[writers] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag] extends ClickhouseWriter[MultiClickhouseConfig, ET, T, Chunk[(T, Int)]] {
+protected[clickhouse] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag] extends ClickhouseWriter[MultiClickhouseConfig,
+  ET, T, Chunk[(T, Int)]] {
   def insertRetrieveResults(batch: Chunk[T]): ClickHouseConnection => Chunk[(T, Int)] = conn => {
     val stmt = conn.prepareStatement(batch.head.sql)
     batch.foreach(row => {

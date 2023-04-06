@@ -6,12 +6,11 @@ import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
-protected[writers] class DefaultWriter[ET] extends KafkaWriter[KafkaConfig with ProducerSettings, ET, String, String] {
+protected[kafka] class DefaultWriter[ET, Config <: KafkaConfig]
+  extends KafkaWriter[Config, ET, String, String] {
   override def apply(stream: ZStream[ET, Throwable, ProducerRecord[String, String]]):
-  ZIO[KafkaConfig with ProducerSettings, Throwable, ZStream[ET, Throwable, ProducerRecord[String, String]]]
-  =
+  ZIO[Config, Throwable, ZStream[ET, Throwable, ProducerRecord[String, String]]] =
     for {
-      producerSettings <- ZIO.service[ProducerSettings]
       config <- ZIO.service[KafkaConfig]
       s = stream.tap(v => {
         ZIO.scoped {
@@ -21,7 +20,7 @@ protected[writers] class DefaultWriter[ET] extends KafkaWriter[KafkaConfig with 
             value = v.value(),
             keySerializer = Serde.string,
             valueSerializer = Serde.string
-          ).provideSomeLayer(ZLayer.fromZIO(Producer.make(producerSettings)))
+          ).provideSomeLayer(ZLayer.fromZIO(Producer.make(config.producerSettings)))
         }
       })
 

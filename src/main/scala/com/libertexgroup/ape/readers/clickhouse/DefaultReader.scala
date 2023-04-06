@@ -7,8 +7,9 @@ import zio.stream.ZStream
 import java.sql.ResultSet
 import scala.reflect.ClassTag
 
-protected[readers] class DefaultReader[E1, T: ClassTag] (sql:String)(implicit row2Object: ResultSet => T)
-  extends com.libertexgroup.ape.readers.clickhouse.ClickhouseReader[MultiClickhouseConfig, E1, T] {
+protected[clickhouse] class DefaultReader[E1, T: ClassTag, Config <: MultiClickhouseConfig](sql:String)
+                                                                                        (implicit r: ResultSet => T)
+  extends ClickhouseReader[Config, E1, T] {
 
   override def apply: ZIO[MultiClickhouseConfig, Throwable, ZStream[E1, Throwable, T]] =
     for {

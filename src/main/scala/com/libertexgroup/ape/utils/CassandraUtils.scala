@@ -9,7 +9,7 @@ import zio.{Scope, ZIO, ZLayer}
 import java.net.InetSocketAddress
 
 object CassandraUtils {
-  val sessionFromCqlSession: ZIO[Scope with CassandraConfig, SessionOpenException, ZCqlSession] =
+  def sessionFromCqlSession[Config <: CassandraConfig]: ZIO[Scope with Config, SessionOpenException, ZCqlSession] =
     for {
       config <- ZIO.service[CassandraConfig]
       con <- session.auto.openFromDatastaxSession({
@@ -26,7 +26,7 @@ object CassandraUtils {
       })
     } yield con        
 
-  val layer: ZLayer[CassandraConfig, SessionOpenException, ZCqlSession] =
+  def layer[Config <: CassandraConfig]: ZLayer[Config, SessionOpenException, ZCqlSession] =
     ZLayer.scoped(sessionFromCqlSession)
 
 }

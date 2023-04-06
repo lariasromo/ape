@@ -3,16 +3,20 @@ package com.libertexgroup.ape.writers.s3
 import com.libertexgroup.configs.S3Config
 import purecsv.safe._
 import purecsv.safe.converter.Converter
-import zio.ZIO
+import zio.{Tag, ZIO}
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
 import zio.stream.ZStream
 
 import scala.reflect.ClassTag
 
-protected[writers] class CsvWriter[ZE, T: ClassTag](sep: String = ",")(implicit rfc: Converter[T,Seq[String]])
- extends S3Writer[ZE with S3 with S3Config, ZE, T, T] {
+protected[s3] class CsvWriter[
+  ZE, T: ClassTag,
+  Config <: S3Config :Tag,
+  AWSS3 <: S3 :Tag
+](sep: String = ",")(implicit rfc: Converter[T,Seq[String]])
+ extends S3Writer[ZE with AWSS3 with Config, ZE, T, T] {
   override def apply(stream: ZStream[ZE, Throwable, T]):
-  ZIO[ZE with S3 with S3Config, Throwable, ZStream[ZE, Throwable, T]] =
+  ZIO[ZE with AWSS3 with Config, Throwable, ZStream[ZE, Throwable, T]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket

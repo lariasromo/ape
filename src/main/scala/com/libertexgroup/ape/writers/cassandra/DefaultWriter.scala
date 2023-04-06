@@ -6,25 +6,27 @@ import com.libertexgroup.configs.CassandraConfig
 import com.libertexgroup.models.cassandra.CassandraModel
 import palanga.zio.cassandra.CassandraException
 import zio.stream.ZStream
-import zio.{Chunk, ZIO, ZLayer}
+import zio.{Chunk, Tag, ZIO, ZLayer}
 
-protected[writers] class DefaultWriter[E] extends CassandraWriter[CassandraConfig, E, CassandraModel, Chunk[AsyncResultSet]] {
-  def insertToCassandra(batch: Chunk[CassandraModel], config: CassandraConfig): ZIO[Any, CassandraException, Chunk[AsyncResultSet]] =
-    (
-      ZIO.scoped {
-        for {
-          session <- sessionFromCqlSession
-          error <- for {
-            ps <- session.prepare(SimpleStatement.builder(batch.head.sql).build)
-            results <- session.executePar(batch.toList.map(element => element.bind(ps)): _*)
-          } yield Chunk.fromIterable(results)
-        } yield error
-      }
-    ).provideSomeLayer(ZLayer.succeed(config))
+import scala.reflect.ClassTag
+
+protected[cassandra] class DefaultWriter[E, Config <: CassandraConfig :Tag, Model <: CassandraModel :Tag :ClassTag]
+  extends CassandraWriter[Config, E, Model, Chunk[AsyncResultSet]] {
+
+  def insertToCassandra(batch: Chunk[Model], config: CassandraConfig): ZIO[Any, CassandraException, Chunk[AsyncResultSet]] =
+    ZIO.scoped {
+      for {
+        session <- sessionFromCqlSession[CassandraConfig]
+        error <- for {
+          ps <- session.prepare(SimpleStatement.builder(batch.head.sql).build)
+          results <- session.executePar(batch.toList.map(element => element.bind(ps)): _*)
+        } yield Chunk.fromIterable(results)
+      } yield error
+    }.provideSomeLayer(ZLayer.succeed(config))
 
 
-  override def apply(stream: ZStream[E, Throwable, CassandraModel]):
-  ZIO[CassandraConfig, Throwable, ZStream[E, Throwable, Chunk[AsyncResultSet]]] =
+  override def apply(stream: ZStream[E, Throwable, Model]): ZIO[Config, Throwable, ZStream[E, Throwable,
+    Chunk[AsyncResultSet]]] =
     for {
       config <- ZIO.service[CassandraConfig]
       s = stream

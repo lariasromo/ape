@@ -5,31 +5,31 @@ import com.libertexgroup.configs.S3Config
 import zio.Console.printLine
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
-import zio.{Duration, ZIO, ZLayer}
+import zio.{Duration, Scope, Tag, ZIO, ZLayer}
 
 import java.time.ZonedDateTime
 
-class S3FileReaderServiceBounded(override val fileStream: ZStream[S3Config with S3, Throwable, S3ObjectSummary])
-  extends S3FileReaderService
+protected [s3] class S3FileReaderServiceBounded[Config <: S3Config :Tag, AWSS3 <: S3 :Tag]
+(override val fileStream: ZStream[S3Config with S3, Throwable, S3ObjectSummary])
+  extends S3FileReaderService[Config, AWSS3]
 
 object S3FileReaderServiceBounded {
-  def make(
-            locationPattern:ZIO[S3Config, Nothing, ZonedDateTime => List[String]],
+  def make[Config <: S3Config :Tag, AWSS3 <: S3 :Tag](
+            locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]],
             start:ZonedDateTime,
             end:ZonedDateTime,
             step:Duration
-          ): ZIO[S3Config with S3, Throwable, S3FileReaderServiceBounded] = ZIO.scoped {
+          ): ZIO[AWSS3 with Config, Throwable, S3FileReaderServiceBounded[Config, AWSS3]] =
     for {
-      files <- Ape.readers.s3FileReaderBounded(locationPattern, start, end, step).apply
-      stream = files.tap { file => printLine(s"Getting file ${file.key} from queue") }
-    } yield new S3FileReaderServiceBounded(stream)
-  }
+      files <- Ape.readers.s3[Config, AWSS3].fileReaderBounded(locationPattern, start, end, step).apply
+    } yield new S3FileReaderServiceBounded[Config, AWSS3](files)
 
-  def live(
-            locationPattern:ZIO[S3Config, Nothing, ZonedDateTime => List[String]],
+
+  def live[Config <: S3Config :Tag, AWSS3 <: S3 :Tag](
+            locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]],
             start:ZonedDateTime,
             end:ZonedDateTime,
             step:Duration
-          ): ZLayer[S3Config with S3, Throwable, S3FileReaderService] =
+          ): ZLayer[AWSS3 with Config, Throwable, S3FileReaderServiceBounded[Config, AWSS3]] =
     ZLayer.fromZIO(make(locationPattern, start, end, step))
 }

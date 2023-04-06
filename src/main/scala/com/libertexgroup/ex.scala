@@ -13,7 +13,7 @@ import java.time.ZonedDateTime
 
 object ex extends ZIOAppDefault{
   val location = "topics/ab-service--determination"
-  val readerService: ZLayer[S3Config with S3, Throwable, S3FileReaderService] =
+  val readerService: ZLayer[S3Config with S3, Throwable, S3FileReaderService[S3Config, S3]] =
     S3FileReaderServiceBounded.live(
       S3Utils.pathConverter(location),
       ZonedDateTime.now().minusHours(10),
@@ -21,7 +21,7 @@ object ex extends ZIOAppDefault{
       1.hour
     )
 
-  val layer: ZLayer[Any, Throwable, S3 with S3Config with S3FileReaderService] =
+  val layer: ZLayer[Any, Throwable, S3 with S3Config with S3FileReaderService[S3Config, S3]] =
     (S3Config.liveS3Default ++ ZLayer.succeed(
       S3Config(
         compressionType = CompressionType.GZIP,
@@ -37,8 +37,8 @@ object ex extends ZIOAppDefault{
 //    "24492121", "24502211", "24641651"
   )
 
-  val main: ZIO[S3 with S3Config with S3FileReaderService with Any, Throwable, Unit] = for {
-    p <- Ape.readers.s3TextReader
+  val main: ZIO[S3 with S3Config with S3FileReaderService[S3Config, S3] with Any, Throwable, Unit] = for {
+    p <- Ape.readers.s3[S3Config, S3].text
       .mapZ(r => r.map(_._2).flatMap(x=>x))
       .mapZ(s => s.filter(r => lookup.exists(r.contains(_)))).apply
     data <- p

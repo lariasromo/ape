@@ -1,8 +1,9 @@
 package com.libertexgroup.configs
 
 import zio.System.envOrElse
-import zio.kafka.consumer.Consumer.AutoOffsetStrategy
+import zio.kafka.consumer.Consumer.{AutoOffsetStrategy, OffsetRetrieval}
 import zio.kafka.consumer.{Consumer, ConsumerSettings}
+import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.{Duration, Scope, ZIO, ZLayer, durationInt}
 
 import scala.util.Try
@@ -14,7 +15,15 @@ case class KafkaConfig(
                         flushSeconds: Duration,
                         batchSize: Int,
                         autoOffsetStrategy: AutoOffsetStrategy
-  )
+  ){
+  val producerSettings: ProducerSettings = ProducerSettings(kafkaBrokers)
+    .withClientId(consumerGroup)
+
+  val consumerSettings: ConsumerSettings = ConsumerSettings(kafkaBrokers)
+    .withOffsetRetrieval(OffsetRetrieval.Auto(autoOffsetStrategy))
+    .withGroupId(consumerGroup)
+    .withClientId(consumerGroup)
+}
 
 
 object KafkaConfig extends ReaderConfig {
@@ -36,16 +45,24 @@ object KafkaConfig extends ReaderConfig {
 
   def live: ZLayer[Any, SecurityException, KafkaConfig] = ZLayer.fromZIO(make)
 
-  val kafkaConsumer: ZIO[Scope with KafkaConfig, Throwable, Consumer] = for {
+  def makeConsumer: ZIO[Scope with KafkaConfig, Throwable, Consumer] = for {
     config <- ZIO.service[KafkaConfig]
-    _ <- ZIO.when(config.kafkaBrokers.isEmpty || config.kafkaBrokers.head.isEmpty) {
-      ZIO.fail(throw new Exception("Kafka Brokers are empty"))
-    }
     consumer <- Consumer.make(
-      ConsumerSettings(config.kafkaBrokers).withGroupId(config.consumerGroup)
+      ConsumerSettings(config.kafkaBrokers)
+        .withOffsetRetrieval(OffsetRetrieval.Auto(config.autoOffsetStrategy))
+        .withGroupId(config.consumerGroup)
+        .withClientId(config.consumerGroup)
     )
   } yield consumer
 
-  val liveConsumer: ZLayer[KafkaConfig, Throwable, Consumer] = ZLayer.scoped(kafkaConsumer)
+  val liveConsumer: ZLayer[KafkaConfig, Throwable, Consumer] = ZLayer.scoped(makeConsumer)
 
+  def makeProducer: ZIO[Scope with KafkaConfig, Throwable, Producer] = for {
+    config <- ZIO.service[KafkaConfig]
+    producer <- Producer.make(
+      ProducerSettings(config.kafkaBrokers).withClientId(config.consumerGroup)
+    )
+  } yield producer
+
+  val liveProducer: ZLayer[KafkaConfig, Throwable, Producer] = ZLayer.scoped(makeProducer)
 }

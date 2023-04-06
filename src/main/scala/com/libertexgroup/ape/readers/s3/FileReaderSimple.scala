@@ -9,9 +9,10 @@ import zio.{Chunk, ZIO}
 
 import java.time.ZonedDateTime
 
-class FileReaderSimple(locationPattern:ZIO[S3 with S3Config, Nothing, ZonedDateTime => List[String]])
-  extends Reader[S3 with S3Config, Any, S3ObjectSummary] {
-  def a: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
+protected [s3] class FileReaderSimple[Config <: S3Config, AWSS3 <: S3]
+(locationPattern:ZIO[AWSS3 with Config, Nothing, ZonedDateTime => List[String]])
+  extends Reader[AWSS3 with Config, Any, S3ObjectSummary] {
+  override def apply: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[S3Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
@@ -24,7 +25,5 @@ class FileReaderSimple(locationPattern:ZIO[S3 with S3Config, Nothing, ZonedDateT
     )
 
   } yield ZStream.fromChunk(objs.flatten)
-
-  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = a
 }
 
