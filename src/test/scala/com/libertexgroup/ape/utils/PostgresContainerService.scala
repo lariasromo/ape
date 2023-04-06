@@ -17,7 +17,7 @@ object PostgresContainerService extends TestContainerHelper[PostgreSQLContainer]
 
   override val stopContainer: PostgreSQLContainer => UIO[Unit] = c => ZIO.succeedBlocking(c.stop())
 
-  def runScoped(sql:String) = ZIO.scoped(executeQuery(sql))
+  def runScoped(sql:String) = ZIO.scoped(executeQuery[JDBCConfig](sql))
 
   def loadSampleData: ZIO[JDBCConfig, Throwable, Unit] = for {
       _ <- createDummyTable

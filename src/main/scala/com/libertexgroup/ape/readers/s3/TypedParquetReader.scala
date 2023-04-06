@@ -16,11 +16,10 @@ import scala.reflect.ClassTag
  */
 protected[s3] class TypedParquetReader[
   T >:Null: SchemaFor :Encoder :Decoder :ClassTag,
-  Config <: S3Config :Tag,
-  AWSS3 <: S3 :Tag
-] extends S3Reader[Config, Config with AWSS3, S3FileWithContent[T, AWSS3], AWSS3, Config] {
-  override def apply: ZIO[S3FileReaderService[Config, AWSS3] with Config, Throwable,
-    ZStream[Config with AWSS3, Throwable, (S3ObjectSummary, ZStream[AWSS3, Throwable, T])]] = for {
+  Config <: S3Config :Tag
+] extends S3Reader[Config, Config with S3, S3FileWithContent[T], Config] {
+  override def apply: ZIO[S3FileReaderService[Config] with Config, Throwable,
+    ZStream[Config with S3, Throwable, (S3ObjectSummary, ZStream[S3, Throwable, T])]] = for {
     s3FilesQueue <- fileStream
     stream = s3FilesQueue.mapZIO(file => for {
       stream <- readParquet[T, Config](file)

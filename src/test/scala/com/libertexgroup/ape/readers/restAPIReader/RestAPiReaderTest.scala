@@ -76,7 +76,7 @@ object RestAPiReaderTest extends ZIOSpecDefault{
         )
 
       for {
-        stream<- Ape.readers.restApiReaderByte(request).apply.provideLayer(zio.http.Client.default)
+        stream<- Ape.readers.rest.byte(request).apply.provideLayer(zio.http.Client.default)
 
         data <- stream.runCollect
       _<-  zio.Console.printLine("data:  " +data.toString)
@@ -115,7 +115,7 @@ object RestAPiReaderTest extends ZIOSpecDefault{
       )
 
       for {
-        stream <- Ape.readers.restApiReaderString(request).apply
+        stream <- Ape.readers.rest.string(request).apply
           .provideLayer(zio.http.Client.default)
         data <- stream.runCollect
         //new String( data.toArray, StandardCharsets.UTF_16))

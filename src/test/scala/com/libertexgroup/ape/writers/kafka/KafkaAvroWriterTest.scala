@@ -14,7 +14,7 @@ import zio.{Chunk, Scope, ZIO, ZLayer}
 
 import java.time.{LocalDateTime, ZoneOffset}
 
-object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with ProducerSettings with KafkaContainer with Consumer] {
+object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
   val sampleObjects: Chunk[dummy] = Chunk(
     dummy("string 1", "other string"),
     dummy("string 2", "some other string")
@@ -28,11 +28,11 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with ProducerSettings wit
       )
     })
 
-  override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with ProducerSettings with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
     suite("KafkaAvroWriterTest")(
       test("Writes avro messages"){
         for {
-          stream <- Ape.readers.kafkaAvroReader[dummy].apply
+          stream <- Ape.readers.kafka[KafkaConfig].avro[dummy].apply
           data <- stream.map(_.value()).runHead
         } yield {
           val result = data.flatten
@@ -42,18 +42,18 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with ProducerSettings wit
       },
     )
 
-  val setup: ZIO[KafkaConfig with ProducerSettings, Throwable, Unit] = for {
+  val setup: ZIO[KafkaConfig, Throwable, Unit] = for {
     config <- ZIO.service[KafkaConfig]
     _ <- zio.Console.printLine("Sending dummy message")
-    _ <- Ape.writers.kafkaAvroWriter[Any, dummy].write(data(config.topicName))
+    _ <- Ape.writers.kafka[KafkaConfig].avro[Any, dummy].write(data(config.topicName))
   } yield ()
 
-  def b: ZLayer[Any, Throwable, KafkaContainer with KafkaConfig with ProducerSettings with Consumer] = {
+  def b: ZLayer[Any, Throwable, KafkaContainer with KafkaConfig with Consumer] = {
     KafkaContainerService.topicLayer("text_topic") >+>
-      (KafkaUtils.liveProducerSettings ++ KafkaUtils.consumerLayer) >+>
+      KafkaConfig.liveConsumer >+>
       ZLayer.fromZIO(setup)
   }
 
-  override def bootstrap: ZLayer[Any, Any, KafkaConfig with ProducerSettings with KafkaContainer with Consumer] = b
+  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer] = b
 }
 

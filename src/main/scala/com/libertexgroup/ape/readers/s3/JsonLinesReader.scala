@@ -12,15 +12,15 @@ import scala.reflect.ClassTag
  * The GenericRecord interface allows to interact with parquet values
  * If the file is just a text file each line will be a string stored in an attribute named `value`
  */
-protected[s3] class JsonLinesReader[T :ClassTag, Config <: S3Config :Tag, AWSS3 <: S3 :Tag]
-(implicit decode: String => T) extends S3Reader[Config, AWSS3 with Config, S3FileWithContent[T, AWSS3], AWSS3, Config] {
+protected[s3] class JsonLinesReader[T :ClassTag, Config <: S3Config :Tag]
+(implicit decode: String => T) extends S3Reader[Config, S3 with Config, S3FileWithContent[T], Config] {
 
-  override def apply: ZIO[S3FileReaderService[Config, AWSS3] with Config, Throwable,
-    ZStream[AWSS3 with Config, Throwable, S3FileWithContent[T, AWSS3]]] =
+  override def apply: ZIO[S3FileReaderService[Config] with Config, Throwable,
+    ZStream[S3 with Config, Throwable, S3FileWithContent[T]]] =
     for {
       config <- ZIO.service[S3Config]
       s3FilesQueue <- fileStream
-      decodedStream = s3FilesQueue.map(file => (file, readPlainText[AWSS3](config.compressionType, file).map(decode)))
-      newStream = if(config.enableBackPressure) readWithBackPressure[T, AWSS3, Config](decodedStream) else decodedStream
+      decodedStream = s3FilesQueue.map(file => (file, readPlainText(config.compressionType, file).map(decode)))
+      newStream = if(config.enableBackPressure) readWithBackPressure[T, Config](decodedStream) else decodedStream
     } yield newStream
 }

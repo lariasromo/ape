@@ -13,7 +13,7 @@ import zio.{Chunk, Scope, ZIO, ZLayer}
 
 import java.time.{LocalDateTime, ZoneOffset}
 
-object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig with ProducerSettings with Consumer] {
+object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig with Consumer] {
   val sampleStrings: Chunk[String] = Chunk(
     "string 1",
     "other string",
@@ -28,11 +28,11 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig with 
       )
     })
 
-  override def spec: Spec[KafkaContainer with KafkaConfig with ProducerSettings with Consumer with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaContainer with KafkaConfig with Consumer with TestEnvironment with Scope, Any] =
     suite("KafkaTextWriterTest")(
       test("Writes plaintext messages"){
         for {
-          stream <- Ape.readers.kafkaStringReader.apply
+          stream <- Ape.readers.kafka[KafkaConfig].string.apply
           data <- stream
             .tap(d => zio.Console.printLine(d.value()))
             .runHead
@@ -45,16 +45,16 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig with 
       },
     )
 
-  val setup: ZIO[KafkaConfig with ProducerSettings, Throwable, Unit] = for {
+  val setup: ZIO[KafkaConfig, Throwable, Unit] = for {
     config <- ZIO.service[KafkaConfig]
     _ <- zio.Console.printLine("Sending text message")
-    _ <- Ape.writers.kafkaStringWriter.write(data(config.topicName))
+    _ <- Ape.writers.kafka[KafkaConfig].string.write(data(config.topicName))
   } yield ()
 
-  def b: ZLayer[Any, Throwable, KafkaContainer with KafkaConfig with ProducerSettings with Consumer] =
+  def b: ZLayer[Any, Throwable, KafkaContainer with KafkaConfig with Consumer] =
     KafkaContainerService.topicLayer("text_topic") >+>
-      (KafkaUtils.liveProducerSettings ++ KafkaUtils.consumerLayer) >+>
+      KafkaConfig.liveConsumer >+>
       ZLayer.fromZIO(setup)
 
-  override def bootstrap: ZLayer[Any, Any, KafkaContainer with KafkaConfig with ProducerSettings with Consumer] = b
+  override def bootstrap: ZLayer[Any, Any, KafkaContainer with KafkaConfig with Consumer] = b
 }

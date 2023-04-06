@@ -12,7 +12,7 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZLayer}
 
-object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService] {
+object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] {
   val sampleStrings: Chunk[String] = Chunk(
     "string 1",
     "other string",
@@ -22,11 +22,11 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config wi
   val data: ZStream[Any, Nothing, String] = ZStream.fromChunk(sampleStrings)
   val location = "bytes"
 
-  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService with TestEnvironment with Scope, Any] =
+  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config] with TestEnvironment with Scope, Any] =
     suite("S3TextWriterTest")(
       test("Writes strings to S3"){
         for {
-          stream <- Ape.readers.s3TextReader.apply
+          stream <- Ape.readers.s3[S3Config].text.apply
           files <- stream.runCollect
           data <- ZStream.fromChunk(files).flatMap(_._2).runCollect
         } yield {
@@ -37,8 +37,8 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config wi
     )
 
 
-  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService] =
+  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] =
       MinioContainerService.s3Layer >+>
         MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-        setup(Ape.writers.s3TextWriter[Any].runDrain(data)) >+> S3FileReaderServiceStatic.live(location)
+        setup(Ape.writers.s3[S3Config].text[Any].runDrain(data)) >+> S3FileReaderServiceStatic.live[S3Config](location)
 }

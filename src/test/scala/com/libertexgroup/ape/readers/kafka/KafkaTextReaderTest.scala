@@ -9,7 +9,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object KafkaTextReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
-  val reader = Ape.readers.kafka.string
+  val reader = Ape.readers.kafka[KafkaConfig].string
   override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
     suite("KafkaReaderTest")(
       test("Reads plaintext message"){
@@ -32,5 +32,5 @@ object KafkaTextReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
   )
 
   override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer] =
-    KafkaContainerService.topicLayer("string_topic") >+> KafkaUtils.consumerLayer
+    KafkaContainerService.topicLayer("string_topic") >+> KafkaConfig.liveConsumer
 }

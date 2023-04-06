@@ -14,14 +14,14 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object S3JsonLinesWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService] {
+object S3JsonLinesWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] {
   val location = "json"
 
-  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService with TestEnvironment with Scope, Any] =
+  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config] with TestEnvironment with Scope, Any] =
     suite("S3JsonLinesWriterTest")(
       test("Writes strings to S3"){
         for {
-          stream <- Ape.readers.s3JsonLinesReader[dummy].apply
+          stream <- Ape.readers.s3[S3Config].jsonLines[dummy].apply
           files <- stream.runCollect
           data <- ZStream.fromChunk(files).flatMap(_._2).runCollect
         } yield {
@@ -31,7 +31,8 @@ object S3JsonLinesWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Conf
       },
     )
 
-  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService] =
+  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3JsonLinesWriter[Any, dummy].write(sampleData)) >+> S3FileReaderServiceStatic.live(location)
+      setup(Ape.writers.s3[S3Config].jsonLines[Any, dummy].write(sampleData)) >+>
+      S3FileReaderServiceStatic.live[S3Config](location)
 }

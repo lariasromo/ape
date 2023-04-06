@@ -11,12 +11,11 @@ import scala.reflect.ClassTag
 
 protected[s3] class CsvWriter[
   ZE, T: ClassTag,
-  Config <: S3Config :Tag,
-  AWSS3 <: S3 :Tag
+  Config <: S3Config :Tag
 ](sep: String = ",")(implicit rfc: Converter[T,Seq[String]])
- extends S3Writer[ZE with AWSS3 with Config, ZE, T, T] {
+ extends S3Writer[ZE with S3 with Config, ZE, T, T] {
   override def apply(stream: ZStream[ZE, Throwable, T]):
-  ZIO[ZE with AWSS3 with Config, Throwable, ZStream[ZE, Throwable, T]] =
+  ZIO[ZE with S3 with Config, Throwable, ZStream[ZE, Throwable, T]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket
