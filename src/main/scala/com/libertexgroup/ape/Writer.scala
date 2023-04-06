@@ -28,7 +28,7 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   def map[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
   def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
 
-  def preMap[T00: ClassTag](t: T00 => T0): Writer[E, ZE, T00, T] = concatenate(new UnitTWriter(t), this)
+  def contramap[T00: ClassTag](t: T00 => T0): Writer[E, ZE, T00, T] = concatenate(new UnitTWriter(t), this)
 
   def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
     new ZTWriter(this, t)
@@ -37,7 +37,7 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
     withZTransform(t)
 
-  def preMapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0]): Writer[E, ZE, T00, T] =
+  def contramapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0]): Writer[E, ZE, T00, T] =
     concatenate(new UnitZWriter(t), this)
 }
 
