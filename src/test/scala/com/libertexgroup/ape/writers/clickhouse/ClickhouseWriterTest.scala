@@ -16,7 +16,7 @@ object ClickhouseWriterTest extends ZIOSpec[MultiClickhouseConfig with ClickHous
     data <- query2ChunkMulti[dummy]("SELECT * FROM dummy;")
   } yield data
 
-  val writer = Ape.writers.clickhouseWriter[Any, dummy]
+  val writer = Ape.writers.clickhouse[MultiClickhouseConfig].default[Any, dummy]
 
   override def spec: Spec[MultiClickhouseConfig with ClickHouseContainer with TestEnvironment with Scope, Any] =
     suite("ClickhouseWriterTest")(

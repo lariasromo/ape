@@ -11,5 +11,5 @@ class PipelineWriters() {
   def kafka[Config <: KafkaConfig :Tag] = new com.libertexgroup.ape.writers.kafka.Writers[Config]()
   def misc = new com.libertexgroup.ape.writers.misc.Writers()
   def rest = new com.libertexgroup.ape.writers.rest.Writers
-  def s3[Config <: S3Config :Tag, AWSS3 <: S3 :Tag] = new com.libertexgroup.ape.writers.s3.Writers[Config, AWSS3]()
+  def s3[Config <: S3Config :Tag] = new com.libertexgroup.ape.writers.s3.Writers[Config]()
 }

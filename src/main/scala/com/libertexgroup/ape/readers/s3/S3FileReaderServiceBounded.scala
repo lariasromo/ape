@@ -9,27 +9,27 @@ import zio.{Duration, Scope, Tag, ZIO, ZLayer}
 
 import java.time.ZonedDateTime
 
-protected [s3] class S3FileReaderServiceBounded[Config <: S3Config :Tag, AWSS3 <: S3 :Tag]
+protected [s3] class S3FileReaderServiceBounded[Config <: S3Config :Tag]
 (override val fileStream: ZStream[S3Config with S3, Throwable, S3ObjectSummary])
-  extends S3FileReaderService[Config, AWSS3]
+  extends S3FileReaderService[Config]
 
 object S3FileReaderServiceBounded {
-  def make[Config <: S3Config :Tag, AWSS3 <: S3 :Tag](
+  def make[Config <: S3Config :Tag](
             locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]],
             start:ZonedDateTime,
             end:ZonedDateTime,
             step:Duration
-          ): ZIO[AWSS3 with Config, Throwable, S3FileReaderServiceBounded[Config, AWSS3]] =
+          ): ZIO[S3 with Config, Throwable, S3FileReaderServiceBounded[Config]] =
     for {
-      files <- Ape.readers.s3[Config, AWSS3].fileReaderBounded(locationPattern, start, end, step).apply
-    } yield new S3FileReaderServiceBounded[Config, AWSS3](files)
+      files <- Ape.readers.s3[Config].fileReaderBounded(locationPattern, start, end, step).apply
+    } yield new S3FileReaderServiceBounded[Config](files)
 
 
-  def live[Config <: S3Config :Tag, AWSS3 <: S3 :Tag](
+  def live[Config <: S3Config :Tag](
             locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]],
             start:ZonedDateTime,
             end:ZonedDateTime,
             step:Duration
-          ): ZLayer[AWSS3 with Config, Throwable, S3FileReaderServiceBounded[Config, AWSS3]] =
+          ): ZLayer[S3 with Config, Throwable, S3FileReaderServiceBounded[Config]] =
     ZLayer.fromZIO(make(locationPattern, start, end, step))
 }

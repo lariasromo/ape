@@ -6,11 +6,11 @@ import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
 import zio.stream.ZStream
 
 protected[s3] class TextWriter[E,
-  Config <: S3Config :Tag,
-  AWSS3 <: S3 :Tag]
-  extends S3Writer[E with AWSS3 with Config, E, String, String] {
+  Config <: S3Config :Tag
+]
+  extends S3Writer[E with S3 with Config, E, String, String] {
   override def apply(stream: ZStream[E, Throwable, String]):
-  ZIO[E with AWSS3 with Config, Throwable, ZStream[E, Throwable, String]] =
+  ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, String]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket

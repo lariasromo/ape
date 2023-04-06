@@ -10,6 +10,6 @@ class PipelineReaders() {
   def jdbc[Config <: JDBCConfig :Tag] = new com.libertexgroup.ape.readers.jdbc.Readers[Config]()
   def kafka[Config <: KafkaConfig :Tag] = new com.libertexgroup.ape.readers.kafka.Readers[Config]()
   def rest = new com.libertexgroup.ape.readers.rest.Readers()
-  def s3[Config <: S3Config :Tag, AWSS3 <: S3 :Tag] = new com.libertexgroup.ape.readers.s3.Readers[Config, AWSS3]()
+  def s3[Config <: S3Config :Tag] = new com.libertexgroup.ape.readers.s3.Readers[Config]()
   def websocket = new com.libertexgroup.ape.readers.websocket.Readers()
 }

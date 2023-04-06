@@ -9,18 +9,18 @@ import zio.{Tag, ZIO, ZLayer}
 
 import java.time.ZonedDateTime
 
-protected [s3] class S3FileReaderServiceStatic[Config <: S3Config :Tag, AWSS3 <: S3 :Tag]
+protected [s3] class S3FileReaderServiceStatic[Config <: S3Config :Tag]
 (override val fileStream: ZStream[S3Config with S3, Throwable, S3ObjectSummary])
-  extends S3FileReaderService[Config, AWSS3]
+  extends S3FileReaderService[Config]
 
 object S3FileReaderServiceStatic {
-  def make[Config <: S3Config :Tag, AWSS3 <: S3 :Tag](location: String):
-  ZIO[Config with AWSS3, Throwable, S3FileReaderServiceStatic[Config, AWSS3]] = for {
-      files <- Ape.readers.s3[Config, AWSS3].fileReaderSimple(ZIO.succeed(_ => List(location))).apply
+  def make[Config <: S3Config :Tag](location: String):
+  ZIO[Config with S3, Throwable, S3FileReaderServiceStatic[Config]] = for {
+      files <- Ape.readers.s3[Config].fileReaderSimple(ZIO.succeed(_ => List(location))).apply
       stream = files.tap { file => printLine(s"Getting file ${file.key} from queue") }
-    } yield new S3FileReaderServiceStatic[Config, AWSS3](stream)
+    } yield new S3FileReaderServiceStatic[Config](stream)
 
-  def live[Config <: S3Config :Tag, AWSS3 <: S3 :Tag](location: String):
-  ZLayer[Config with AWSS3, Throwable, S3FileReaderServiceStatic[Config, AWSS3]] =
-    ZLayer.fromZIO(make[Config, AWSS3](location))
+  def live[Config <: S3Config :Tag](location: String):
+  ZLayer[Config with S3, Throwable, S3FileReaderServiceStatic[Config]] =
+    ZLayer.fromZIO(make[Config](location))
 }

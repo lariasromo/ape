@@ -10,10 +10,9 @@ import scala.reflect.ClassTag
 
 protected[s3] class AvroWriter[
   E, T >:Null :SchemaFor :Decoder :Encoder : ClassTag,
-  Config <: S3Config :Tag,
-  AWSS3 <: S3 :Tag
-] extends S3Writer[E with AWSS3 with Config, E, T, T] {
-  override def apply(stream: ZStream[E, Throwable, T]): ZIO[E with AWSS3 with Config, Throwable, ZStream[E, Throwable, T]] =
+  Config <: S3Config :Tag
+] extends S3Writer[E with S3 with Config, E, T, T] {
+  override def apply(stream: ZStream[E, Throwable, T]): ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, T]] =
     for {
       config <- ZIO.service[S3Config]
       bucket <- config.taskS3Bucket

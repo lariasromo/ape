@@ -9,7 +9,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
 object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
-  val reader = Ape.readers.kafka.default
+  val reader = Ape.readers.kafka[KafkaConfig].default
   override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
     suite("KafkaBytesReaderTest")(
       test("Reads bytes"){
@@ -30,5 +30,5 @@ object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with
   )
 
   override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer] =
-    KafkaContainerService.topicLayer("bytes_topic") >+> KafkaUtils.consumerLayer
+    KafkaContainerService.topicLayer("bytes_topic") >+> KafkaConfig.liveConsumer
 }

@@ -2,7 +2,7 @@ package com.libertexgroup.ape.utils
 
 import com.datastax.oss.driver.api.core.cql.{AsyncResultSet, SimpleStatement}
 import com.dimafeng.testcontainers.CassandraContainer
-import com.libertexgroup.configs.CassandraConfig
+import com.libertexgroup.configs.{CassandraConfig, S3Config}
 import palanga.zio.cassandra.CassandraException
 import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 
@@ -33,13 +33,13 @@ object CassandraContainerService extends TestContainerHelper[CassandraContainer]
 
   def createKeyspace(keyspace: String): ZIO[CassandraConfig, CassandraException, Unit] = for {
     _ <- ZIO.scoped( for {
-      session <- CassandraUtils.sessionFromCqlSession
+      session <- CassandraUtils.sessionFromCqlSession[CassandraConfig]
       _ <- session.execute(createKeyspaceStmt(keyspace))
     } yield ())
   } yield ()
 
   val createTable: ZIO[CassandraConfig, CassandraException, AsyncResultSet] = ZIO.scoped(
-    CassandraUtils.sessionFromCqlSession.flatMap(session => session.execute(createTableStmt))
+    CassandraUtils.sessionFromCqlSession[CassandraConfig].flatMap(session => session.execute(createTableStmt))
   )
 
   override val startContainer: Task[CassandraContainer] = ZIO.attemptBlocking {

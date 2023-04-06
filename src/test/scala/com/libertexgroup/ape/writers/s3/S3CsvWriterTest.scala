@@ -14,18 +14,18 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZLayer}
 
-object S3CsvWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService] {
+object S3CsvWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] {
   val location = "bytes"
   val sampleDataWithCharacters = ZStream.fromChunk(Chunk(
     dummy(",\",,", "£$%^&"),
     dummy(",\",,", "'1,'1'"),
   ))
 
-  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService with TestEnvironment with Scope, Any] =
+  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config] with TestEnvironment with Scope, Any] =
     suite("S3CsvWriterTest")(
       test("Writes entities to csv strings"){
         for {
-          stream <- Ape.readers.s3TextReader.apply
+          stream <- Ape.readers.s3[S3Config].text.apply
           files <- stream.runCollect
           data <- ZStream.fromChunk(files).flatMap(_._2).runCollect
         } yield {
@@ -39,7 +39,8 @@ object S3CsvWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config with
       },
     )
 
-  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService] =
+  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3CsvWriter[Any, dummy](";").write(sampleDataWithCharacters)) >+> S3FileReaderServiceStatic.live(location)
+      setup(Ape.writers.s3[S3Config].csv[Any, dummy](";").write(sampleDataWithCharacters)) >+>
+      S3FileReaderServiceStatic.live[S3Config](location)
 }
