@@ -7,9 +7,9 @@ import zio.http._
 import zio.stream.ZStream
 
 
-protected[writers] class RestAPIWriterByte[E] extends RestApiWriter[Client,E,Request, Byte] {
+protected[rest] class RestAPIWriterByte[ZE] extends RestApiWriter[Client,ZE,Request, Byte] {
 
-  override def apply(i: ZStream[E, Throwable, Request]): ZIO[Client, Throwable, ZStream[E, Throwable, Byte]] =
+  override def apply(i: ZStream[ZE, Throwable, Request]): ZIO[Client, Throwable, ZStream[ZE, Throwable, Byte]] =
     for {
       l <- reLayer[Client]
       z = i.mapZIO(r => sendRequestByte(r).provideSomeLayer(l)).flatMap(x=>x)

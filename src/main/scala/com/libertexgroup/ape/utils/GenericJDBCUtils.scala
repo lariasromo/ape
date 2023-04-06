@@ -2,7 +2,7 @@ package com.libertexgroup.ape.utils
 
 import com.libertexgroup.configs.JDBCConfig
 import zio.stream.ZStream
-import zio.{Chunk, Scope, ZIO}
+import zio.{Chunk, Scope, Tag, ZIO}
 
 import java.sql.{Connection, DriverManager, ResultSet}
 import java.util.Properties
@@ -12,21 +12,21 @@ import scala.util.{Failure, Success, Try}
 object GenericJDBCUtils {
   case class ConnectionWithZStream(connection: Connection, ZStream: ZStream[Any, Throwable, ResultSet])
 
-  def query2Chunk[T: ClassTag](query: String)
-                              (implicit row2Object: ResultSet => T): ZIO[JDBCConfig, Nothing, Chunk[T]] =
-    ZIO.scoped {
+  def query2Chunk[T: ClassTag, Config <: JDBCConfig :Tag](query: String)
+                              (implicit row2Object: ResultSet => T): ZIO[Config, Nothing, Chunk[T]] =
+    ZIO.scoped[Config] {
       for {
-        conn <- connect
+        conn <- connect[Config]
       } yield toChunk(conn.createStatement().executeQuery(query))
     }
 
-  def query2Stream[T: ClassTag](query: String)
-                               (implicit row2Object: ResultSet => T): ZIO[JDBCConfig, Nothing, ZStream[Any,
+  def query2Stream[T: ClassTag, Config <: JDBCConfig :Tag](query: String)
+                               (implicit row2Object: ResultSet => T): ZIO[Config, Nothing, ZStream[Any,
     Throwable,
     T]] =
-    ZIO.scoped {
+    ZIO.scoped[Config] {
       for {
-        conn <- connect
+        conn <- connect[Config]
       } yield toStream(conn.createStatement().executeQuery(query))
     }
 
@@ -44,32 +44,34 @@ object GenericJDBCUtils {
   def toStream[T: ClassTag](resultSet: ResultSet)(implicit row2Object: ResultSet => T): ZStream[Any, Throwable, T] =
     ZStream.fromIterator(queryIterator(resultSet))
 
-  val connect: ZIO[JDBCConfig with Scope, Nothing, Connection] = ZIO
-    .acquireRelease(for {
-      config <- ZIO.service[JDBCConfig]
+  def connect[Config <: JDBCConfig :Tag]: ZIO[Config with Scope, Nothing, Connection] =
+    ZIO.acquireRelease(for {
+      config <- ZIO.service[Config]
     } yield getConnection(config.driverName, config.jdbcUrl, config.username, config.password)
     )(c => ZIO.succeed(c.close()))
 
 
-  def runConnect[T](effect: Connection => T): ZIO[JDBCConfig, Throwable, T] = for {
-    errors <- ZIO.scoped( for {
-      conn <- connect
-      errors <- ZIO.fromEither {
-        Try {
-          effect(conn)
-        } match {
-          case Failure(exception) => {
-            exception.printStackTrace()
-            Left(exception)
+  def runConnect[T, Config <: JDBCConfig :Tag](effect: Connection => T): ZIO[Config, Throwable, T] = for {
+    errors <- ZIO.scoped[Config] {
+      for {
+        conn <- connect[Config]
+        errors <- ZIO.fromEither {
+          Try {
+            effect(conn)
+          } match {
+            case Failure(exception) => {
+              exception.printStackTrace()
+              Left(exception)
+            }
+            case Success(value) => Right(value)
           }
-          case Success(value) => Right(value)
         }
-      }
-    } yield errors )
+      } yield errors
+    }
   } yield errors
 
-  def executeQuery(sql: String): ZIO[JDBCConfig with Scope, Nothing, Unit] = for {
-    conRes <- connect
+  def executeQuery[Config <: JDBCConfig :Tag](sql: String): ZIO[Config with Scope, Nothing, Unit] = for {
+    conRes <- connect[Config]
     _ <- ZIO.scoped {
       ZIO.succeed {
         val statement = conRes.createStatement()

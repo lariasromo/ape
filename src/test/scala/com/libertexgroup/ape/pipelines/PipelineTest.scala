@@ -13,8 +13,8 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}
 
 object PipelineTest extends ZIOSpec[KafkaContainer with KafkaConfig with Consumer with MultiClickhouseConfig with ClickHouseContainer] {
-  val pp = Ape.readers.kafkaDefaultReader.**[dummy] --> (
-      Ape.writers.consoleWriter[Any, Consumer, dummy] ++ Ape.writers.clickhouseWriter[Consumer, dummy]
+  val pp = Ape.readers.kafka.default.**[dummy] --> (
+      Ape.writers.misc.console[Any, Consumer, dummy] ++ Ape.writers.clickhouse.default[Consumer, dummy]
     )
     
   override def spec: Spec[KafkaContainer with KafkaConfig with Consumer with MultiClickhouseConfig with ClickHouseContainer with TestEnvironment with Scope, Any] =

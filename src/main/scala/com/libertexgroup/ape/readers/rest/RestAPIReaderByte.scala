@@ -5,7 +5,7 @@ import zio.ZIO
 import zio.http._
 import zio.stream.ZStream
 
-protected[readers] class RestAPIReaderByte[E](
+protected[rest] class RestAPIReaderByte[E](
                                                  request: Request
                                            ) extends RestApiReader[Client,E,Byte] {
 

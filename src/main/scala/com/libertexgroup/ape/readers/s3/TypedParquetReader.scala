@@ -2,7 +2,7 @@ package com.libertexgroup.ape.readers.s3
 
 import com.libertexgroup.configs.S3Config
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
-import zio.ZIO
+import zio.{Tag, ZIO}
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
 
@@ -14,13 +14,16 @@ import scala.reflect.ClassTag
  * The GenericRecord interface allows to interact with parquet values
  * If the file is just a text file each line will be a string stored in an attribute named `value`
  */
-protected[readers] class TypedParquetReader[T >:Null: SchemaFor :Encoder :Decoder :ClassTag]
-  extends S3Reader[S3Config, S3Config with S3, S3FileWithContent[T]] {
-  override def apply: ZIO[S3FileReaderService with S3Config, Throwable,
-    ZStream[S3Config with S3, Throwable, (S3ObjectSummary, ZStream[S3, Throwable, T])]] = for {
+protected[s3] class TypedParquetReader[
+  T >:Null: SchemaFor :Encoder :Decoder :ClassTag,
+  Config <: S3Config :Tag,
+  AWSS3 <: S3 :Tag
+] extends S3Reader[Config, Config with AWSS3, S3FileWithContent[T, AWSS3], AWSS3, Config] {
+  override def apply: ZIO[S3FileReaderService[Config, AWSS3] with Config, Throwable,
+    ZStream[Config with AWSS3, Throwable, (S3ObjectSummary, ZStream[AWSS3, Throwable, T])]] = for {
     s3FilesQueue <- fileStream
     stream = s3FilesQueue.mapZIO(file => for {
-      stream <- readParquet[T](file)
+      stream <- readParquet[T, Config](file)
     } yield (file, stream))
   } yield stream
 }

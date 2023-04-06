@@ -10,10 +10,10 @@ import zio.stream.ZStream
 
 import scala.reflect.ClassTag
 
-protected[readers] class JsonCirceReader[T: Decoder :ClassTag]
-  extends com.libertexgroup.ape.readers.kafka.KafkaReader[KafkaConfig, Consumer, ConsumerRecord[String, T]] {
+protected[kafka] class JsonCirceReader[T: Decoder :ClassTag, Config <: KafkaConfig]
+  extends KafkaReader[Config, Consumer, ConsumerRecord[String, T]] {
 
-  override def apply: ZIO[KafkaConfig, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, T]]] =
+  override def apply: ZIO[Config, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, T]]] =
     for {
         kafkaConfig <- ZIO.service[KafkaConfig]
     } yield Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )

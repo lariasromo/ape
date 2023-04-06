@@ -11,15 +11,15 @@ import zio.{Chunk, Duration, ZIO}
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
-class FileReaderBounded(
-                         locationPattern:ZIO[S3Config, Nothing, ZonedDateTime => List[String]],
+protected [s3] class FileReaderBounded[Config <: S3Config, AWSS3 <: S3](
+                         locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]],
                          start:ZonedDateTime,
                          end:ZonedDateTime,
                          step:Duration
-                       ) extends Reader[S3 with S3Config, Any, S3ObjectSummary] {
-    val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
+                       ) extends Reader[AWSS3 with Config, Any, S3ObjectSummary] {
+  val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
-  def a: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
+  override def apply: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[S3Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
@@ -37,7 +37,5 @@ class FileReaderBounded(
       } yield objs.objectSummaries
       )
   } yield ZStream.fromChunk(c.flatten)
-
-  override def apply: ZIO[S3 with S3Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = a
 }
 

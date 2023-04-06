@@ -13,7 +13,7 @@ import zio.{Scope, ZLayer}
 
 object S3JsonLinesCirceReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer with S3FileReaderService] {
   val location = "json"
-  val reader = Ape.readers.s3JsonLinesCirceReader[dummy]
+  val reader = Ape.readers.s3.jsonLinesCirce[dummy]
   override def spec: Spec[S3 with S3Config with MinioContainer with S3FileReaderService with TestEnvironment with Scope, Any] =
     suite("S3JsonLinesCirceReaderTest")(
       test("Reads a json file"){
