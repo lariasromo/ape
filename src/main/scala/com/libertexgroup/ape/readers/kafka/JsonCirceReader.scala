@@ -3,19 +3,19 @@ package com.libertexgroup.ape.readers.kafka
 import com.libertexgroup.configs.KafkaConfig
 import io.circe.{Decoder, jawn}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.ZIO
+import zio.{Tag, ZIO}
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
 import scala.reflect.ClassTag
 
-protected[kafka] class JsonCirceReader[T: Decoder :ClassTag, Config <: KafkaConfig]
+protected[kafka] class JsonCirceReader[T: Decoder :ClassTag, Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Consumer, ConsumerRecord[String, T]] {
 
   override def apply: ZIO[Config, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, T]]] =
     for {
-        kafkaConfig <- ZIO.service[KafkaConfig]
+        kafkaConfig <- ZIO.service[Config]
     } yield Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )
       .plainStream(Serde.string, Serde.string)
       .tap { batch => batch.offset.commit }

@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception
 import zio.Console.printLine
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.{ZPipeline, ZStream}
-import zio.{Queue, ZIO}
+import zio.{Queue, Tag, ZIO}
 
 import java.io.IOException
 
@@ -33,26 +33,26 @@ package object s3 {
       case NONE => stream
     }
 
-  def readBytes[T>:Null :SchemaFor :Decoder :Encoder, Config <: S3Config](file: S3ObjectSummary):
+  def readBytes[T>:Null :SchemaFor :Decoder :Encoder, Config <: S3Config :Tag](file: S3ObjectSummary):
   ZIO[S3 with Config, Exception, ZStream[Any, Nothing, T]] =
     for {
-      config <- ZIO.service[S3Config]
+      config <- ZIO.service[Config]
       byteChunks <- decompressStream(config.compressionType, zio.s3.getObject(file.bucketName, file.key)).runCollect
     } yield {
       import com.libertexgroup.ape.utils.AvroUtils.implicits._
       ZStream.fromIterable(byteChunks.decode[T]())
     }
 
-  def readParquet[T >:Null: SchemaFor :Encoder :Decoder, Config <: S3Config](file: S3ObjectSummary):
+  def readParquet[T >:Null: SchemaFor :Encoder :Decoder, Config <: S3Config :Tag](file: S3ObjectSummary):
   ZIO[Config, Throwable, ZStream[Any, Throwable, T]] = for {
-    config <- ZIO.service[S3Config]
+    config <- ZIO.service[Config]
     stream = readParquetWithType[T](config, file)
   } yield stream
 
-  def readParquetGenericRecords[Config <: S3Config](file: S3ObjectSummary):
+  def readParquetGenericRecords[Config <: S3Config :Tag](file: S3ObjectSummary):
   ZIO[Config with S3, Throwable, ZStream[Any, Throwable, GenericRecord]] =
     for {
-      config <- ZIO.service[S3Config]
+      config <- ZIO.service[Config]
       stream = readParquetGenericRecord(config, file)
     } yield stream
 

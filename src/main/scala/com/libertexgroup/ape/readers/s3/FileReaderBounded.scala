@@ -6,12 +6,12 @@ import com.libertexgroup.configs.S3Config
 import zio.Console.printLine
 import zio.s3.{ListObjectOptions, S3, S3ObjectSummary, listObjects}
 import zio.stream.ZStream
-import zio.{Chunk, Duration, ZIO}
+import zio.{Chunk, Duration, Tag, ZIO}
 
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
-protected [s3] class FileReaderBounded[Config <: S3Config, AWSS3 <: S3](
+protected [s3] class FileReaderBounded[Config <: S3Config :Tag, AWSS3 <: S3](
                          locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]],
                          start:ZonedDateTime,
                          end:ZonedDateTime,
@@ -20,7 +20,7 @@ protected [s3] class FileReaderBounded[Config <: S3Config, AWSS3 <: S3](
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
   override def apply: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
-    config <- ZIO.service[S3Config]
+    config <- ZIO.service[Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
     _ <- printLine(s"Starting s3 bounded files from ${start} to ${end}")

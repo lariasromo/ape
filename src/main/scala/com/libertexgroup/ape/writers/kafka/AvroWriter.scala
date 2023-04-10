@@ -13,7 +13,7 @@ protected[kafka] class AvroWriter[ET, T:SchemaFor :Encoder, Config <: KafkaConfi
   override def apply(stream: ZStream[ET, Throwable, ProducerRecord[String, T]]):
   ZIO[Config, Nothing, ZStream[ET, Throwable, ProducerRecord[String, T]]] =
     for {
-      config <- ZIO.service[KafkaConfig]
+      config <- ZIO.service[Config]
     } yield {
         stream.tap(v => {
           import com.libertexgroup.ape.utils.AvroUtils.implicits._

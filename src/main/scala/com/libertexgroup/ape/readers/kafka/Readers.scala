@@ -5,12 +5,13 @@ import com.libertexgroup.ape.Reader
 import com.libertexgroup.configs._
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import zio.Tag
 import zio.kafka.consumer.Consumer
 
 import scala.reflect.ClassTag
 
 // Readers
-protected [readers] class Readers[Config <: KafkaConfig]() {
+protected [readers] class Readers[Config <: KafkaConfig :Tag]() {
   def default: Reader[Config, Consumer, ConsumerRecord[String, Array[Byte]]] =
     new ape.readers.kafka.DefaultReader()
 

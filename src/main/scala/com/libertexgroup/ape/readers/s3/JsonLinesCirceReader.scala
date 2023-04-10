@@ -21,7 +21,7 @@ protected[s3] class JsonLinesCirceReader[T: Decoder :ClassTag, Config <: S3Confi
   override def apply: ZIO[S3FileReaderService[Config] with Config, Throwable,
     ZStream[S3 with Config, Throwable, S3FileWithContent[T]]] =
     for {
-      config <- ZIO.service[S3Config]
+      config <- ZIO.service[Config]
       s3FilesQueue <- fileStream
       stream = s3FilesQueue.map(file => (file, mapContent(readPlainText(config.compressionType, file))))
     } yield stream

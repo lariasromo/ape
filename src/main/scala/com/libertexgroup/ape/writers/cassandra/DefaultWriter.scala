@@ -28,7 +28,7 @@ protected[cassandra] class DefaultWriter[E, Config <: CassandraConfig :Tag, Mode
   override def apply(stream: ZStream[E, Throwable, Model]): ZIO[Config, Throwable, ZStream[E, Throwable,
     Chunk[AsyncResultSet]]] =
     for {
-      config <- ZIO.service[CassandraConfig]
+      config <- ZIO.service[Config]
       s = stream
         .groupedWithin(config.batchSize, config.syncDuration)
         .mapZIO(batch => insertToCassandra(batch, config))
