@@ -1,6 +1,4 @@
-ThisBuild / version := "2.1.7"
-
-
+ThisBuild / version := "2.1.8"
 ThisBuild / scalaVersion := "2.13.10"
 
 lazy val root = (project in file("."))
@@ -80,3 +78,5 @@ publishTo := {
   else
     Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release")
 }
+
+Test / parallelExecution := false
