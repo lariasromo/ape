@@ -6,7 +6,8 @@ import com.libertexgroup.ape.writers.PipelineWriters
 import zio.ZIO
 import zio.stream.ZStream
 
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
+import scala.util.Try
 
 abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
@@ -39,6 +40,20 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
 
   def contramapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0]): Writer[E, ZE, T00, T] =
     concatenate(new UnitZWriter(t), this)
+
+  def safeGet[V :ClassTag]: Writer[E, ZE, T0, V] = {
+    implicit class ClassTagOps[U](val classTag: ClassTag[U]){
+      def <<:(other: ClassTag[_]): Boolean = classTag.runtimeClass.isAssignableFrom(other.runtimeClass)
+    }
+    classTag[T] match {
+      case a if a <<: classTag[Option[V]] =>
+        this.map(_.asInstanceOf[Option[V]]).mapZ(stream => stream.filter(_.isDefined).map(_.get))
+      case a if a <<: classTag[V] => this.map(_.asInstanceOf[V])
+      case _ => throw new Exception(s"Cannot safely get values, " +
+        s"${classTag[V].runtimeClass.toString} should be Option[${classTag[T].runtimeClass.toString}]")
+    }
+  }
+  def as[V :ClassTag]: Writer[E, ZE, T0, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 }
 
 object Writer {
