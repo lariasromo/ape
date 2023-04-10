@@ -4,7 +4,8 @@ import com.libertexgroup.ape.Reader.{TTReader, ZTReader}
 import zio.ZIO
 import zio.stream.ZStream
 
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
+import scala.util.Try
 
 abstract class Reader[E, ZE, T: ClassTag]{
   def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
@@ -25,6 +26,21 @@ abstract class Reader[E, ZE, T: ClassTag]{
     ***
   }
   def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] = withZTransform(t)
+
+  def safeGet[V :ClassTag]: Reader[E, ZE, V] = {
+    implicit class ClassTagOps[U](val classTag: ClassTag[U]){
+      def <<:(other: ClassTag[_]): Boolean = classTag.runtimeClass.isAssignableFrom(other.runtimeClass)
+    }
+    classTag[T] match {
+      case a if a <<: classTag[Option[V]] =>
+        this.map(_.asInstanceOf[Option[V]]).mapZ(stream => stream.filter(_.isDefined).map(_.get))
+      case a if a <<: classTag[V] => this.map(_.asInstanceOf[V])
+      case _ => throw new Exception(s"Cannot safely get values, " +
+        s"${classTag[V].runtimeClass.toString} should be Option[${classTag[T].runtimeClass.toString}]")
+    }
+  }
+
+  def as[V :ClassTag]: Reader[E, ZE, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 }
 
 object Reader {
