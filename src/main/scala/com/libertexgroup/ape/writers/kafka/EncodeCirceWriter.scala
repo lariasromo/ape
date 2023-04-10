@@ -7,16 +7,16 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import zio.kafka.producer.Producer
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
-import zio.{ZIO, ZLayer}
+import zio.{Tag, ZIO, ZLayer}
 
 import scala.reflect.ClassTag
 
-protected[kafka] class EncodeCirceWriter[ET, Config <: KafkaConfig, T :ClassTag :Encoder]
+protected[kafka] class EncodeCirceWriter[ET, Config <: KafkaConfig :Tag, T :ClassTag :Encoder]
   extends KafkaWriter[Config, ET, String, T] {
   override def apply(stream: ZStream[ET, Throwable, ProducerRecord[String, T]]):
   ZIO[Config, Throwable, ZStream[ET, Throwable, ProducerRecord[String, T]]] =
     for {
-      config <- ZIO.service[KafkaConfig]
+      config <- ZIO.service[Config]
       s = stream.tap(v => {
         ZIO.scoped {
           Producer.produce[Any, String, String](

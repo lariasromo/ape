@@ -15,7 +15,7 @@ protected[s3] class ParquetWriter[E,
   extends S3Writer[E with S3 with Config, E, T, T] {
   override def apply(stream: ZStream[E, Throwable, T]): ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, T]] =
     for {
-      config <- ZIO.service[S3Config]
+      config <- ZIO.service[Config]
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
       randomString <- zio.Random.nextUUID

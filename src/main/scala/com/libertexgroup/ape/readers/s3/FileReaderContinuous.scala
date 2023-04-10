@@ -7,18 +7,18 @@ import zio.Console.printLine
 import zio.concurrent.ConcurrentMap
 import zio.s3.{ListObjectOptions, S3, S3ObjectSummary, listObjects}
 import zio.stream.ZStream
-import zio.{Schedule, ZIO}
+import zio.{Schedule, Tag, ZIO}
 
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
-protected [s3] class FileReaderContinuous[Config <: S3Config, AWSS3 <: S3]
+protected [s3] class FileReaderContinuous[Config <: S3Config :Tag, AWSS3 <: S3]
 (locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]])
   extends Reader[Config, AWSS3, S3ObjectSummary] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
   override def apply: ZIO[Config, Throwable, ZStream[AWSS3, Throwable, S3ObjectSummary]] = for {
-    config <- ZIO.service[S3Config]
+    config <- ZIO.service[Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
     trackedFiles <- ConcurrentMap.empty[Array[Byte], ZonedDateTime]

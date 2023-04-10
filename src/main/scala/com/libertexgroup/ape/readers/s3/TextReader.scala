@@ -16,7 +16,7 @@ protected[s3] class TextReader[Config <: S3Config :Tag]
   override def apply: ZIO[S3FileReaderService[Config] with Config, Throwable,
     ZStream[Config with S3, Throwable, S3FileWithContent[String]]] =
     for {
-      config <- ZIO.service[S3Config]
+      config <- ZIO.service[Config]
       s3FilesQueue <- fileStream
       stream = s3FilesQueue.map(file => (file, readPlainText(config.compressionType, file)))
       newStream = if(config.enableBackPressure) readWithBackPressure[String, Config](stream) else stream

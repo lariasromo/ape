@@ -4,17 +4,19 @@ import com.libertexgroup.ape.utils.AvroUtils
 import com.libertexgroup.configs.KafkaConfig
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.ZIO
+import zio.{Tag, ZIO}
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
-protected[kafka] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder, Config <: KafkaConfig]
+import scala.reflect.ClassTag
+
+protected[kafka] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder, Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Consumer, ConsumerRecord[String, Option[T]]] {
 
   override def apply: ZIO[Config, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, Option[T]]]] =
     for {
-        kafkaConfig <- ZIO.service[KafkaConfig]
+        kafkaConfig <- ZIO.service[Config]
     } yield Consumer.subscribeAnd( Subscription.topics( kafkaConfig.topicName ) )
       .plainStream(Serde.string, AvroUtils.getSerde[T])
       .filter(_.value.isDefined)

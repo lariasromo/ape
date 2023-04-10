@@ -2,12 +2,14 @@ package com.libertexgroup.ape.readers.kafka
 
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.ZIO
+import zio.{Tag, ZIO}
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
-protected[kafka] class DefaultReader[Config <: KafkaConfig]
+import scala.reflect.ClassTag
+
+protected[kafka] class DefaultReader[Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Consumer, ConsumerRecord[String, Array[Byte]]] {
 
   def createStream(kafkaConfig: KafkaConfig): ZStream[Consumer, Throwable, ConsumerRecord[String, Array[Byte]]] =
@@ -20,6 +22,6 @@ protected[kafka] class DefaultReader[Config <: KafkaConfig]
 
   override def apply: ZIO[Config, Throwable, ZStream[Consumer, Throwable, ConsumerRecord[String, Array[Byte]]]] =
     for {
-        kafkaConfig <- ZIO.service[KafkaConfig]
+        kafkaConfig <- ZIO.service[Config]
     } yield createStream(kafkaConfig)
 }
