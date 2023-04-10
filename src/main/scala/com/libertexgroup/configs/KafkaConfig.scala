@@ -27,13 +27,13 @@ case class KafkaConfig(
 
 
 object KafkaConfig extends ReaderConfig {
-  def make: ZIO[Any, SecurityException, KafkaConfig] = for {
-    offsetStrategy <- envOrElse("KAFKA_OFFSET_STRATEGY", "")
-    kafkaBrokers <- envOrElse("KAFKA_BROKERS", "")
-    consumerGroup <- envOrElse("KAFKA_CONSUMER_GROUP", "")
-    topicName <- envOrElse("KAFKA_TOPIC", "")
-    flushSeconds <- envOrElse("KAFKA_FLUSH_SECONDS", "300")
-    batchSize <- envOrElse("KAFKA_BATCH_SIZE", "10000")
+  def make(prefix:Option[String]=None): ZIO[Any, SecurityException, KafkaConfig] = for {
+    offsetStrategy <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_OFFSET_STRATEGY", "")
+    kafkaBrokers <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_BROKERS", "")
+    consumerGroup <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_CONSUMER_GROUP", "")
+    topicName <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_TOPIC", "")
+    flushSeconds <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_FLUSH_SECONDS", "300")
+    batchSize <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_BATCH_SIZE", "10000")
   } yield KafkaConfig(
     topicName,
     kafkaBrokers.split(",").toList,
@@ -43,7 +43,7 @@ object KafkaConfig extends ReaderConfig {
     if(offsetStrategy.equalsIgnoreCase("latest")) AutoOffsetStrategy.Latest else AutoOffsetStrategy.Earliest
   )
 
-  def live: ZLayer[Any, SecurityException, KafkaConfig] = ZLayer.fromZIO(make)
+  def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, KafkaConfig] = ZLayer.fromZIO(make(prefix))
 
   def makeConsumer: ZIO[Scope with KafkaConfig, Throwable, Consumer] = for {
     config <- ZIO.service[KafkaConfig]

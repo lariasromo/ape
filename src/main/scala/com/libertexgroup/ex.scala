@@ -22,7 +22,7 @@ object ex extends ZIOAppDefault{
     )
 
   val layer: ZLayer[Any, Throwable, S3 with S3Config with S3FileReaderService[S3Config]] =
-    (S3Config.liveS3Default ++ ZLayer.succeed(
+    (S3Config.liveS3Default() ++ ZLayer.succeed(
       S3Config(
         compressionType = CompressionType.GZIP,
         parallelism = 1,

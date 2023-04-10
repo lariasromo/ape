@@ -11,6 +11,6 @@ object Main extends ZIOAppDefault {
     conf <- ZIO.service[MultiClickhouseConfig]
   } yield ()
   override def run = test.provideSomeLayer(
-    ClickhouseConfig.live >+> MultiClickhouseConfig.liveFromNode
+    ClickhouseConfig.live() >+> MultiClickhouseConfig.liveFromNode
   )
 }

@@ -19,17 +19,17 @@ case class ClickhouseConfig(
 }
 
 object ClickhouseConfig {
-  def live: ZLayer[Any, SecurityException, ClickhouseConfig] = ZLayer(make)
+  def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, ClickhouseConfig] = ZLayer(make(prefix))
 
-  def make: ZIO[Any, SecurityException, ClickhouseConfig] = for {
-    clusterName <- env("CLICKHOUSE_CLUSTER_NAME")
-    syncDuration <- envOrElse("CLICKHOUSE_SYNC_DURATION", "5")
-    batchSize <- envOrElse("CLICKHOUSE_BATCH_SIZE", "10000")
-    host <- envOrElse("CLICKHOUSE_HOST", "")
-    port <- envOrElse("CLICKHOUSE_PORT", "8123")
-    databaseName <- envOrElse("CLICKHOUSE_DATABASE_NAME", "")
-    username <- envOrElse("CLICKHOUSE_USERNAME", "")
-    password <- envOrElse("CLICKHOUSE_PASSWORD", "")
+  def make(prefix:Option[String]=None): ZIO[Any, SecurityException, ClickhouseConfig] = for {
+    clusterName <- env(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_CLUSTER_NAME")
+    syncDuration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_SYNC_DURATION", "5")
+    batchSize <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_BATCH_SIZE", "10000")
+    host <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_HOST", "")
+    port <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_PORT", "8123")
+    databaseName <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_DATABASE_NAME", "")
+    username <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_USERNAME", "")
+    password <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_PASSWORD", "")
   } yield ClickhouseConfig(
     syncDuration = Try(syncDuration.toInt.minutes).toOption.getOrElse(5.minutes),
     batchSize = Try(batchSize.toInt).toOption.getOrElse(10000),

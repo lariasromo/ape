@@ -28,16 +28,16 @@ case class S3Config (
 }
 
 object S3Config extends ReaderConfig {
-  def make: ZIO[Any, SecurityException, S3Config] = for {
-    location <- env("S3_LOCATION")
-    parallelism <- envOrElse("S3_PARALLELISM", "4")
-    fileCacheExpiration <- envOrElse("S3_FILE_CACHE_EXPIRATION", "PT1H")
-    filePeekDuration <- envOrElse("S3_FILE_PEEK_DURATION", "PT1H")
-    filePeekDurationMargin <- envOrElse("S3_FILE_PEEK_DURATION_MARGIN", "PT1H")
-    s3Bucket <- env("S3_BUCKET")
-    compressionType <- envOrElse("COMPRESSION_TYPE", "GZIP")
-    s3Host <- env("S3_OVERRIDE_URL")
-    enableBackPressure <- envOrElse("S3_BACK_PRESSURE", "false")
+  def make(prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {
+    location <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_LOCATION")
+    parallelism <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_PARALLELISM", "4")
+    fileCacheExpiration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_FILE_CACHE_EXPIRATION", "PT1H")
+    filePeekDuration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_FILE_PEEK_DURATION", "PT1H")
+    filePeekDurationMargin <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_FILE_PEEK_DURATION_MARGIN", "PT1H")
+    s3Bucket <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_BUCKET")
+    compressionType <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "COMPRESSION_TYPE", "GZIP")
+    s3Host <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_OVERRIDE_URL")
+    enableBackPressure <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_BACK_PRESSURE", "false")
   } yield S3Config (
     location = location,
     s3Bucket = s3Bucket,
@@ -50,9 +50,9 @@ object S3Config extends ReaderConfig {
     filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
   )
 
-  val makeS3Default: ZIO[Scope, Throwable, Live] =
+  def makeS3Default(prefix:Option[String]=None): ZIO[Scope, Throwable, Live] =
     for {
-      reg <- envOrElse("AWS_REGION", "eu-west-1")
+      reg <- envOrElse(prefix.map(s=>s+"_").getOrElse("") +  "AWS_REGION", "eu-west-1")
       service <- ZIO.fromAutoCloseable(ZIO.attempt(
         S3AsyncClient
           .builder()
@@ -61,9 +61,9 @@ object S3Config extends ReaderConfig {
         .mapBoth(e => ConnectionError(e.getMessage, e.getCause), new zio.s3.Live(_))
     } yield service
 
-  def liveS3Default: ZLayer[Any, Throwable, S3] = ZLayer.scoped {
-    makeS3Default
+  def liveS3Default(prefix:Option[String]=None): ZLayer[Any, Throwable, S3] = ZLayer.scoped {
+    makeS3Default(prefix)
   }
 
-  val live: ZLayer[Any, Throwable, S3Config] = ZLayer.fromZIO(make)
+  def live(prefix:Option[String]=None): ZLayer[Any, Throwable, S3Config] = ZLayer.fromZIO(make(prefix))
 }
