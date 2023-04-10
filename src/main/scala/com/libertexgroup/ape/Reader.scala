@@ -41,6 +41,8 @@ abstract class Reader[E, ZE, T: ClassTag]{
   }
 
   def as[V :ClassTag]: Reader[E, ZE, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
+
+  def filter(predicate: T => Boolean): Reader[E, ZE, T] = mapZ(_.filter(predicate))
 }
 
 object Reader {

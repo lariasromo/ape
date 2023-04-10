@@ -54,6 +54,8 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
     }
   }
   def as[V :ClassTag]: Writer[E, ZE, T0, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
+
+  def filter(predicate: T => Boolean): Writer[E, ZE, T0, T] = mapZ(_.filter(predicate))
 }
 
 object Writer {
