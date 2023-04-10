@@ -67,7 +67,6 @@ package object s3 {
     .range(0, count.toInt)
     .mapZIO(_ => for {
       t <- queue.take
-      _ <- printLine(s"Reading stream with back pressure (using queue ${queueName})")
     } yield t)
     .ensuring(queue.shutdown <* printLine(s"Shutting down queue ${queueName}").catchAll(_ => ZIO.unit))
 
