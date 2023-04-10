@@ -17,17 +17,18 @@ case class CassandraConfig(
                           )
 
 object CassandraConfig {
-  def live: ZLayer[Any, SecurityException, CassandraConfig] = ZLayer(make)
+  def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, CassandraConfig] = ZLayer(make(prefix))
 
-  def make: ZIO[Any, SecurityException, CassandraConfig] = for {
-    host <- envOrElse("CASSANDRA_HOST", throw new Exception("CASSANDRA_HOST needs to be set"))
-    keyspace <- envOrElse("CASSANDRA_KEYSPACE", "")
-    port <- envOrElse("CASSANDRA_PORT", "9042")
-    batchSize <- envOrElse("CASSANDRA_BATCHSIZE", "10000")
-    syncDuration <- envOrElse("CASSANDRA_SYNCDURATION", "5")
-    username <- envOrElse("CASSANDRA_USERNAME", "")
-    password <- envOrElse("CASSANDRA_PASSWORD", "")
-    datacenter <- envOrElse("CASSANDRA_DATACENTER", "datacenter1")
+  def make(prefix:Option[String]=None): ZIO[Any, SecurityException, CassandraConfig] = for {
+    host <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_HOST",
+      throw new Exception(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_HOST needs to be set"))
+    keyspace <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_KEYSPACE", "")
+    port <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_PORT", "9042")
+    batchSize <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_BATCHSIZE", "10000")
+    syncDuration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_SYNCDURATION", "5")
+    username <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_USERNAME", "")
+    password <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_PASSWORD", "")
+    datacenter <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_DATACENTER", "datacenter1")
   } yield CassandraConfig(
     host=host,
     keyspace=keyspace,

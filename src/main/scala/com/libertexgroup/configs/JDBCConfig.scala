@@ -15,15 +15,15 @@ case class JDBCConfig(
                        )
 
 object JDBCConfig {
-  def live: ZLayer[System, SecurityException, JDBCConfig] = ZLayer(make)
+  def live(prefix:Option[String]=None): ZLayer[System, SecurityException, JDBCConfig] = ZLayer(make(prefix))
 
-  def make: ZIO[System, SecurityException, JDBCConfig] = for {
-    syncDuration <- envOrElse("CLICKHOUSE_SYNC_DURATION", "5")
-    batchSize <- envOrElse("CLICKHOUSE_BATCH_SIZE", "10000")
-    driverName <- envOrElse("JDBC_DRIVER_NAME", "")
-    jdbcUrl <- envOrElse("JDBC_URL", "")
-    username <- envOrElse("JDBC_USERNAME", "")
-    password <- envOrElse("JDBC_PASSWORD", "")
+  def make(prefix:Option[String]=None): ZIO[System, SecurityException, JDBCConfig] = for {
+    syncDuration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_SYNC_DURATION", "5")
+    batchSize <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_BATCH_SIZE", "10000")
+    driverName <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_DRIVER_NAME", "")
+    jdbcUrl <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_URL", "")
+    username <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_USERNAME", "")
+    password <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_PASSWORD", "")
   } yield JDBCConfig(
     syncDuration = Try(syncDuration.toInt.minutes).toOption.getOrElse(5.minutes),
     batchSize = Try(batchSize.toInt).toOption.getOrElse(10000),
