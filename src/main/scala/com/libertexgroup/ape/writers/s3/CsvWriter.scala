@@ -1,19 +1,24 @@
 package com.libertexgroup.ape.writers.s3
 
 import com.libertexgroup.configs.S3Config
-import purecsv.safe._
-import purecsv.safe.converter.Converter
+import purecsv.unsafe.converter.StringConverterUtils
 import zio.{Tag, ZIO}
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
 import zio.stream.ZStream
 
 import scala.reflect.ClassTag
 
-protected[s3] class CsvWriter[
-  ZE, T: ClassTag,
-  Config <: S3Config :Tag
-](sep: String = ",")(implicit rfc: Converter[T,Seq[String]])
- extends S3Writer[ZE with S3 with Config, ZE, T, T] {
+protected[s3] class CsvWriter[ZE, T: ClassTag,Config <: S3Config :Tag]
+(
+  sep: String = ",",
+  order:Option[Seq[String]]=None
+) extends S3Writer[ZE with S3 with Config, ZE, T, T] {
+  def getTMap(cc: T): Map[String, Any] =
+    cc.getClass.getDeclaredFields.foldLeft(Map.empty[String, Any]) { (a, f) =>
+      f.setAccessible(true)
+      a + (f.getName -> f.get(cc).toString)
+    }
+
   override def apply(stream: ZStream[ZE, Throwable, T]):
   ZIO[ZE with S3 with Config, Throwable, ZStream[ZE, Throwable, T]] =
     for {
@@ -21,7 +26,14 @@ protected[s3] class CsvWriter[
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
       bytesStream = stream
-        .map(a => rfc.to(a).mkString(sep) + "\n")
+        .map(a => {
+          val m = getTMap(a)
+          order
+            .map(_.map(k => m.getOrElse(k, "")))
+            .getOrElse(m)
+            .map(v => StringConverterUtils.quoteTextIfNecessary(v.toString))
+            .mkString(sep)
+        } + "\n")
         .map(_.getBytes)
         .flatMap(bytes => ZStream.fromIterable(bytes))
       fileName <- zio.Random.nextUUID
