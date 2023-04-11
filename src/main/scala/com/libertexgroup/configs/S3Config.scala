@@ -14,9 +14,9 @@ import java.time.ZonedDateTime
 import scala.util.Try
 
 case class S3Config (
-                      compressionType: CompressionType,
-                      parallelism: Int,
-                      enableBackPressure: Boolean,
+                      compressionType: CompressionType=CompressionType.NONE,
+                      parallelism: Int=1,
+                      enableBackPressure: Boolean=false,
                       location: Option[String]=None,
                       locationPattern: Option[ZonedDateTime=>String]=None,
                       s3Bucket: Option[String]=None,
