@@ -31,8 +31,8 @@ object S3CsvWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config with
         } yield {
           assertTrue(data.nonEmpty)
           val csvRecords = Chunk(
-            "\",\"\",,\";£$%^&",
-            "\",\"\",,\";\"'1,'1'\""
+            "£$%^&;\",\"\",,\"",
+            "\"'1,'1'\";\",\"\",,\""
           )
           assertTrue(data.equals(csvRecords))
         }
@@ -41,6 +41,8 @@ object S3CsvWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config with
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3Config].csv[Any, dummy](";").write(sampleDataWithCharacters)) >+>
+      setup(Ape.writers.s3[S3Config]
+        .csv[Any, dummy]( ";", Some(Seq("b", "a")))
+        .write(sampleDataWithCharacters)) >+>
       S3FileReaderServiceStatic.live[S3Config](location)
 }
