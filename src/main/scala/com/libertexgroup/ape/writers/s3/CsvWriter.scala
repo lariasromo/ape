@@ -30,7 +30,7 @@ protected[s3] class CsvWriter[ZE, T: ClassTag,Config <: S3Config :Tag]
           val m = getTMap(a)
           order
             .map(_.map(k => m.getOrElse(k, "")))
-            .getOrElse(m)
+            .getOrElse(m.values)
             .map(v => StringConverterUtils.quoteTextIfNecessary(v.toString))
             .mkString(sep)
         } + "\n")
