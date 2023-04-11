@@ -58,7 +58,7 @@ object S3Config extends ReaderConfig {
 
   def makeWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {
     conf <- make(prefix)
-  } yield conf.copy(locationPattern = Some(pattern))
+  } yield conf.copy(locationPattern = Some(pattern), location = None)
 
   def makeS3Default(prefix:Option[String]=None): ZIO[Scope, Throwable, Live] =
     for {
