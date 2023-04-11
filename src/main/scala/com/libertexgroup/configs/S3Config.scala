@@ -10,6 +10,7 @@ import zio.s3.errors.ConnectionError
 import zio.s3.{Live, S3}
 import zio.{Duration, Scope, Task, ZIO, ZLayer}
 
+import java.time.ZonedDateTime
 import scala.util.Try
 
 case class S3Config (
@@ -17,13 +18,18 @@ case class S3Config (
                       parallelism: Int,
                       enableBackPressure: Boolean,
                       location: Option[String]=None,
+                      locationPattern: Option[ZonedDateTime=>String]=None,
                       s3Bucket: Option[String]=None,
                       s3Host: Option[String]=None,
                       fileCacheExpiration: Option[zio.Duration]=None,
                       filePeekDuration: Option[zio.Duration]=None,
                       filePeekDurationMargin: Option[zio.Duration]=None
   ) {
-  val taskLocation: Task[String] = ZIO.getOrFail(location)
+  val taskLocation: Task[String] = ZIO.succeed{
+    location.getOrElse({
+      locationPattern.map(l => l(ZonedDateTime.now())).getOrElse("location and location pattern are empty")
+    })
+  }
   val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
 }
 
@@ -50,6 +56,10 @@ object S3Config extends ReaderConfig {
     filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
   )
 
+  def makeWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {
+    conf <- make(prefix)
+  } yield conf.copy(locationPattern = Some(pattern))
+
   def makeS3Default(prefix:Option[String]=None): ZIO[Scope, Throwable, Live] =
     for {
       reg <- envOrElse(prefix.map(s=>s+"_").getOrElse("") +  "AWS_REGION", "eu-west-1")
@@ -66,4 +76,7 @@ object S3Config extends ReaderConfig {
   }
 
   def live(prefix:Option[String]=None): ZLayer[Any, Throwable, S3Config] = ZLayer.fromZIO(make(prefix))
+
+  def liveWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZLayer[Any, SecurityException, S3Config] =
+    ZLayer.fromZIO(makeWithPattern(pattern, prefix))
 }
