@@ -19,9 +19,11 @@ protected[writers] class Writers[Config <: S3Config :Tag]() {
   ](chunkSize: Int, duration: Duration): Writer[ET with S3 with Config, ET, T, T] =
     new ParquetWriter[ET, T, Config](chunkSize, duration)
 
-  def csv[ET, T: ClassTag](sep: String = ",")
-                                (implicit rfc: Converter[T,Seq[String]]): Writer[ET with S3 with Config, ET, T, T] =
-    new CsvWriter[ET, T, Config](sep)
+  def csv[ET, T: ClassTag](
+                            sep: String = ",",
+                            order:Option[Seq[String]]=None
+                          ): Writer[ET with S3 with Config, ET, T, T] =
+    new CsvWriter[ET, T, Config](sep, order)
 
   def text[ET]: Writer[ET with S3 with Config, ET, String, String] =
     new TextWriter[ET, Config]
