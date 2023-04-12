@@ -1,6 +1,6 @@
 package com.libertexgroup.configs
 
-import zio.System.envOrElse
+import zio.System.{envOrElse, envs}
 import zio.kafka.consumer.Consumer.{AutoOffsetStrategy, OffsetRetrieval}
 import zio.kafka.consumer.{Consumer, ConsumerSettings}
 import zio.kafka.producer.{Producer, ProducerSettings}
@@ -14,54 +14,65 @@ case class KafkaConfig(
                         consumerGroup: String,
                         flushSeconds: Duration,
                         batchSize: Int,
-                        autoOffsetStrategy: AutoOffsetStrategy
+                        autoOffsetStrategy: AutoOffsetStrategy,
+                        additionalProperties: Map[String, String]
   ){
   val producerSettings: ProducerSettings = ProducerSettings(kafkaBrokers)
-    .withClientId(consumerGroup)
+        .withClientId(consumerGroup)
+        .withProperties(additionalProperties)
 
   val consumerSettings: ConsumerSettings = ConsumerSettings(kafkaBrokers)
-    .withOffsetRetrieval(OffsetRetrieval.Auto(autoOffsetStrategy))
-    .withGroupId(consumerGroup)
-    .withClientId(consumerGroup)
+        .withOffsetRetrieval(OffsetRetrieval.Auto(autoOffsetStrategy))
+        .withGroupId(consumerGroup)
+        .withClientId(consumerGroup)
+        .withProperties(additionalProperties)
 }
 
 
 object KafkaConfig extends ReaderConfig {
-  def make(prefix:Option[String]=None): ZIO[Any, SecurityException, KafkaConfig] = for {
-    offsetStrategy <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_OFFSET_STRATEGY", "")
-    kafkaBrokers <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_BROKERS", "")
-    consumerGroup <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_CONSUMER_GROUP", "")
-    topicName <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_TOPIC", "")
-    flushSeconds <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_FLUSH_SECONDS", "300")
-    batchSize <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "KAFKA_BATCH_SIZE", "10000")
-  } yield KafkaConfig(
-    topicName,
-    kafkaBrokers.split(",").toList,
-    consumerGroup,
-    Try(flushSeconds.toInt).toOption.getOrElse(300).seconds,
-    Try(batchSize.toInt).toOption.getOrElse(1000),
-    if(offsetStrategy.equalsIgnoreCase("latest")) AutoOffsetStrategy.Latest else AutoOffsetStrategy.Earliest
-  )
+  def make(prefix:Option[String]=None): ZIO[Any, SecurityException, KafkaConfig] = {
+    val p = prefix.map(s => s + "_").getOrElse("")
+    for {
+      offsetStrategy <- envOrElse(p + "KAFKA_OFFSET_STRATEGY", "")
+      kafkaBrokers <- envOrElse(p + "KAFKA_BROKERS", "")
+      consumerGroup <- envOrElse(p + "KAFKA_CONSUMER_GROUP", "")
+      topicName <- envOrElse(p + "KAFKA_TOPIC", "")
+      flushSeconds <- envOrElse(p + "KAFKA_FLUSH_SECONDS", "300")
+      batchSize <- envOrElse(p + "KAFKA_BATCH_SIZE", "10000")
+      envs <- envs
+      additionalProperties = envs
+        .filter(e => e._1.startsWith(p + "KAFKA_PROP_"))
+        .map(e => (
+            e._1.replace(p + "KAFKA_PROP_", "").replace("_", ".").toLowerCase(),
+            e._2
+          ))
+    } yield KafkaConfig(
+      topicName = topicName,
+      kafkaBrokers = kafkaBrokers.split(",").toList,
+      consumerGroup = consumerGroup,
+      flushSeconds = Try(flushSeconds.toInt).toOption.getOrElse(300).seconds,
+      batchSize = Try(batchSize.toInt).toOption.getOrElse(1000),
+      autoOffsetStrategy = {
+        if (offsetStrategy.equalsIgnoreCase("latest"))
+          AutoOffsetStrategy.Latest
+        else AutoOffsetStrategy.Earliest
+      },
+      additionalProperties = additionalProperties
+    )
+  }
 
   def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, KafkaConfig] = ZLayer.fromZIO(make(prefix))
 
   def makeConsumer: ZIO[Scope with KafkaConfig, Throwable, Consumer] = for {
     config <- ZIO.service[KafkaConfig]
-    consumer <- Consumer.make(
-      ConsumerSettings(config.kafkaBrokers)
-        .withOffsetRetrieval(OffsetRetrieval.Auto(config.autoOffsetStrategy))
-        .withGroupId(config.consumerGroup)
-        .withClientId(config.consumerGroup)
-    )
+    consumer <- Consumer.make(config.consumerSettings)
   } yield consumer
 
   val liveConsumer: ZLayer[KafkaConfig, Throwable, Consumer] = ZLayer.scoped(makeConsumer)
 
   def makeProducer: ZIO[Scope with KafkaConfig, Throwable, Producer] = for {
     config <- ZIO.service[KafkaConfig]
-    producer <- Producer.make(
-      ProducerSettings(config.kafkaBrokers).withClientId(config.consumerGroup)
-    )
+    producer <- Producer.make(config.producerSettings)
   } yield producer
 
   val liveProducer: ZLayer[KafkaConfig, Throwable, Producer] = ZLayer.scoped(makeProducer)
