@@ -37,7 +37,8 @@ object KafkaContainerService extends TestContainerHelper[KafkaContainer]{
       consumerGroup = topicName,
       flushSeconds = 30.seconds,
       batchSize = 1,
-      autoOffsetStrategy = AutoOffsetStrategy.Earliest
+      autoOffsetStrategy = AutoOffsetStrategy.Earliest,
+      additionalProperties = Map.empty
     )
   }
 
