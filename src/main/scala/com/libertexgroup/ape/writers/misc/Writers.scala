@@ -6,7 +6,7 @@ import zio.Queue
 import scala.reflect.ClassTag
 
 protected[writers] class Writers() {
-  def queue[E, ZE, T: ClassTag](queue:Queue[T]): Writer[E, ZE, T, T] = new QueueWriter[E, ZE, T](queue)
+  def queue[E, ZE, T: ClassTag](queue:Queue[T]): QueueWriter[E, ZE, T] = new QueueWriter[E, ZE, T](queue)
 
   def console[E, ET, T: ClassTag]: Writer[E, ET, T, T] = new ConsoleWriter[E, ET, T]
 
