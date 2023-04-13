@@ -4,12 +4,10 @@ import com.libertexgroup.ape.utils.AvroUtils
 import com.libertexgroup.configs.KafkaConfig
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.{Tag, ZIO}
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
-
-import scala.reflect.ClassTag
+import zio.{Tag, ZIO}
 
 protected[kafka] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder, Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Consumer, ConsumerRecord[String, Option[T]]] {

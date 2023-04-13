@@ -1,7 +1,9 @@
 package com.libertexgroup.ape.readers.s3
 
 import com.libertexgroup.ape.Ape
+import com.libertexgroup.ape.writers.misc.QueueWriter
 import com.libertexgroup.configs.S3Config
+import com.libertexgroup.metrics.ApeMetrics
 import zio.Console.printLine
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
@@ -24,7 +26,8 @@ object S3FileReaderServiceStream {
   = for {
     queue <- Queue.unbounded[S3ObjectSummary]
     ape <- {
-      Ape.readers.s3[Config].fileReaderContinuous(locationPattern) -->
+      Ape.readers.s3[Config].fileReaderContinuous(locationPattern) -->[Config, S3ObjectSummary,
+        QueueWriter[Config, S3, S3ObjectSummary]]
         Ape.writers.misc.queue[Config, S3, S3ObjectSummary](queue)
     }
     _ <- ape.stream.runDrain.ensuring(fin(queue)).fork

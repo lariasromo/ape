@@ -7,7 +7,7 @@ import zio.{Queue, ZIO}
 
 import scala.reflect.ClassTag
 
-protected[misc] class QueueWriter[E, ET, T: ClassTag](queue: Queue[T]) extends Writer[E, ET, T, T] {
+class QueueWriter[E, ET, T: ClassTag](queue: Queue[T]) extends Writer[E, ET, T, T] {
   override def apply(i: ZStream[ET, Throwable, T]): ZIO[E, Throwable, ZStream[ET, Throwable,T]] =
     ZIO.succeed{
       i.tap { file => printLine(s"Offering ${file} to queue") }.tap(f => queue.offer(f))
