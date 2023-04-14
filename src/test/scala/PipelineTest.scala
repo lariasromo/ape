@@ -1,9 +1,14 @@
 import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
 import com.libertexgroup.ape.{Ape, Reader, Writer}
+import com.libertexgroup.configs.{KafkaConfig, MultiClickhouseConfig}
+import zio.Config.{LocalDate, LocalTime}
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, TestResult, ZIOSpecDefault, assertTrue}
 import zio.{Chunk, Scope, ZIO}
+
+import java.time.{ZoneId, ZonedDateTime}
+import java.time.format.DateTimeFormatter
 
 
 object PipelineTest extends ZIOSpecDefault {
@@ -46,11 +51,14 @@ object PipelineTest extends ZIOSpecDefault {
     },
     test("Writer safeGet") {
       for {
-        testResult <- reader -->[Any, dummy, Writer[Any,Any,Option[dummy],dummy]]
-          new Writer.UnitTWriter[Any, Any, Option[dummy], Option[dummy]](dummyT).safeGet[dummy]
+        testResult <- reader --> new Writer.UnitTWriter[Any, Any, Option[dummy], Option[dummy]](dummyT).safeGet[dummy]
         chunkResult <- testResult.stream.runCollect
       } yield {
         assertTrue(chunkResult.equals(sampleDataNoOp))
       }
+    },
+    test("Class names") {
+      val dt = LocalDate.parse("2023-03-01").map(dt => dt.atStartOfDay(ZoneId.of("UTC")))
+      assertTrue(true)
     })
 }

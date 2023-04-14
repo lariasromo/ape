@@ -5,12 +5,14 @@ import com.libertexgroup.models.s3.CompressionType
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
+import zio.Config.LocalDate
 import zio.System.{env, envOrElse}
 import zio.s3.errors.ConnectionError
 import zio.s3.{Live, S3}
 import zio.{Duration, Scope, Task, ZIO, ZLayer}
 
-import java.time.ZonedDateTime
+import java.time.{ZoneId, ZonedDateTime}
+import java.time.format.DateTimeFormatter
 import scala.util.Try
 
 case class S3Config (
@@ -23,7 +25,8 @@ case class S3Config (
                       s3Host: Option[String]=None,
                       fileCacheExpiration: Option[zio.Duration]=None,
                       filePeekDuration: Option[zio.Duration]=None,
-                      filePeekDurationMargin: Option[zio.Duration]=None
+                      filePeekDurationMargin: Option[zio.Duration]=None,
+                      startDate: Option[ZonedDateTime]=None
   ) {
   val taskLocation: Task[String] = ZIO.succeed{
     location.getOrElse({
@@ -44,6 +47,7 @@ object S3Config extends ReaderConfig {
     compressionType <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "COMPRESSION_TYPE", "GZIP")
     s3Host <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_OVERRIDE_URL")
     enableBackPressure <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_BACK_PRESSURE", "false")
+    startDate <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_START_DATE")
   } yield S3Config (
     location = location,
     s3Bucket = s3Bucket,
@@ -54,6 +58,9 @@ object S3Config extends ReaderConfig {
     fileCacheExpiration = Some(Duration fromJava java.time.Duration.parse(fileCacheExpiration)),
     filePeekDuration = Some(Duration fromJava java.time.Duration.parse(filePeekDuration)),
     filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
+    startDate = startDate.flatMap(sd => {
+      LocalDate.parse(sd).map(dt => dt.atStartOfDay(ZoneId.of("UTC"))).toOption
+    })
   )
 
   def makeWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {
