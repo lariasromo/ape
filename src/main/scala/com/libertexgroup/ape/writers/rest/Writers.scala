@@ -19,4 +19,6 @@ class Writers() {
   def decodeZipCirce[ZE, T:ClassTag, T2: ClassTag :Decoder]
   (implicit request: T => Request): Writer[Client, ZE, T, (T, Option[T2])]  =
     new RestAPIWriterDecodeCirceZip[ZE, T, T2]
+  def decodeZipCirceWithRequest[E, ZE, T:ClassTag, T2: ClassTag :Decoder] : Writer[E with Client, ZE, (Request,T),(T,Option[T2])] =
+    new RestAPIWriterRequestCirce[E,ZE,T,T2]
 }
