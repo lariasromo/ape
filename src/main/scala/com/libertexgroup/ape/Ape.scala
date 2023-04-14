@@ -12,9 +12,10 @@ case class Ape[ZE, T] (stream: ZStream[ZE, Throwable, T]){
 }
 
 object Ape {
-  def apply[E, E1, ZE, T0, T,
-    R <: Reader[E, ZE, T0],
-    W <: Writer[E1, ZE, T0, T]]( reader: R, writer: W ): ZIO[E with E1, Throwable, Ape[ZE, T]] = {
+  def apply[E, E1, ZE, T0, T](
+                               reader: Reader[E, ZE, T0],
+                               writer: Writer[E1, ZE, T0, T]
+                             ): ZIO[E with E1, Throwable, Ape[ZE, T]] = {
     for {
       s <- reader.apply
       s2 <- writer.apply(s.withMetrics(reader.getClass.getName))

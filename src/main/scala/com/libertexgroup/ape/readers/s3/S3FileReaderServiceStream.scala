@@ -26,8 +26,7 @@ object S3FileReaderServiceStream {
   = for {
     queue <- Queue.unbounded[S3ObjectSummary]
     ape <- {
-      Ape.readers.s3[Config].fileReaderContinuous(locationPattern) -->[Config, S3ObjectSummary,
-        QueueWriter[Config, S3, S3ObjectSummary]]
+      Ape.readers.s3[Config].fileReaderContinuous(locationPattern) -->
         Ape.writers.misc.queue[Config, S3, S3ObjectSummary](queue)
     }
     _ <- ape.stream.runDrain.ensuring(fin(queue)).fork

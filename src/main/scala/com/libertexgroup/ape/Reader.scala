@@ -11,10 +11,8 @@ import scala.util.Try
 abstract class Reader[E, ZE, T: ClassTag]{
   def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
   def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = apply
-  def -->[E2, T2: ClassTag,
-    W <: Writer[E2, ZE, T, T2]
-  ](writer: W): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
-    Ape.apply[E, E2, ZE, T, T2, Reader[E, ZE, T], W](this, writer)
+  def -->[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
+    Ape.apply[E, E2, ZE, T, T2](this, writer)
 
   def **[T2: ClassTag](implicit t: T => T2): Reader[E, ZE, T2] = new TTReader(this, t)
   def withTransform[T2: ClassTag](t: T => T2): Reader[E, ZE, T2] = {
