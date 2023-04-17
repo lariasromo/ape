@@ -2,7 +2,6 @@ package com.libertexgroup.ape
 
 import com.libertexgroup.ape.readers.PipelineReaders
 import com.libertexgroup.ape.writers.PipelineWriters
-import com.libertexgroup.metrics.ApeMetrics
 import com.libertexgroup.metrics.ApeMetrics._
 import zio._
 import zio.stream.ZStream
@@ -18,8 +17,8 @@ object Ape {
                              ): ZIO[E with E1, Throwable, Ape[ZE, T]] = {
     for {
       s <- reader.apply
-      s2 <- writer.apply(s.withMetrics(reader.getClass.getName))
-    } yield Ape(s2.withMetrics(writer.getClass.getName))
+      s2 <- writer.apply(s.withMetrics(reader.name).withMetrics(writer.name))
+    } yield Ape(s2)
   }
 
   val readers = new PipelineReaders()

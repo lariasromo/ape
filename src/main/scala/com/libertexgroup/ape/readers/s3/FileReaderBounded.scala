@@ -16,7 +16,7 @@ protected [s3] class FileReaderBounded[Config <: S3Config :Tag, AWSS3 <: S3](
                          start:ZonedDateTime,
                          end:ZonedDateTime,
                          step:Duration
-                       ) extends Reader[AWSS3 with Config, Any, S3ObjectSummary] {
+                       ) extends S3FileReader[AWSS3 with Config, Any, S3ObjectSummary] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
   override def apply: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {

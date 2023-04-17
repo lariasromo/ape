@@ -6,4 +6,6 @@ import com.libertexgroup.ape.Reader
 
 import scala.reflect.ClassTag
 
-trait RestApiReader[E, E1, T ] extends Reader[E, E1, T]
+abstract class RestApiReader[E, E1, T: ClassTag] extends Reader[E, E1, T] {
+  override val name = "RestApiReader"
+}

@@ -9,6 +9,7 @@ import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
 abstract class Reader[E, ZE, T: ClassTag]{
+  val name:String
   def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
   def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = apply
   def -->[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
@@ -55,6 +56,8 @@ object Reader {
     override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
       s <- input.apply
     } yield s.map(transform)
+
+    override val name: String = input.name
   }
 
   class ZTReader[E, ZE, T0: ClassTag, T1: ClassTag](
@@ -64,10 +67,17 @@ object Reader {
     override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
       s <- input.apply
     } yield transform(s)
+
+    override val name: String = input.name
   }
 
-  class UnitReader[E, ZE, T: ClassTag] (stream: ZStream[ZE, Throwable, T]) extends Reader[E, ZE, T]{
+  class UnitReader[E, ZE, T: ClassTag] (
+                                         stream: ZStream[ZE, Throwable, T],
+                                         n:String = "defaultReader"
+                                       ) extends Reader[E, ZE, T] {
     override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = ZIO.succeed(stream)
+
+    override val name: String = n
   }
 }
 
