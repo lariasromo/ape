@@ -9,10 +9,10 @@ import zio.stream.ZStream
 
 protected[rest] class RestAPIWriterString[ZE] extends RestApiWriter[Client, ZE, Request, String] {
 
-  override def apply(i: ZStream[ZE, Throwable, Request]): ZIO[Client, Throwable, ZStream[ZE, Throwable, String]] =
-    for {
-      l <- reLayer[Client]
-      z = i.mapZIO(r => sendRequestString(r).provideSomeLayer(l)).flatMap(x=>x)
-    } yield z
+  override protected[this] def pipe(i: ZStream[ZE, Throwable, Request]):
+    ZIO[Client, Throwable, ZStream[ZE, Throwable, String]] = for {
+    l <- reLayer[Client]
+    z = i.mapZIO(r => sendRequestString(r).provideSomeLayer(l)).flatMap(x=>x)
+  } yield z
 }
 

@@ -8,10 +8,17 @@ import zio.stream.ZStream
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
+import com.libertexgroup.metrics.ApeMetrics._
+
 abstract class Reader[E, ZE, T: ClassTag]{
   val name:String
-  def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
-  def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = apply
+
+  protected[this] def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
+
+  def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = for {
+    s <- read
+  } yield s.withMetrics(name)
+
   def -->[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
     Ape.apply[E, E2, ZE, T, T2](this, writer)
 
@@ -53,7 +60,7 @@ object Reader {
                                                      input: Reader[E, ZE, T0],
                                                      transform:T0=>T1
                                                    ) extends Reader[E, ZE, T1] {
-    override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
+    override def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
       s <- input.apply
     } yield s.map(transform)
 
@@ -64,7 +71,7 @@ object Reader {
                                                      input: Reader[E, ZE, T0],
                                                      transform:ZStream[ZE, Throwable, T0] => ZStream[ZE, Throwable, T1]
                                                    ) extends Reader[E, ZE, T1]{
-    override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
+    override def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
       s <- input.apply
     } yield transform(s)
 
@@ -75,7 +82,7 @@ object Reader {
                                          stream: ZStream[ZE, Throwable, T],
                                          n:String = "defaultReader"
                                        ) extends Reader[E, ZE, T] {
-    override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = ZIO.succeed(stream)
+    override def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = ZIO.succeed(stream)
 
     override val name: String = n
   }

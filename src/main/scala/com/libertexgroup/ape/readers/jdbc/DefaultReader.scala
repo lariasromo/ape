@@ -11,8 +11,8 @@ import scala.reflect.ClassTag
 protected[jdbc] class DefaultReader[E, T: ClassTag, Config <: JDBCConfig :Tag](sql:String)(implicit r: ResultSet => T)
   extends JDBCReader[Config, E, T] {
 
-  override def apply: ZIO[Config, Throwable, ZStream[E, Throwable, T]] = for {
-    chnk <- query2Chunk[T, Config](sql)
-  } yield ZStream.fromChunk(chnk)
-
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[E, Throwable, T]] =
+      for {
+        chnk <- query2Chunk[T, Config](sql)
+      } yield ZStream.fromChunk(chnk)
 }

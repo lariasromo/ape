@@ -19,7 +19,7 @@ protected[s3] class CsvWriter[ZE, T: ClassTag,Config <: S3Config :Tag]
       a + (f.getName -> f.get(cc).toString)
     }
 
-  override def apply(stream: ZStream[ZE, Throwable, T]):
+  def a(stream: ZStream[ZE, Throwable, T]):
   ZIO[ZE with S3 with Config, Throwable, ZStream[ZE, Throwable, T]] =
     for {
       config <- ZIO.service[Config]
@@ -45,4 +45,7 @@ protected[s3] class CsvWriter[ZE, T: ClassTag,Config <: S3Config :Tag]
       )(config.parallelism)
         .catchAll(_ => ZIO.unit)
     } yield stream
+
+  override protected[this] def pipe(i: ZStream[ZE, Throwable, T]):
+    ZIO[ZE with S3 with Config, Throwable, ZStream[ZE, Throwable, T]] = a(i)
 }

@@ -9,5 +9,5 @@ protected[rest] class RestAPIReaderByte[E](
                                                  request: Request
                                            ) extends RestApiReader[Client,E,Byte] {
 
-  override def apply: ZIO[Client, Throwable, ZStream[E, Throwable, Byte]] = sendRequestByte(request)
+  override protected[this] def read: ZIO[Client, Throwable, ZStream[E, Throwable, Byte]] = sendRequestByte(request)
 }

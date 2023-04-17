@@ -48,7 +48,7 @@ protected [s3] class FileReaderContinuous[Config <: S3Config :Tag, AWSS3 <: S3]
             }
         }.flatMap { x => x }
 
-  override def apply: ZIO[Config, Throwable, ZStream[AWSS3, Throwable, S3ObjectSummary]] = for {
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[AWSS3, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[Config]
     _ <- printLine("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
     now <- currentDateTime

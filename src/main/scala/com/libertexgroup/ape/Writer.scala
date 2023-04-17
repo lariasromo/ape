@@ -1,17 +1,19 @@
 package com.libertexgroup.ape
 
-import com.libertexgroup.ape.Writer.{TTWriter, UnitTWriter, UnitZWriter, ZTWriter, concatenate}
-import com.libertexgroup.ape.readers.PipelineReaders
-import com.libertexgroup.ape.writers.PipelineWriters
+import com.libertexgroup.ape.Writer._
 import zio.ZIO
 import zio.stream.ZStream
 
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
+import com.libertexgroup.metrics.ApeMetrics._
+
 abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   val name:String
-  def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
+  protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
+  def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]] =
+    pipe(i.withMetrics(name))
   def write(i: ZStream[ZE, Throwable, T0]): ZIO[ZE with E, Throwable, Unit] = for {
     s <- apply(i)
     _ <- s.runDrain
@@ -66,7 +68,7 @@ object Writer {
                                                                writer2: Writer[E2, ZE, T0, T2]
                                                              ): Writer[E with E2, ZE, T0, (T, T2)] =
     new Writer[E with E2, ZE, T0, (T, T2)] {
-      override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E with E2, Throwable, ZStream[ZE, Throwable, (T, T2)]] =
+      override def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E with E2, Throwable, ZStream[ZE, Throwable, (T, T2)]] =
         for {
           s <- writer1(i)
           s2 <- writer2(i)
@@ -82,7 +84,7 @@ object Writer {
                                          writer2: Writer[E2, ZE, T, T2]
                                        ): Writer[E with E2, ZE, T0, T2] =
     new Writer[E with E2, ZE, T0, T2] {
-      override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E with E2, Throwable, ZStream[ZE, Throwable, T2]] =
+      override def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E with E2, Throwable, ZStream[ZE, Throwable, T2]] =
         for {
                 s <- writer1(i)
                 s2 <- writer2(s)
@@ -95,7 +97,7 @@ object Writer {
                                                                    writer: Writer[E, ZE, T0, T1],
                                                                    transform:T1=>T2
                                                                  ) extends Writer[E, ZE, T0, T2] {
-    override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
+    override def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
       s <- writer.apply(i)
     } yield s.map(transform)
 
@@ -106,7 +108,7 @@ object Writer {
                                                                    input: Writer[E, ZE, T0, T1],
                                                                    transform:ZStream[ZE, Throwable, T1] => ZStream[ZE, Throwable, T2]
                                                                  ) extends Writer[E, ZE, T0, T2]{
-    override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
+    override def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
       s <- input.apply(i)
     } yield transform(s)
 
@@ -117,14 +119,14 @@ object Writer {
                                                        t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
                                                        n: String = "defaultWriter"
                                                       ) extends Writer[E, ZE, T, T2] {
-    override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = ZIO.succeed(t(i))
+    override def pipe(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = ZIO.succeed(t(i))
 
     override val name: String = n
   }
 
   class UnitTWriter[E, ZE, T: ClassTag, T2: ClassTag] (t: T => T2, n: String = "defaultWriter")
     extends Writer[E, ZE, T, T2]{
-    override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] =
+    override def pipe(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] =
       ZIO.succeed(i.map(t))
 
     override val name: String = n

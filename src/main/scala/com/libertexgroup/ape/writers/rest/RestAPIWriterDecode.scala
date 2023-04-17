@@ -12,10 +12,10 @@ import scala.reflect.ClassTag
 protected[rest] class RestAPIWriterDecode[ZE, T:ClassTag](implicit enc: String => T)
   extends RestApiWriter[Client, ZE, Request, T] {
 
-  override def apply(i: ZStream[ZE, Throwable, Request]): ZIO[Client, Throwable, ZStream[ZE, Throwable, T]] =
-    for {
-      l <- reLayer[Client]
-      z = i.mapZIO(r => sendRequestString(r).provideSomeLayer(l)).flatMap(x=>x).map(enc)
-    } yield z
+  override protected[this] def pipe(i: ZStream[ZE, Throwable, Request]):
+    ZIO[Client, Throwable, ZStream[ZE, Throwable, T]] = for {
+    l <- reLayer[Client]
+    z = i.mapZIO(r => sendRequestString(r).provideSomeLayer(l)).flatMap(x=>x).map(enc)
+  } yield z
 }
 

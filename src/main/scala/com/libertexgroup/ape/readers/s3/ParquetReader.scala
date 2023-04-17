@@ -14,7 +14,9 @@ import zio.stream.ZStream
  */
 protected[s3] class ParquetReader[E, Config <: S3Config :Tag]
   extends S3Reader[E, Config with S3, GenericRecord, Config] {
-  override def apply: ZIO[S3FileReaderService[Config], Nothing, ZStream[Config with S3, Throwable, GenericRecord]] = for {
-    s3FilesQueue <- fileStream
-  } yield s3FilesQueue.mapZIO(readParquetGenericRecords[Config]).flatMap(x=>x)
+  override protected[this] def read: ZIO[S3FileReaderService[Config] with E, Throwable,
+    ZStream[Config with S3, Throwable, GenericRecord]] =
+    for {
+      s3FilesQueue <- fileStream
+    } yield s3FilesQueue.mapZIO(readParquetGenericRecords[Config]).flatMap(x=>x)
 }

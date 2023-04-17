@@ -12,7 +12,7 @@ protected[s3] class JsonLinesWriter[E,
   Config <: S3Config :Tag
 ](implicit enc: T => String)
  extends S3Writer[E with S3 with Config, E, T, T] {
-  override def apply(stream: ZStream[E, Throwable, T]):
+  def a(stream: ZStream[E, Throwable, T]):
   ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, T]] =
     for {
       config <- ZIO.service[Config]
@@ -31,4 +31,7 @@ protected[s3] class JsonLinesWriter[E,
       )(config.parallelism)
         .catchAll(_ => ZIO.unit)
     } yield stream
+
+  override protected[this] def pipe(i: ZStream[E, Throwable, T]):
+    ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, T]] = a(i)
 }

@@ -17,7 +17,7 @@ object Ape {
                              ): ZIO[E with E1, Throwable, Ape[ZE, T]] = {
     for {
       s <- reader.apply
-      s2 <- writer.apply(s.withMetrics(reader.name).withMetrics(writer.name))
+      s2 <- writer.apply(s)
     } yield Ape(s2)
   }
 

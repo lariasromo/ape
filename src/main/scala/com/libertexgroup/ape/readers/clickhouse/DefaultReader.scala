@@ -11,9 +11,8 @@ protected[clickhouse] class DefaultReader[E1, T: ClassTag, Config <: MultiClickh
                                                                                         (implicit r: ResultSet => T)
   extends ClickhouseReader[Config, E1, T] {
 
-  override def apply: ZIO[MultiClickhouseConfig, Throwable, ZStream[E1, Throwable, T]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[E1, Throwable, T]] =
     for {
       chnk <- query2ChunkMulti(sql)
     } yield ZStream.fromChunk(chnk)
-
 }

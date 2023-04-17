@@ -15,8 +15,8 @@ import scala.reflect.ClassTag
 protected[s3] class JsonLinesReader[T :ClassTag, Config <: S3Config :Tag]
 (implicit decode: String => T) extends S3Reader[Config, S3 with Config, S3FileWithContent[T], Config] {
 
-  override def apply: ZIO[S3FileReaderService[Config] with Config, Throwable,
-    ZStream[S3 with Config, Throwable, S3FileWithContent[T]]] =
+  override protected[this] def read: ZIO[S3FileReaderService[Config] with Config, Throwable,
+    ZStream[S3 with Config, Throwable, (S3ObjectSummary, ZStream[S3, Throwable, T])]] =
     for {
       config <- ZIO.service[Config]
       s3FilesQueue <- fileStream
