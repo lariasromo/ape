@@ -24,21 +24,20 @@ protected[jdbc] class DefaultWriter[ET,
       .map { case(row, _) => row }
   }
 
-  def insertBatch(batch: Chunk[Model], config:Config): ZIO[Any, Throwable, Chunk[Model]] = for {
-    errors <- runConnect(insertRetrieveErrors(batch)).provideSomeLayer(ZLayer.succeed(config))
+  def insertBatch(batch: Chunk[Model]): ZIO[Config, Throwable, Chunk[Model]] = for {
+    errors <- runConnect(insertRetrieveErrors(batch))
   } yield errors
 
-  override def apply(stream: ZStream[ET, Throwable, Model]): ZIO[Config, Nothing, ZStream[ET, Throwable, Chunk[Model]]]
-  =
+  override protected[this] def pipe(i: ZStream[ET, Throwable, Model]):
+    ZIO[Config, Nothing, ZStream[ET, Throwable, Chunk[Model]]] =
     for {
       config <- ZIO.service[Config]
-      errors = stream
+      errors = i
         .groupedWithin(config.batchSize, config.syncDuration)
         .mapZIO(batch => for {
           error <- ZIO.scoped(for {
-            error <- insertBatch(batch, config)
+            error <- insertBatch(batch).provideSomeLayer(ZLayer.succeed(config))
           } yield error )
         } yield error )
     } yield errors
-
 }

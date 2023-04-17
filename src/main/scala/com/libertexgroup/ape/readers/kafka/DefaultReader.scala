@@ -20,8 +20,8 @@ protected[kafka] class DefaultReader[Config <: KafkaConfig :Tag]
     .groupedWithin(kafkaConfig.batchSize, kafkaConfig.flushSeconds)
     .flatMap(r => ZStream.fromChunk(r))
 
-  override def apply: ZIO[Config, Throwable, ZStream[Consumer, Throwable, ConsumerRecord[String, Array[Byte]]]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Consumer, Throwable, ConsumerRecord[String, Array[Byte]]]] =
     for {
-        kafkaConfig <- ZIO.service[Config]
+      kafkaConfig <- ZIO.service[Config]
     } yield createStream(kafkaConfig)
 }

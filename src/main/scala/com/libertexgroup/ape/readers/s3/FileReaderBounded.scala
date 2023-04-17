@@ -1,6 +1,5 @@
 package com.libertexgroup.ape.readers.s3
 
-import com.libertexgroup.ape.Reader
 import com.libertexgroup.ape.utils.S3Utils
 import com.libertexgroup.configs.S3Config
 import zio.Console.printLine
@@ -19,7 +18,7 @@ protected [s3] class FileReaderBounded[Config <: S3Config :Tag, AWSS3 <: S3](
                        ) extends S3FileReader[AWSS3 with Config, Any, S3ObjectSummary] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
-  override def apply: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
+  override protected[this] def read: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket

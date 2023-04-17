@@ -13,9 +13,9 @@ import scala.reflect.ClassTag
 protected[kafka] class JsonCirceReader[T: Decoder :ClassTag, Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Consumer, ConsumerRecord[String, T]] {
 
-  override def apply: ZIO[Config, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, T]]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Consumer, Throwable, ConsumerRecord[String, T]]] =
     for {
-        kafkaConfig <- ZIO.service[Config]
+      kafkaConfig <- ZIO.service[Config]
     } yield Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )
       .plainStream(Serde.string, Serde.string)
       .tap { batch => batch.offset.commit }

@@ -9,8 +9,9 @@ protected[s3] class TextWriter[E,
   Config <: S3Config :Tag
 ]
   extends S3Writer[E with S3 with Config, E, String, String] {
-  override def apply(stream: ZStream[E, Throwable, String]):
-  ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, String]] =
+
+  override protected[this] def pipe(i: ZStream[E, Throwable, String]):
+    ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, String]] =
     for {
       config <- ZIO.service[Config]
       bucket <- config.taskS3Bucket
@@ -19,9 +20,9 @@ protected[s3] class TextWriter[E,
       _ <- multipartUpload(
         bucket,
         s"${location}/${fileName}.txt",
-        stream.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r)),
+        i.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r)),
         MultipartUploadOptions.default
       )(config.parallelism)
         .catchAll(_ => ZIO.unit)
-    } yield stream
+    } yield i
 }

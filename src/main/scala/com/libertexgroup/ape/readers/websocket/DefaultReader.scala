@@ -12,7 +12,9 @@ import java.time.ZoneOffset
 protected[websocket] class DefaultReader[E, ZE](ws: WebSocket[Task])
   extends Reader[E, ZE, Message] {
 
-  override def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, Message]] = for {
+  override val name: String = "WebSocketReader"
+
+  override protected[this] def read: ZIO[E, Throwable, ZStream[ZE, Throwable, Message]] = for {
     stream <- ZIO.succeed {
       ZStream
         .fromZIO(ws.receiveText())
@@ -22,6 +24,4 @@ protected[websocket] class DefaultReader[E, ZE](ws: WebSocket[Task])
         } yield Message(dt.toLocalDateTime.toInstant(ZoneOffset.UTC).toEpochMilli, text))
     }
   } yield stream
-
-  override val name: String = "WebSocketReader"
 }

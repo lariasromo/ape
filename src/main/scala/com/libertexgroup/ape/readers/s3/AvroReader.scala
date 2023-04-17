@@ -2,11 +2,10 @@ package com.libertexgroup.ape.readers.s3
 
 import com.libertexgroup.configs.S3Config
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
-import zio.{Tag, ZIO}
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
-import java.io.IOException
 import scala.reflect.ClassTag
 
 /**
@@ -22,11 +21,12 @@ protected[s3] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder :ClassTag, 
     Config
   ] {
 
-  override def apply: ZIO[S3FileReaderService[Config] with Config, Throwable,
-    ZStream[S3 with Config, Throwable, S3FileWithContent[T]]] = for {
-    config <- ZIO.service[Config]
-    s3FilesQueue <- fileStream
-    stream = s3FilesQueue.mapZIO(file => readBytes[T, Config](file).map(x => (file, x)))
-    newStream = if(config.enableBackPressure) readWithBackPressure[T, Config](stream) else stream
-  } yield newStream
+  override protected[this] def read: ZIO[S3FileReaderService[Config] with Config, Throwable,
+    ZStream[S3 with Config, Throwable, (S3ObjectSummary, ZStream[S3, Throwable, T])]] =
+    for {
+      config <- ZIO.service[Config]
+      s3FilesQueue <- fileStream
+      stream = s3FilesQueue.mapZIO(file => readBytes[T, Config](file).map(x => (file, x)))
+      newStream = if(config.enableBackPressure) readWithBackPressure[T, Config](stream) else stream
+    } yield newStream
 }

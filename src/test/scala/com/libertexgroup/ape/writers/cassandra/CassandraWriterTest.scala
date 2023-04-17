@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.writers.cassandra
 
 import com.dimafeng.testcontainers.CassandraContainer
-import com.libertexgroup.ape.Ape
+import com.libertexgroup.ape.{Ape, Reader}
 import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.utils.CassandraContainerService
 import com.libertexgroup.ape.writers.sampleData
@@ -16,7 +16,7 @@ object CassandraWriterTest  extends ZIOSpec[CassandraConfig with CassandraContai
     suite("CassandraWriterTest")(
       test("Writes dummy data"){
         for {
-          _ <- writer.apply(sampleData)
+          _ <- writer.write(sampleData)
         } yield {
           assertTrue(true)
         }

@@ -10,18 +10,14 @@ import zio.stream.ZStream
 
 import scala.reflect.ClassTag
 
-protected[rest] class RestAPIWriterDecodeCirceZip[
-  ZE,
-  T:ClassTag,
-  T2: ClassTag :Decoder
-](implicit request: T => Request)
+protected[rest] class RestAPIWriterDecodeCirceZip[ZE, T:ClassTag, T2: ClassTag :Decoder](implicit request: T => Request)
   extends RestApiWriter[Client, ZE, T, (T, Option[T2])] {
 
-  override def apply(i: ZStream[ZE, Throwable, T]): ZIO[Client, Throwable, ZStream[ZE, Throwable, (T, Option[T2])]] =
-    for {
-      l <- reLayer[Client]
-    } yield i.mapZIO(r => for {
-      respS <- sendRequestString(r).provideSomeLayer(l)
-      resp <- respS.runCollect
-    } yield (r, jawn.decode[T2](resp.mkString).toOption))
+  override protected[this] def pipe(i: ZStream[ZE, Throwable, T]):
+    ZIO[Client, Throwable, ZStream[ZE, Throwable, (T, Option[T2])]] = for {
+    l <- reLayer[Client]
+  } yield i.mapZIO(r => for {
+    respS <- sendRequestString(r).provideSomeLayer(l)
+    resp <- respS.runCollect
+  } yield (r, jawn.decode[T2](resp.mkString).toOption))
 }

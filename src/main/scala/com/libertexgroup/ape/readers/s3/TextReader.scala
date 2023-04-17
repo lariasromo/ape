@@ -13,8 +13,8 @@ import zio.stream.ZStream
 protected[s3] class TextReader[Config <: S3Config :Tag]
   extends S3Reader[Config, Config with S3, S3FileWithContent[String], Config] {
 
-  override def apply: ZIO[S3FileReaderService[Config] with Config, Throwable,
-    ZStream[Config with S3, Throwable, S3FileWithContent[String]]] =
+  override protected[this] def read: ZIO[S3FileReaderService[Config] with Config, Throwable,
+    ZStream[Config with S3, Throwable, (S3ObjectSummary, ZStream[S3, Throwable, String])]] =
     for {
       config <- ZIO.service[Config]
       s3FilesQueue <- fileStream

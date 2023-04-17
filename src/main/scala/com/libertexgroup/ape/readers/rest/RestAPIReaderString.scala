@@ -10,6 +10,6 @@ protected[rest] class RestAPIReaderString[ZE](
                                                    request: Request
                                                ) extends RestApiReader[Client,ZE,String] {
 
-  override def apply: ZIO[Client, Throwable, ZStream[ZE, Throwable, String]] = sendRequestString(request)
+  override protected[this] def read: ZIO[Client, Throwable, ZStream[ZE, Throwable, String]] = sendRequestString(request)
 }
 

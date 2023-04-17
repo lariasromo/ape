@@ -44,16 +44,16 @@ protected[clickhouse] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag, Con
       }
   } yield errors
 
-  override def apply(stream: ZStream[ET, Throwable, T]):
-  ZIO[Config, Nothing, ZStream[ET, Throwable, Chunk[(T, Int)]]] = for {
-      config <- ZIO.service[Config]
-      r = stream
-        .grouped(config.chConfigs.length * config.chConfigs.head.batchSize)
-        .flatMap{ batch => {
-          ZStream.fromIterable{
-            config.chConfigs.zip(batch.split(config.chConfigs.length))
-              .map { case (config, batch) => insertBatch(batch).provideSomeLayer(ZLayer.succeed(config)) }
-          }.mapZIOPar(config.chConfigs.length)(x => ZIO.scoped(x))
-        }}
-    } yield r
+  override protected[this] def pipe(i: ZStream[ET, Throwable, T]):
+    ZIO[Config, Throwable, ZStream[ET, Throwable, Chunk[(T, Int)]]] = for {
+    config <- ZIO.service[Config]
+    r = i
+      .grouped(config.chConfigs.length * config.chConfigs.head.batchSize)
+      .flatMap{ batch => {
+        ZStream.fromIterable{
+          config.chConfigs.zip(batch.split(config.chConfigs.length))
+            .map { case (config, batch) => insertBatch(batch).provideSomeLayer(ZLayer.succeed(config)) }
+        }.mapZIOPar(config.chConfigs.length)(x => ZIO.scoped(x))
+      }}
+  } yield r
 }

@@ -10,9 +10,9 @@ import zio.stream.ZStream
 protected[kafka] class StringReader[Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Consumer, ConsumerRecord[String, String]] {
 
-  override def apply: ZIO[Config, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, String]]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Consumer, Throwable, ConsumerRecord[String, String]]] =
     for {
-        kafkaConfig <- ZIO.service[Config]
+      kafkaConfig <- ZIO.service[Config]
     } yield Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )
       .plainStream(Serde.string, Serde.string)
       .tap { batch => batch.offset.commit }
