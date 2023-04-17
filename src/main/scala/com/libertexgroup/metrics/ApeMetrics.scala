@@ -1,6 +1,7 @@
 package com.libertexgroup.metrics
 
 import com.libertexgroup.configs.ApeMetricsConfig
+import zio.Cause.stack
 import zio.Console.printLine
 import zio._
 import zio.http._
@@ -34,7 +35,7 @@ object ApeMetrics {
   }
 
   def app(path:String): Http[PrometheusPublisher, Nothing, Request, Response] =
-    Http.collectZIO[Request] { case Method.GET -> !! / path =>
+    Http.collectZIO[Request] { case Method.GET -> !! / "metrics" =>
       ZIO.serviceWithZIO[PrometheusPublisher](
         _.get.map(Response.text),
       )
@@ -45,7 +46,7 @@ object ApeMetrics {
       for {
         conf <- ZIO.service[ApeMetricsConfig]
         _ <- printLine(s"Starting metrics server on port ${conf.port} and path: /${conf.path}")
-        server <- Server.serve(app(conf.path) ++ healthApp)
+        server <- Server.serve((app(conf.path) ++ healthApp).withDefaultErrorResponse)
           .provide(
             // general config for all metric backend
             metricsConfig,
@@ -54,10 +55,14 @@ object ApeMetrics {
             prometheus.prometheusLayer,
             Server.live(ServerConfig(address = new InetSocketAddress(conf.port)))
           )
-          .onInterrupt(printLine("Metrics server stopped").catchAll(_=>ZIO.unit))
+          .onInterrupt(printLine("Metrics server interrupted").catchAll(_=>ZIO.unit))
+          .catchAll(ex => for {
+            _ <- printLine("Something happened with the metrics server " + ex.getMessage)
+          } yield throw new Exception(ex))
           .fork
       } yield server
     )(s => for {
+      _ <- printLine("Metrics server stopped").catchAll(_ => ZIO.unit)
       _ <- s.interruptFork
     } yield ())
 
