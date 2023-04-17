@@ -4,6 +4,7 @@ import com.clickhouse.jdbc.ClickHouseConnection
 import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.runConnect
 import com.libertexgroup.configs.{ClickhouseConfig, MultiClickhouseConfig}
 import com.libertexgroup.models.clickhouse.ClickhouseModel
+import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Chunk, Tag, ZIO, ZLayer}
 
@@ -33,8 +34,14 @@ protected[clickhouse] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag, Con
     batch.zip(tryEx)
   }
 
-  def insertBatch(batch: Chunk[T], config:ClickhouseConfig): ZIO[Any, Throwable, Chunk[(T, Int)]] = for {
-    errors <- runConnect(insertRetrieveResults(batch)).provideSomeLayer(ZLayer.succeed(config))
+  def insertBatch(batch: Chunk[T]): ZIO[ClickhouseConfig, Nothing, Chunk[(T, Int)]] = for {
+    errors <- runConnect(insertRetrieveResults(batch))
+      .catchAll{ error => {
+          for {
+            _ <- printLine(error.getMessage).catchAll(_=>ZIO.unit)
+          } yield batch.map(t => (t, Statement.EXECUTE_FAILED)) // if the whole batch failed, mark all rows as failed
+        }
+      }
   } yield errors
 
   override def apply(stream: ZStream[ET, Throwable, T]):
@@ -45,7 +52,7 @@ protected[clickhouse] class DefaultWriter[ET, T <:ClickhouseModel :ClassTag, Con
         .flatMap{ batch => {
           ZStream.fromIterable{
             config.chConfigs.zip(batch.split(config.chConfigs.length))
-              .map { case (config, batch) => insertBatch(batch, config)}
+              .map { case (config, batch) => insertBatch(batch).provideSomeLayer(ZLayer.succeed(config)) }
           }.mapZIOPar(config.chConfigs.length)(x => ZIO.scoped(x))
         }}
     } yield r

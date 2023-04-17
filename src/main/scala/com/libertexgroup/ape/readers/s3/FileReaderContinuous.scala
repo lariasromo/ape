@@ -16,7 +16,7 @@ import java.time.{Instant, OffsetDateTime, ZonedDateTime}
 
 protected [s3] class FileReaderContinuous[Config <: S3Config :Tag, AWSS3 <: S3]
 (locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]])
-  extends Reader[Config, AWSS3, S3ObjectSummary] {
+  extends S3FileReader[Config, AWSS3, S3ObjectSummary] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
   def createStreamOfFiles(stream: ZStream[Any, Nothing, OffsetDateTime]): ZIO[Config, Throwable, ZStream[S3, S3Exception, S3ObjectSummary]] =

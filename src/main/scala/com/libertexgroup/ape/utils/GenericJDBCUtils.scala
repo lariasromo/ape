@@ -2,7 +2,7 @@ package com.libertexgroup.ape.utils
 
 import com.libertexgroup.configs.JDBCConfig
 import zio.stream.ZStream
-import zio.{Chunk, Scope, Tag, ZIO}
+import zio.{Chunk, Duration, Scope, Tag, ZIO}
 
 import java.sql.{Connection, DriverManager, ResultSet}
 import java.util.Properties
@@ -47,7 +47,7 @@ object GenericJDBCUtils {
   def connect[Config <: JDBCConfig :Tag]: ZIO[Config with Scope, Nothing, Connection] =
     ZIO.acquireRelease(for {
       config <- ZIO.service[Config]
-    } yield getConnection(config.driverName, config.jdbcUrl, config.username, config.password)
+    } yield getConnection(config.driverName, config.jdbcUrl, config.username, config.password, config.socketTimeout)
     )(c => ZIO.succeed(c.close()))
 
 
@@ -87,10 +87,10 @@ object GenericJDBCUtils {
     }
   } yield ()
 
-  def getConnection(DRIVER_NAME: String, DB_URL: String, USER: String, PASS: String): Connection = {
+  def getConnection(DRIVER_NAME: String, DB_URL: String, USER: String, PASS: String, TIMEOUT: Duration): Connection = {
     try {
       val properties = new Properties()
-      properties.setProperty("socket_timeout", "3000000")
+      properties.setProperty("socket_timeout", TIMEOUT.toMillis.toString)
       properties.setProperty("user", USER)
       properties.setProperty("password", PASS)
       Class.forName(DRIVER_NAME)

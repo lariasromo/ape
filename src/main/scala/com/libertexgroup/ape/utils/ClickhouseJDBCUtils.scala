@@ -4,7 +4,7 @@ import com.clickhouse.jdbc.{ClickHouseConnection, ClickHouseDataSource}
 import com.libertexgroup.configs.{ClickhouseConfig, MultiClickhouseConfig}
 import zio.Console.printLine
 import zio.stream.ZStream
-import zio.{Chunk, Scope, ZIO, ZLayer}
+import zio.{Chunk, Duration, Scope, ZIO, ZLayer}
 
 import java.sql.ResultSet
 import java.util.Properties
@@ -56,7 +56,7 @@ object ClickhouseJDBCUtils {
   val connect: ZIO[ClickhouseConfig with Scope, Nothing, ClickHouseConnection] = ZIO
     .acquireRelease(for {
       config <- ZIO.service[ClickhouseConfig]
-    } yield getConnection(config.jdbcUrl, config.username, config.password)
+    } yield getConnection(config.jdbcUrl, config.username, config.password, config.socketTimeout)
     )(c => ZIO.succeed(c.close()))
 
   def queryIterator[T](resultSet: ResultSet)(implicit row2Object: ResultSet => T): Iterator[T] = {
@@ -93,10 +93,10 @@ object ClickhouseJDBCUtils {
       ) *> ZIO.unit
     )
 
-  def getConnection(DB_URL: String, USER: String, PASS: String): ClickHouseConnection = {
+  def getConnection(DB_URL: String, USER: String, PASS: String, TIMEOUT: Duration): ClickHouseConnection = {
     try {
       val properties = new Properties()
-      properties.setProperty("socket_timeout", "3000000")
+      properties.setProperty("socket_timeout", TIMEOUT.toMillis.toString)
       properties.setProperty("user", USER)
       properties.setProperty("password", PASS)
       val dataSource = new ClickHouseDataSource(DB_URL, properties)

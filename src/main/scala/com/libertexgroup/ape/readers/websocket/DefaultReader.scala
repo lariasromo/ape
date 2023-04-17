@@ -22,4 +22,6 @@ protected[websocket] class DefaultReader[E, ZE](ws: WebSocket[Task])
         } yield Message(dt.toLocalDateTime.toInstant(ZoneOffset.UTC).toEpochMilli, text))
     }
   } yield stream
+
+  override val name: String = "WebSocketReader"
 }

@@ -12,4 +12,6 @@ class QueueWriter[E, ET, T: ClassTag](queue: Queue[T]) extends Writer[E, ET, T, 
     ZIO.succeed{
       i.tap { file => printLine(s"Offering ${file} to queue") }.tap(f => queue.offer(f))
     }
+
+  override val name: String = "QueueWriter"
 }

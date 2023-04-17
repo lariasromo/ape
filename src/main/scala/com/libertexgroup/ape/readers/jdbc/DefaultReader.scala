@@ -14,4 +14,5 @@ protected[jdbc] class DefaultReader[E, T: ClassTag, Config <: JDBCConfig :Tag](s
   override def apply: ZIO[Config, Throwable, ZStream[E, Throwable, T]] = for {
     chnk <- query2Chunk[T, Config](sql)
   } yield ZStream.fromChunk(chnk)
+
 }

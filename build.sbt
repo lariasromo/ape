@@ -1,4 +1,4 @@
-ThisBuild / version := "2.1.15"
+ThisBuild / version := "2.2.3"
 ThisBuild / scalaVersion := "2.13.10"
 
 lazy val root = (project in file("."))
@@ -24,7 +24,7 @@ val zioLibraries = Seq(
   "dev.zio" %% "zio-concurrent" % zioVersion,
   "dev.zio" %% "zio-zmx" % "2.0.0-RC4",
   "dev.zio"       %% "zio-metrics-connectors" % "2.0.7",
-  "io.d11"        %% "zhttp"                  % "2.0.0-RC9",
+  "dev.zio" %% "zio-http" % "0.0.5",
 //  "dev.zio" %% "zio-config"     % zioVersion,
   "dev.zio" %% "zio-kafka" % "2.0.6",
   "dev.zio" %% "zio-s3"    % "0.4.2.3",

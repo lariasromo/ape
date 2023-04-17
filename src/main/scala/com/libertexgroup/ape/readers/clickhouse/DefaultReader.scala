@@ -15,4 +15,5 @@ protected[clickhouse] class DefaultReader[E1, T: ClassTag, Config <: MultiClickh
     for {
       chnk <- query2ChunkMulti(sql)
     } yield ZStream.fromChunk(chnk)
+
 }

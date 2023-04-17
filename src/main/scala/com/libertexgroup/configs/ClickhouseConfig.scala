@@ -13,8 +13,9 @@ case class ClickhouseConfig(
                              databaseName: String,
                              username: String,
                              password: String,
-                             clusterName: Option[String]
-                           ){
+                             clusterName: Option[String],
+                             socketTimeout: Duration = 3.minutes
+  ){
   val jdbcUrl = s"jdbc:clickhouse://$host:$port/$databaseName"
 }
 
@@ -30,6 +31,7 @@ object ClickhouseConfig {
     databaseName <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_DATABASE_NAME", "")
     username <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_USERNAME", "")
     password <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_PASSWORD", "")
+    socketTimeout <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_SOCKET_TIMEOUT", "")
   } yield ClickhouseConfig(
     syncDuration = Try(syncDuration.toInt.minutes).toOption.getOrElse(5.minutes),
     batchSize = Try(batchSize.toInt).toOption.getOrElse(10000),
@@ -38,6 +40,7 @@ object ClickhouseConfig {
     databaseName = databaseName,
     username = username,
     password = password,
-    clusterName = clusterName
+    clusterName = clusterName,
+    socketTimeout = Try(socketTimeout.toInt.seconds).toOption.getOrElse(3.minutes),
   )
 }

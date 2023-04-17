@@ -11,7 +11,7 @@ import java.time.ZonedDateTime
 
 protected [s3] class FileReaderSimple[Config <: S3Config :Tag, AWSS3 <: S3]
 (locationPattern:ZIO[AWSS3 with Config, Nothing, ZonedDateTime => List[String]])
-  extends Reader[AWSS3 with Config, Any, S3ObjectSummary] {
+  extends S3FileReader[AWSS3 with Config, Any, S3ObjectSummary] {
   override def apply: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[Config]
     locPattern <- locationPattern

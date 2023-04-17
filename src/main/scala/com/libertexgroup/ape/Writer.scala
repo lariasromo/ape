@@ -10,6 +10,7 @@ import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
 abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
+  val name:String
   def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
   def write(i: ZStream[ZE, Throwable, T0]): ZIO[ZE with E, Throwable, Unit] = for {
     s <- apply(i)
@@ -70,6 +71,8 @@ object Writer {
           s <- writer1(i)
           s2 <- writer2(i)
         } yield s.zip(s2)
+
+      override val name: String = writer1.name + " ++ " + writer2.name
     }
 
   //input stream will be passed to one writer then the output T will be passed to the second writer,
@@ -84,6 +87,8 @@ object Writer {
                 s <- writer1(i)
                 s2 <- writer2(s)
               } yield s2
+
+      override val name: String = writer1.name + " --> " + writer2.name
     }
 
   class TTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
@@ -93,6 +98,8 @@ object Writer {
     override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
       s <- writer.apply(i)
     } yield s.map(transform)
+
+    override val name: String = writer.name
   }
 
   class ZTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
@@ -102,18 +109,25 @@ object Writer {
     override def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
       s <- input.apply(i)
     } yield transform(s)
+
+    override val name: String = input.name
   }
 
   class UnitZWriter[E, ZE, T: ClassTag, T2: ClassTag] (
-                                                       t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2])
-    extends Writer[E, ZE, T, T2]{
+                                                       t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
+                                                       n: String = "defaultWriter"
+                                                      ) extends Writer[E, ZE, T, T2] {
     override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = ZIO.succeed(t(i))
+
+    override val name: String = n
   }
 
-  class UnitTWriter[E, ZE, T: ClassTag, T2: ClassTag] (t: T => T2)
+  class UnitTWriter[E, ZE, T: ClassTag, T2: ClassTag] (t: T => T2, n: String = "defaultWriter")
     extends Writer[E, ZE, T, T2]{
     override def apply(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] =
       ZIO.succeed(i.map(t))
+
+    override val name: String = n
   }
 }
 

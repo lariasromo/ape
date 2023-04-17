@@ -11,7 +11,8 @@ case class JDBCConfig(
                        driverName:String,
                        jdbcUrl: String,
                        username: String,
-                       password: String
+                       password: String,
+                       socketTimeout: Duration = 3.minutes
                        )
 
 object JDBCConfig {
@@ -24,12 +25,14 @@ object JDBCConfig {
     jdbcUrl <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_URL", "")
     username <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_USERNAME", "")
     password <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_PASSWORD", "")
+    socketTimeout <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_SOCKET_TIMEOUT", "")
   } yield JDBCConfig(
     syncDuration = Try(syncDuration.toInt.minutes).toOption.getOrElse(5.minutes),
     batchSize = Try(batchSize.toInt).toOption.getOrElse(10000),
     driverName = driverName,
     jdbcUrl = jdbcUrl,
     username = username,
-    password = password
+    password = password,
+    socketTimeout = Try(socketTimeout.toInt.minutes).toOption.getOrElse(3.minutes)
   )
 }
