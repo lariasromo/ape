@@ -53,7 +53,7 @@ object ApeMetrics {
             // The prometheus reporting layer
             prometheus.publisherLayer,
             prometheus.prometheusLayer,
-            Server.live(ServerConfig(address = new InetSocketAddress(conf.port)))
+            ZLayer.succeed(ServerConfig(address = new InetSocketAddress(conf.port))) >>> Server.live
           )
           .onInterrupt(printLine("Metrics server interrupted").catchAll(_=>ZIO.unit))
           .catchAll(ex => for {
