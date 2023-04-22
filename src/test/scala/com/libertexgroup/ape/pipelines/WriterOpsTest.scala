@@ -1,5 +1,6 @@
 package com.libertexgroup.ape.pipelines
 
+import com.github.lalyos.jfiglet.FigletFont
 import com.libertexgroup.ape.{Reader, Writer}
 import zio.Console.printLine
 import zio.stream.{ZSink, ZStream}
@@ -110,6 +111,7 @@ object WriterOpsTest extends ZIOSpec[Unit] {
     suite("PipelineTest")(
       test("Simple pipeline with PipelineBuilder"){
         for {
+          _ <- printLine(FigletFont.convertOneLine("hello"))
           crossResults <- runPipe("cross", cross)
           crossLeftResults <- runPipe("crossLeft", crossLeft)
           crossRightResults <- runPipe("crossRight", crossRight)

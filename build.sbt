@@ -1,4 +1,4 @@
-ThisBuild / version := "2.3.0"
+ThisBuild / version := "2.3.1"
 ThisBuild / scalaVersion := "2.13.10"
 
 lazy val root = (project in file("."))
@@ -34,6 +34,7 @@ val zioLibraries = Seq(
 )
 
 libraryDependencies ++= Seq(
+  "com.github.lalyos" % "jfiglet" % "0.0.9",
   "io.kontainers" %% "purecsv" % "1.3.10",
   "io.github.palanga" %% "zio-cassandra" % "0.10.0",
   "org.apache.parquet" % "parquet-avro" % "1.12.0",
