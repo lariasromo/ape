@@ -3,12 +3,13 @@ package com.libertexgroup.ape
 import com.libertexgroup.ape.readers.PipelineReaders
 import com.libertexgroup.ape.writers.PipelineWriters
 import zio._
-import zio.stream.ZStream
+import zio.stream.{ZSink, ZStream}
 
 import scala.reflect.ClassTag
 
 case class Ape[ZE, T: ClassTag] (stream: ZStream[ZE, Throwable, T]){
   def run: ZIO[ZE, Throwable, Unit] = stream.runDrain
+  def run[R1, E1, L, Z](sink: => ZSink[R1, E1, T, L, Z]): ZIO[R1 with ZE, Any, Z] = stream.run(sink)
   def -->[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E2, Throwable, Ape[ZE, T2]] =
     Ape.apply[E2, E2, ZE, T, T2](new Reader.UnitReader(stream), writer)
 }

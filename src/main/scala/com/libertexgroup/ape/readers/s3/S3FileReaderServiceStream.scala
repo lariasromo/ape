@@ -25,11 +25,10 @@ object S3FileReaderServiceStream {
   ZIO[S3 with Config, Throwable, S3FileReaderServiceStream[Config]]
   = for {
     queue <- Queue.unbounded[S3ObjectSummary]
-    ape <- {
+    _ <- {
       Ape.readers.s3[Config].fileReaderContinuous(locationPattern) -->
         Ape.writers.misc.queue[Config, S3, S3ObjectSummary](queue)
-    }
-    _ <- ape.stream.runDrain.ensuring(fin(queue)).fork
+    }.runDrain.ensuring(fin(queue)).fork
     stream = ZStream.fromQueue(queue).tap { file => printLine(s"Getting file ${file.key} from queue") }
   } yield new S3FileReaderServiceStream(stream)
 

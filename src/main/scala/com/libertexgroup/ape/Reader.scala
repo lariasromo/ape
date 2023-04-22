@@ -19,8 +19,21 @@ abstract class Reader[E, ZE, T: ClassTag]{
     s <- read
   } yield s.withMetrics(name)
 
-  def -->[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
+  def ape[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
     Ape.apply[E, E2, ZE, T, T2](this, writer)
+
+  def -->[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZStream[ZE with E with E2, Throwable, T2] =
+    ZStream.unwrap{
+      for {
+        s <- ape(writer)
+      } yield s.stream
+    }
+
+  def ->>[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[ZE with E with E2, Throwable, Unit] =
+    for {
+      s <- ape(writer)
+      _ <- s.run
+    } yield ()
 
   def **[T2: ClassTag](implicit t: T => T2): Reader[E, ZE, T2] = new TTReader(this, t)
   def withTransform[T2: ClassTag](t: T => T2): Reader[E, ZE, T2] = {
