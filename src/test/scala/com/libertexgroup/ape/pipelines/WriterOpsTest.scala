@@ -3,7 +3,7 @@ package com.libertexgroup.ape.pipelines
 import com.github.lalyos.jfiglet.FigletFont
 import com.libertexgroup.ape.{Reader, Writer}
 import zio.Console.printLine
-import zio.stream.{ZSink, ZStream}
+import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}
 

@@ -1,8 +1,10 @@
 package com.libertexgroup.ape
 
+import com.github.lalyos.jfiglet.FigletFont
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.readers.PipelineReaders
 import com.libertexgroup.ape.writers.PipelineWriters
+import zio.Console.printLine
 import zio._
 import zio.stream.{ZSink, ZStream}
 
@@ -16,6 +18,21 @@ case class Ape[ZE, T: ClassTag] (stream: ZStream[ZE, Throwable, T], transitions:
 }
 
 object Ape {
+  def readWrite[E, E2, ZE, T: ClassTag, T2: ClassTag](reader: Reader[E, ZE, T], writer: Writer[E2, ZE, T, T2]):
+  ZStream[ZE with E with E2, Throwable, T2] =
+    ZStream.unwrap {
+      for {
+        s <- Ape.apply(reader, writer)
+        _ <- printLine(FigletFont.convertOneLine("APE"))
+        pipe = s.transitions.map(t => s"${t.t0}) -> ${t.op} -> (${t.t1}").mkString("-") + "|"
+        _ <- printLine("Forming a pipeline with transitions...")
+        _ <- printLine("-"*pipe.length)
+        _ <- printLine(pipe)
+        _ <- printLine("-"*pipe.length)
+      } yield s.stream
+    }
+
+
   case class Transition(t0: String, op:String, t1: String)
   def apply[E, E1, ZE, T0: ClassTag, T: ClassTag](
                                reader: Reader[E, ZE, T0],
