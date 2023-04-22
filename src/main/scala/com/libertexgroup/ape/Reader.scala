@@ -1,22 +1,17 @@
 package com.libertexgroup.ape
 
-import com.github.lalyos.jfiglet.FigletFont
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.Reader.{TTReader, ZTReader}
-import com.libertexgroup.metrics.ApeMetrics
+import com.libertexgroup.metrics.ApeMetrics._
 import zio.ZIO
 import zio.stream.ZStream
 
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
-import com.libertexgroup.metrics.ApeMetrics._
-import zio.Console.printLine
-
-import scala.reflect.runtime.universe.typeOf
 
 abstract class Reader[E, ZE, T: ClassTag]{
   val name:String
-  val transitions: Seq[Transition] = Seq(Transition("|", name, implicitly[ClassTag[T]].runtimeClass.getSimpleName))
+  def transitions: Seq[Transition] = Seq(Transition("|", name, implicitly[ClassTag[T]].runtimeClass.getSimpleName))
 
   protected[this] def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
 
@@ -27,17 +22,8 @@ abstract class Reader[E, ZE, T: ClassTag]{
   def ape[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
     Ape.apply[E, E2, ZE, T, T2](this, writer)
 
-  def -->[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZStream[ZE with E with E2, Throwable, T2] =
-    ZStream.unwrap{
-      for {
-        s <- ape(writer)
-        _ <- printLine(FigletFont.convertOneLine("APE"))
-        _ <- printLine("Forming a pipeline with transitions...")
-        _ <- printLine("-"*60)
-        _ <- printLine(s.transitions.map(t => s"${t.t0} -> ${t.op} -> ${t.t1}").mkString("-->"))
-        _ <- printLine("-"*60)
-      } yield s.stream
-    }
+  def -->[E2, T2: ClassTag](that: Writer[E2, ZE, T, T2]): ZStream[ZE with E with E2, Throwable, T2] =
+    Ape.readWrite(this, that)
 
   def ->>[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[ZE with E with E2, Throwable, Unit] =
     for {
@@ -79,8 +65,7 @@ object Reader {
     override val transitions: Seq[Transition] = input.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T0]].runtimeClass.getSimpleName,
-          transform.toString(),
+          implicitly[ClassTag[T0]].runtimeClass.getSimpleName, "TTReader",
           implicitly[ClassTag[T1]].runtimeClass.getSimpleName
         )
       )
@@ -98,8 +83,7 @@ object Reader {
     override val transitions: Seq[Transition] = input.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T0]].runtimeClass.getSimpleName,
-          transform.toString(),
+          implicitly[ClassTag[T0]].runtimeClass.getSimpleName, "ZTReader",
           implicitly[ClassTag[T1]].runtimeClass.getSimpleName
         )
       )
@@ -112,7 +96,7 @@ object Reader {
 
   class UnitReader[E, ZE, T: ClassTag] (
                                          stream: ZStream[ZE, Throwable, T],
-                                         n:String = "unitReader"
+                                         n:String = "UnitReader"
                                        ) extends Reader[E, ZE, T] {
     override val transitions: Seq[Transition] = Seq(
       Transition("|", n,

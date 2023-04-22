@@ -1,9 +1,13 @@
 package com.libertexgroup.ape.utils
 
+import com.datastax.oss.driver.api.core.cql.Row
 import com.datastax.oss.driver.api.core.{CqlSession => DatastaxSession}
 import com.libertexgroup.configs.CassandraConfig
+import com.libertexgroup.models.cassandra.CassandraModel
 import palanga.zio.cassandra.CassandraException.SessionOpenException
-import palanga.zio.cassandra.{ZCqlSession, session}
+import palanga.zio.cassandra.ZStatement.StringOps
+import palanga.zio.cassandra.{CassandraException, ZCqlSession, session}
+import zio.stream.ZStream
 import zio.{Scope, ZIO, ZLayer}
 
 import java.net.InetSocketAddress
@@ -29,4 +33,14 @@ object CassandraUtils {
   def layer[Config <: CassandraConfig]: ZLayer[Config, SessionOpenException, ZCqlSession] =
     ZLayer.scoped(sessionFromCqlSession)
 
+  def query2Chunk[Config <: CassandraConfig, T <: CassandraModel](sql:String)(implicit row2Object: Row => T):
+    ZIO[Config, SessionOpenException, ZStream[Any, CassandraException, T]] =
+      ZIO.scoped[Config] {
+        for {
+          s <- sessionFromCqlSession[Config]
+          stream = ZCqlSession.stream(sql.toStatement.decodeAttempt(row2Object))
+            .flatMap(c => ZStream.fromChunk(c))
+            .provideSomeLayer(ZLayer.succeed(s))
+        } yield stream
+      }
 }

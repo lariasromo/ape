@@ -12,6 +12,8 @@ import scala.reflect.ClassTag
 protected[kafka] class DefaultReader[Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Consumer, ConsumerRecord[String, Array[Byte]]] {
 
+  override val name: String = "KafkaDefaultReader"
+
   def createStream(kafkaConfig: KafkaConfig): ZStream[Consumer, Throwable, ConsumerRecord[String, Array[Byte]]] =
     Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )
     .plainStream(Serde.string, Serde.byteArray)

@@ -23,9 +23,9 @@ object PipelineTest extends ZIOSpec[Consumer with KafkaContainer with KafkaConfi
       test("Simple pipeline with PipelineBuilder"){
         for {
           _ <- KafkaContainerService.sendPlaintextMessage
-          result <- pp.runCollect
+          result <- pp.take(1).runCollect
         } yield {
-          assertTrue(result.equals(Chunk(dummy("Some key", "Some value"))))
+          assertTrue(result.equals(dummy("Some key", "Some value")))
         }
       },
     )

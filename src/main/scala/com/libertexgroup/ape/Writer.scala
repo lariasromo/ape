@@ -13,7 +13,7 @@ import scala.reflect.runtime.universe.typeOf
 
 abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   val name:String
-  val transitions: Seq[Transition] = Seq(
+  def transitions: Seq[Transition] = Seq(
     Transition(
       implicitly[ClassTag[T0]].runtimeClass.getSimpleName,
       name,
@@ -21,7 +21,7 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
     ))
   protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
   def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]] =
-    pipe(i.withMetrics(name))
+    pipe(i).flatMap(s => ZIO.succeed(s.withMetrics(name)))
   def write(i: ZStream[ZE, Throwable, T0]): ZIO[ZE with E, Throwable, Unit] = for {
     s <- apply(i)
     _ <- s.runDrain
@@ -123,7 +123,8 @@ object Writer {
 
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 merge s2,
-      writer1.name + " <+> " + writer2.name, maximumLag)
+      s"{(${writer1.name}) <+> (${writer2.name})}",
+      maximumLag)
   }
 
   //same input will be send to 2 writers, merging the results (as they come) and discarding results from the 2nd writer
@@ -134,7 +135,7 @@ object Writer {
                                                                    ): Writer[E with E2 with ZE with Scope, ZE, T0, T] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 mergeLeft s2,
-      writer1.name + " <+ " + writer2.name,
+      s"{${writer1.name}) <+ (${writer2.name})}",
       maximumLag
     )
 
@@ -146,7 +147,7 @@ object Writer {
                                                                     ): Writer[E with E2 with ZE with Scope, ZE, T0, T2] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 mergeRight s2,
-      writer1.name + " +> " + writer2.name,
+      s"{(${writer1.name}) +> (${writer2.name})}",
       maximumLag
     )
 
@@ -158,7 +159,7 @@ object Writer {
                                                                      ): Writer[E with E2 with ZE with Scope, ZE, T0, Any] = {
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 interleave s2,
-      writer1.name + " interleave " + writer2.name,
+      s"{(${writer1.name}) interleave (${writer2.name})}",
       maximumLag
     )
   }
@@ -171,7 +172,7 @@ object Writer {
                                                              ): Writer[E with E2 with ZE with Scope, ZE, T0, (T, T2)] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 zip s2,
-      writer1.name + " ++ " + writer2.name,
+      s"{(${writer1.name}) ++ (${writer2.name})}",
       maximumLag
     )
 
@@ -183,7 +184,7 @@ object Writer {
                                                                     ): Writer[E with E2 with ZE with Scope, ZE, T0, T2] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 *> s2,
-      writer1.name + " *> " + writer2.name,
+      s"{(${writer1.name}) *> (${writer2.name})}",
       maximumLag
     )
 
@@ -195,7 +196,7 @@ object Writer {
                                                                ): Writer[E with E2 with ZE with Scope, ZE, T0, Any] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 <*> s2,
-      writer1.name + " <*> " + writer2.name,
+      s"{(${writer1.name}) <*> (${writer2.name})}",
       maximumLag
     )
 
@@ -209,7 +210,7 @@ object Writer {
                                                                    ): Writer[E with E2 with ZE with Scope, ZE, T0, T] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 <* s2,
-      writer1.name + " <* " + writer2.name,
+      s"{(${writer1.name}) <* (${writer2.name})}",
       maximumLag
     )
 
@@ -233,8 +234,7 @@ object Writer {
     override val transitions: Seq[Transition] = writer.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T1]].runtimeClass.getSimpleName,
-          transform.toString(),
+          implicitly[ClassTag[T1]].runtimeClass.getSimpleName, "TTWriter",
           implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
 
@@ -252,8 +252,7 @@ object Writer {
     override val transitions: Seq[Transition] = input.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T1]].runtimeClass.getSimpleName,
-          transform.toString(),
+          implicitly[ClassTag[T1]].runtimeClass.getSimpleName, "ZTWriter",
           implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
 
@@ -271,8 +270,7 @@ object Writer {
     extends Writer[E, ZE, T, T2] {
     override val transitions: Seq[Transition] = Seq(
       Transition(
-        implicitly[ClassTag[T]].runtimeClass.getSimpleName,
-        t.toString(),
+        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n,
         implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
 
@@ -287,8 +285,7 @@ object Writer {
                                                       ) extends Writer[E, ZE, T, T2]{
     override val transitions: Seq[Transition] = Seq(
       Transition(
-        implicitly[ClassTag[T]].runtimeClass.getSimpleName,
-        t.toString(),
+        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n,
         implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
     override protected[this] def pipe(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = ZIO.succeed(t(i))
@@ -302,8 +299,7 @@ object Writer {
                                                       ) extends Writer[E, ZE, T, T2]{
     override val transitions: Seq[Transition] = Seq(
       Transition(
-        implicitly[ClassTag[T]].runtimeClass.getSimpleName,
-        t.toString(),
+        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n,
         implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
     override protected[this] def pipe(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] =
