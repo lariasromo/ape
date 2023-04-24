@@ -33,14 +33,16 @@ object CassandraUtils {
   def layer[Config <: CassandraConfig]: ZLayer[Config, SessionOpenException, ZCqlSession] =
     ZLayer.scoped(sessionFromCqlSession)
 
-  def query2Chunk[Config <: CassandraConfig, T <: CassandraModel](sql:String)(implicit row2Object: Row => T):
-    ZIO[Config, SessionOpenException, ZStream[Any, CassandraException, T]] =
-      ZIO.scoped[Config] {
-        for {
-          s <- sessionFromCqlSession[Config]
-          stream = ZCqlSession.stream(sql.toStatement.decodeAttempt(row2Object))
-            .flatMap(c => ZStream.fromChunk(c))
-            .provideSomeLayer(ZLayer.succeed(s))
-        } yield stream
-      }
+  def query2Chunk[EZ, Config <: CassandraConfig, T <: CassandraModel](sql:String)(implicit row2Object: Row => T):
+    ZIO[Config, CassandraException, ZStream[Any, Nothing, T]]
+  = ZIO.scoped[Config] {
+      for {
+        s <- sessionFromCqlSession[Config]
+        stream <- ZCqlSession.stream(sql.toStatement.decodeAttempt(row2Object))
+          .flatMap(c => ZStream.fromChunk(c))
+          .provideSomeLayer(ZLayer.succeed(s))
+          .runCollect
+      } yield ZStream.fromChunk(stream)
+    }
+
 }

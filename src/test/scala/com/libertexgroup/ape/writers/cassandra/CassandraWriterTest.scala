@@ -11,14 +11,17 @@ import zio.{Scope, ZLayer}
 
 object CassandraWriterTest  extends ZIOSpec[CassandraConfig with CassandraContainer] {
   val writer = Ape.writers.cassandra[CassandraConfig].default[Any, dummy]
+  val reader = Ape.readers.cassandra[CassandraConfig].default[Any, dummy]("select * from dummy")
 
   override def spec: Spec[CassandraConfig with CassandraContainer with TestEnvironment with Scope, Any] =
     suite("CassandraWriterTest")(
       test("Writes dummy data"){
         for {
           _ <- writer.write(sampleData)
+          expectedData <- sampleData.runCollect
+          data <- reader.stream.runCollect
         } yield {
-          assertTrue(true)
+          assertTrue(data.map(d => s"${d.a}${d.b}").sorted equals expectedData.map(d => s"${d.a}${d.b}").sorted)
         }
       }
     )

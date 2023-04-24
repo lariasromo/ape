@@ -21,6 +21,8 @@ abstract class Reader[E, ZE, T: ClassTag]{
 
   def pipe: Writer[E, ZE, T, T] = new Writer.UnitWriter[E, ZE, T, T](_ => apply)
 
+  def stream: ZStream[ZE with E, Throwable, T] = ZStream.unwrap(apply)
+
   def ape[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
     Ape.apply[E, E2, ZE, T, T2](this, writer)
 

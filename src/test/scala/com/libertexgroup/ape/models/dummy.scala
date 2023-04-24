@@ -1,5 +1,6 @@
 package com.libertexgroup.ape.models
 
+import com.datastax.oss.driver.api.core.cql.Row
 import com.datastax.oss.driver.api.core.cql
 import com.datastax.oss.driver.api.core.cql.BoundStatement
 import com.libertexgroup.models.cassandra.CassandraModel
@@ -33,6 +34,12 @@ object dummy {
   implicit val dummy2Str: dummy => String = s => s.asJson.noSpaces
 
   implicit val row2Object: ResultSet => dummy = rs => {
+    dummy(
+      rs.getString("a"),
+      rs.getString("b")
+    )
+  }
+  implicit val cassandraRow2Object: Row => dummy = rs => {
     dummy(
       rs.getString("a"),
       rs.getString("b")
