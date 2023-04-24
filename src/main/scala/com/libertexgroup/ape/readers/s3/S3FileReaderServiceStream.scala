@@ -29,7 +29,7 @@ object S3FileReaderServiceStream {
       Ape.readers.s3[Config].fileReaderContinuous(locationPattern) -->
         Ape.writers.misc.queue[Config, S3, S3ObjectSummary](queue)
     }.runDrain.ensuring(fin(queue)).fork
-    stream = ZStream.fromQueue(queue).tap { file => printLine(s"Getting file ${file.key} from queue") }
+    stream = ZStream.fromQueue(queue)
   } yield new S3FileReaderServiceStream(stream)
 
 

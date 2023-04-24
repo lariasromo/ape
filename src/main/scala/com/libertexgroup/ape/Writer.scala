@@ -52,6 +52,9 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   def ++[E2, T2: ClassTag](that: Writer[E2, ZE, T0, T2]): Writer[E with E2 with ZE with Scope, ZE, T0, (T, T2)] =
     Writer.zip(this, that)
 
+  def -->[E2, T2: ClassTag](that: Writer[E2, ZE, T, T2]): Writer[E with E2, ZE, T0, T2] =
+    Writer.concatenate(this, that)
+
   def withTransform[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = new TTWriter(this, t)
   def map[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
   def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
@@ -118,7 +121,7 @@ object Writer {
   def merge[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                  writer1: Writer[E, ZE, T0, T],
                                                                  writer2: Writer[E2, ZE, T0, T2],
-                                                                 maximumLag: Int=100
+                                                                 maximumLag: Int=1
                                                                ): Writer[E with E2 with ZE with Scope, ZE, T0, Any] = {
 
     broadcastOp(writer1, writer2,
@@ -131,7 +134,7 @@ object Writer {
   def mergeLeft[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                      writer1: Writer[E, ZE, T0, T],
                                                                      writer2: Writer[E2, ZE, T0, T2],
-                                                                     maximumLag: Int=100
+                                                                     maximumLag: Int=1
                                                                    ): Writer[E with E2 with ZE with Scope, ZE, T0, T] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 mergeLeft s2,
@@ -143,7 +146,7 @@ object Writer {
   def mergeRight[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                       writer1: Writer[E, ZE, T0, T],
                                                                       writer2: Writer[E2, ZE, T0, T2],
-                                                                      maximumLag: Int=100
+                                                                      maximumLag: Int=1
                                                                     ): Writer[E with E2 with ZE with Scope, ZE, T0, T2] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 mergeRight s2,
@@ -155,7 +158,7 @@ object Writer {
   def interleave[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                        writer1: Writer[E, ZE, T0, T],
                                                                        writer2: Writer[E2, ZE, T0, T2],
-                                                                       maximumLag: Int=100
+                                                                       maximumLag: Int=1
                                                                      ): Writer[E with E2 with ZE with Scope, ZE, T0, Any] = {
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 interleave s2,
@@ -168,7 +171,7 @@ object Writer {
   def zip[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                writer1: Writer[E, ZE, T0, T],
                                                                writer2: Writer[E2, ZE, T0, T2],
-                                                               maximumLag: Int=100
+                                                               maximumLag: Int=1
                                                              ): Writer[E with E2 with ZE with Scope, ZE, T0, (T, T2)] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 zip s2,
@@ -180,7 +183,7 @@ object Writer {
   def crossRight[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                       writer1: Writer[E, ZE, T0, T],
                                                                       writer2: Writer[E2, ZE, T0, T2],
-                                                                      maximumLag: Int=100
+                                                                      maximumLag: Int=1
                                                                     ): Writer[E with E2 with ZE with Scope, ZE, T0, T2] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 *> s2,
@@ -192,7 +195,7 @@ object Writer {
   def cross[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                  writer1: Writer[E, ZE, T0, T],
                                                                  writer2: Writer[E2, ZE, T0, T2],
-                                                                 maximumLag: Int=100
+                                                                 maximumLag: Int=1
                                                                ): Writer[E with E2 with ZE with Scope, ZE, T0, Any] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 <*> s2,
@@ -206,7 +209,7 @@ object Writer {
   def crossLeft[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
                                                                      writer1: Writer[E, ZE, T0, T],
                                                                      writer2: Writer[E2, ZE, T0, T2],
-                                                                     maximumLag: Int=100
+                                                                     maximumLag: Int=1
                                                                    ): Writer[E with E2 with ZE with Scope, ZE, T0, T] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 <* s2,
@@ -226,6 +229,7 @@ object Writer {
         s2 <- writer2(s)
       } yield s2
     )
+
 
   class TTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
                                                                    writer: Writer[E, ZE, T0, T1],

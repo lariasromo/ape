@@ -17,7 +17,7 @@ object S3FileReaderServiceStatic {
   def make[Config <: S3Config :Tag](location: String):
   ZIO[Config with S3, Throwable, S3FileReaderServiceStatic[Config]] = for {
       files <- Ape.readers.s3[Config].fileReaderSimple(ZIO.succeed(_ => List(location))).apply
-      stream = files.tap { file => printLine(s"Getting file ${file.key} from queue") }
+      stream = files
     } yield new S3FileReaderServiceStatic[Config](stream)
 
   def live[Config <: S3Config :Tag](location: String):

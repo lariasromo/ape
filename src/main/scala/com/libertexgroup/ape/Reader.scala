@@ -2,6 +2,7 @@ package com.libertexgroup.ape
 
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.Reader.{TTReader, ZTReader}
+import com.libertexgroup.ape.utils.reLayer
 import com.libertexgroup.metrics.ApeMetrics._
 import zio.ZIO
 import zio.stream.ZStream
@@ -18,6 +19,8 @@ abstract class Reader[E, ZE, T: ClassTag]{
   def apply: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = for {
     s <- read
   } yield s.withMetrics(name)
+
+  def pipe: Writer[E, ZE, T, T] = new Writer.UnitWriter[E, ZE, T, T](_ => apply)
 
   def ape[E2, T2: ClassTag](writer: Writer[E2, ZE, T, T2]): ZIO[E with E2, Throwable, Ape[ZE, T2]] =
     Ape.apply[E, E2, ZE, T, T2](this, writer)
