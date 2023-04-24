@@ -2,7 +2,6 @@ package com.libertexgroup.ape
 
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.Reader.{TTReader, ZTReader}
-import com.libertexgroup.ape.utils.reLayer
 import com.libertexgroup.metrics.ApeMetrics._
 import zio.ZIO
 import zio.stream.ZStream
@@ -11,7 +10,7 @@ import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
 abstract class Reader[E, ZE, T: ClassTag]{
-  val name:String
+  def name:String = this.getClass.getSimpleName
   def transitions: Seq[Transition] = Seq(Transition("|", name, implicitly[ClassTag[T]].runtimeClass.getSimpleName))
 
   protected[this] def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
@@ -34,13 +33,23 @@ abstract class Reader[E, ZE, T: ClassTag]{
       _ <- s.run
     } yield ()
 
-  def withTransform[T2: ClassTag](t: T => T2): Reader[E, ZE, T2] = new TTReader(this, t)
-  def **[T2: ClassTag](implicit t: T => T2): Reader[E, ZE, T2] = withTransform(t)
-  def map[T2: ClassTag](t: T => T2): Reader[E, ZE, T2] = withTransform(t)
+  def withTransform[T2: ClassTag](t: T => T2, name:String="withTransform"): Reader[E, ZE, T2] =
+    new TTReader(this, t, name)
+  def **[T2: ClassTag](implicit t: T => T2): Reader[E, ZE, T2] =
+    withTransform(t, "**")
+  def map[T2: ClassTag](t: T => T2, name:String="map"): Reader[E, ZE, T2] =
+    withTransform(t, name)
 
-  def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] = new ZTReader(this, t)
-  def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] = withZTransform(t)
-  def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] = withZTransform(t)
+  def withZTransform[T2: ClassTag](
+                                    t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
+                                    name:String="withZTransform"
+                                  ): Reader[E, ZE, T2] = new ZTReader(this, t, name)
+  def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Reader[E, ZE, T2] =
+    withZTransform(t, "***")
+  def mapZ[T2: ClassTag](
+                          t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
+                          name:String="mapZ"
+                        ): Reader[E, ZE, T2] = withZTransform(t, name)
 
   def safeGet[V :ClassTag]: Reader[E, ZE, V] = {
     implicit class ClassTagOps[U](val classTag: ClassTag[U]){
@@ -57,44 +66,43 @@ abstract class Reader[E, ZE, T: ClassTag]{
 
   def as[V :ClassTag]: Reader[E, ZE, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 
-  def filter(predicate: T => Boolean): Reader[E, ZE, T] = mapZ(_.filter(predicate))
+  def filter(predicate: T => Boolean, name:String="filter"): Reader[E, ZE, T] = mapZ(_.filter(predicate), name)
 }
 
 object Reader {
   class TTReader[E, ZE, T0: ClassTag, T1: ClassTag](
                                                      input: Reader[E, ZE, T0],
-                                                     transform:T0=>T1
+                                                     transform:T0=>T1, n:String="TTReader"
                                                    ) extends Reader[E, ZE, T1] {
     override val transitions: Seq[Transition] = input.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T0]].runtimeClass.getSimpleName, "TTReader",
-          implicitly[ClassTag[T1]].runtimeClass.getSimpleName
+          implicitly[ClassTag[T0]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T1]].runtimeClass.getSimpleName
         )
       )
     override def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
       s <- input.apply
     } yield s.map(transform)
 
-    override val name: String = input.name
+    override def name: String = input.name
   }
 
   class ZTReader[E, ZE, T0: ClassTag, T1: ClassTag](
                                                      input: Reader[E, ZE, T0],
-                                                     transform:ZStream[ZE, Throwable, T0] => ZStream[ZE, Throwable, T1]
+                                                     transform:ZStream[ZE, Throwable, T0] => ZStream[ZE, Throwable, T1],
+                                                     n:String="ZTReader"
                                                    ) extends Reader[E, ZE, T1]{
     override val transitions: Seq[Transition] = input.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T0]].runtimeClass.getSimpleName, "ZTReader",
-          implicitly[ClassTag[T1]].runtimeClass.getSimpleName
+          implicitly[ClassTag[T0]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T1]].runtimeClass.getSimpleName
         )
       )
     override def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T1]] = for {
       s <- input.apply
     } yield transform(s)
 
-    override val name: String = input.name
+    override def name: String = input.name
   }
 
   class UnitReader[E, ZE, T: ClassTag] (
@@ -102,12 +110,11 @@ object Reader {
                                          n:String = "UnitReader"
                                        ) extends Reader[E, ZE, T] {
     override val transitions: Seq[Transition] = Seq(
-      Transition("|", n,
-        implicitly[ClassTag[T]].runtimeClass.getSimpleName
-      ))
+      Transition("|", n, implicitly[ClassTag[T]].runtimeClass.getSimpleName)
+    )
     override def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]] = ZIO.succeed(stream)
 
-    override val name: String = n
+    override def name: String = n
   }
 }
 
