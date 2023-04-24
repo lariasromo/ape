@@ -2,22 +2,18 @@ package com.libertexgroup.ape
 
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.Writer._
-import zio.{Scope, ZIO}
+import com.libertexgroup.metrics.ApeMetrics._
 import zio.stream.ZStream
+import zio.{Scope, ZIO}
 
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
-import com.libertexgroup.metrics.ApeMetrics._
-
-import scala.reflect.runtime.universe.typeOf
 
 abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
-  val name:String
+  def name:String = this.getClass.getSimpleName
   def transitions: Seq[Transition] = Seq(
     Transition(
-      implicitly[ClassTag[T0]].runtimeClass.getSimpleName,
-      name,
-      implicitly[ClassTag[T]].runtimeClass.getSimpleName
+      implicitly[ClassTag[T0]].runtimeClass.getSimpleName, name, implicitly[ClassTag[T]].runtimeClass.getSimpleName
     ))
   protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
   def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]] =
@@ -55,21 +51,25 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   def -->[E2, T2: ClassTag](that: Writer[E2, ZE, T, T2]): Writer[E with E2, ZE, T0, T2] =
     Writer.concatenate(this, that)
 
-  def withTransform[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = new TTWriter(this, t)
-  def map[T2: ClassTag](t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
-  def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] = withTransform(t)
+  def withTransform[T2: ClassTag](t: T => T2, name:String="withTransform"): Writer[E, ZE, T0, T2] =
+    new TTWriter(this, t, name)
+  def map[T2: ClassTag](t: T => T2, name:String="map"): Writer[E, ZE, T0, T2] =
+    withTransform(t, name)
+  def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] =
+    withTransform(t)
 
-  def contramap[T00: ClassTag](t: T00 => T0): Writer[E, ZE, T00, T] = concatenate(new UnitTWriter(t), this)
+  def contramap[T00: ClassTag](t: T00 => T0, name:String="contramap"): Writer[E, ZE, T00, T] =
+    concatenate(new UnitTWriter(t, name), this)
 
-  def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
-    new ZTWriter(this, t)
-  def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
-    withZTransform(t)
+  def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2], name:String="withZTransform"):
+    Writer[E, ZE, T0, T2] = new ZTWriter(this, t, name)
+  def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2], name:String="mapZ"): Writer[E, ZE, T0, T2] =
+    withZTransform(t, name)
   def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Writer[E, ZE, T0, T2] =
     withZTransform(t)
 
-  def contramapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0]): Writer[E, ZE, T00, T] =
-    concatenate(new UnitZWriter(t), this)
+  def contramapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0], name:String="contramapZ"):
+    Writer[E, ZE, T00, T] = concatenate(new UnitZWriter(t, name), this)
 
   def safeGet[V :ClassTag]: Writer[E, ZE, T0, V] = {
     implicit class ClassTagOps[U](val classTag: ClassTag[U]){
@@ -85,7 +85,7 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   }
   def as[V :ClassTag]: Writer[E, ZE, T0, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 
-  def filter(predicate: T => Boolean): Writer[E, ZE, T0, T] = mapZ(_.filter(predicate))
+  def filter(predicate: T => Boolean, name:String="filter"): Writer[E, ZE, T0, T] = mapZ(_.filter(predicate), name)
 }
 
 
@@ -94,19 +94,18 @@ object Writer {
                                              writer1: Writer[E, ZE, T0, T],
                                              writer2: Writer[E2, ZE, T0, T2],
                                              op: (ZStream[ZE, Throwable, T], ZStream[ZE, Throwable, T2]) => ZStream[ZE, Throwable, T3],
-                                             n:String="",
+                                             n:String="broadcastOp",
                                              maximumLag: Int=100,
                                            ): Writer[E with E2 with ZE with Scope, ZE, T0, T3] =
     new Writer[E with E2 with ZE with Scope, ZE, T0, T3] {
-      override val name: String = n
+      override def name: String = n
 
       override val transitions: Seq[Transition] = writer1.transitions ++
         Seq(
           Transition(
-            implicitly[ClassTag[T]].runtimeClass.getSimpleName,
-            n,
-            implicitly[ClassTag[T3]].runtimeClass.getSimpleName
-          )) ++ writer2.transitions
+            implicitly[ClassTag[T]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T3]].runtimeClass.getSimpleName
+          )
+        ) ++ writer2.transitions
 
       override protected[this] def pipe(i: ZStream[ZE, Throwable, T0]):
       ZIO[E with E2 with ZE with Scope, Throwable, ZStream[ZE, Throwable, T3]] =
@@ -127,7 +126,8 @@ object Writer {
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 merge s2,
       s"{(${writer1.name}) <+> (${writer2.name})}",
-      maximumLag)
+      maximumLag
+    )
   }
 
   //same input will be send to 2 writers, merging the results (as they come) and discarding results from the 2nd writer
@@ -233,38 +233,40 @@ object Writer {
 
   class TTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
                                                                    writer: Writer[E, ZE, T0, T1],
-                                                                   transform:T1=>T2
+                                                                   transform:T1=>T2,
+                                                                   n:String="TTWriter"
                                                                  ) extends Writer[E, ZE, T0, T2] {
     override val transitions: Seq[Transition] = writer.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T1]].runtimeClass.getSimpleName, "TTWriter",
-          implicitly[ClassTag[T2]].runtimeClass.getSimpleName
-      ))
+          implicitly[ClassTag[T1]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T2]].runtimeClass.getSimpleName
+        )
+      )
 
     override protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
       s <- writer.apply(i)
     } yield s.map(transform)
 
-    override val name: String = writer.name
+    override def name: String = writer.name
   }
 
   class ZTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
                                                                    input: Writer[E, ZE, T0, T1],
-                                                                   transform:ZStream[ZE, Throwable, T1] => ZStream[ZE, Throwable, T2]
+                                                                   transform:ZStream[ZE, Throwable, T1] => ZStream[ZE, Throwable, T2],
+                                                                   n:String="ZTWriter"
                                                                  ) extends Writer[E, ZE, T0, T2]{
     override val transitions: Seq[Transition] = input.transitions ++
       Seq(
         Transition(
-          implicitly[ClassTag[T1]].runtimeClass.getSimpleName, "ZTWriter",
-          implicitly[ClassTag[T2]].runtimeClass.getSimpleName
-      ))
+          implicitly[ClassTag[T1]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T2]].runtimeClass.getSimpleName
+        )
+      )
 
     override protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = for {
       s <- input.apply(i)
     } yield transform(s)
 
-    override val name: String = input.name
+    override def name: String = input.name
   }
 
   class UnitWriter[E, ZE, T: ClassTag, T2: ClassTag] (
@@ -274,8 +276,7 @@ object Writer {
     extends Writer[E, ZE, T, T2] {
     override val transitions: Seq[Transition] = Seq(
       Transition(
-        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n,
-        implicitly[ClassTag[T2]].runtimeClass.getSimpleName
+        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
 
     override protected[this] def pipe(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = t(i)
@@ -289,8 +290,7 @@ object Writer {
                                                       ) extends Writer[E, ZE, T, T2]{
     override val transitions: Seq[Transition] = Seq(
       Transition(
-        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n,
-        implicitly[ClassTag[T2]].runtimeClass.getSimpleName
+        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
     override protected[this] def pipe(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] = ZIO.succeed(t(i))
     override val name: String = n
@@ -303,8 +303,7 @@ object Writer {
                                                       ) extends Writer[E, ZE, T, T2]{
     override val transitions: Seq[Transition] = Seq(
       Transition(
-        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n,
-        implicitly[ClassTag[T2]].runtimeClass.getSimpleName
+        implicitly[ClassTag[T]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T2]].runtimeClass.getSimpleName
       ))
     override protected[this] def pipe(i: ZStream[ZE, Throwable, T]): ZIO[E, Throwable, ZStream[ZE, Throwable, T2]] =
       ZIO.succeed(i.map(t))
