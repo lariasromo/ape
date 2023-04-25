@@ -10,14 +10,15 @@ import zio.stream.ZStream
 import zio.{Tag, ZIO}
 
 protected[kafka] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder, Config <: KafkaConfig :Tag]
-  extends KafkaReader[Config, Consumer, ConsumerRecord[String, Option[T]]] {
+  extends KafkaReader[Config, Config, ConsumerRecord[String, Option[T]]] {
 
   override protected [this] def read:
-    ZIO[Config, Throwable, ZStream[Any with Consumer, Throwable, ConsumerRecord[String, Option[T]]]] =
+    ZIO[Config, Throwable, ZStream[Config, Throwable, ConsumerRecord[String, Option[T]]]] =
     for {
         kafkaConfig <- ZIO.service[Config]
     } yield Consumer.subscribeAnd( Subscription.topics( kafkaConfig.topicName ) )
       .plainStream(Serde.string, AvroUtils.getSerde[T])
+      .provideSomeLayer(KafkaConfig.liveConsumer)
       .filter(_.value.isDefined)
       .tap{batch => batch.offset.commit}
       .map(record => record.record)

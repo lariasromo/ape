@@ -10,9 +10,9 @@ import zio.kafka.consumer.Consumer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object KafkaAvroReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
+object KafkaAvroReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val reader = Ape.readers.kafka[KafkaConfig].avro[dummy]
-  override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaConfig with KafkaContainer with TestEnvironment with Scope, Any] =
     suite("KafkaReaderTest")(
     test("Reads avro message"){
       for {
@@ -36,6 +36,6 @@ object KafkaAvroReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
     }
   )
 
-  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer] =
-    KafkaContainerService.topicLayer("avro_topic") >+> KafkaConfig.liveConsumer
+  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer] =
+    KafkaContainerService.topicLayer("avro_topic")
 }

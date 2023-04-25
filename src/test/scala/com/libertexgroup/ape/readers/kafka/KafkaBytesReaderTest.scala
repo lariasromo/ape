@@ -8,9 +8,9 @@ import zio.kafka.consumer.Consumer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
+object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val reader = Ape.readers.kafka[KafkaConfig].default
-  override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaConfig with KafkaContainer with TestEnvironment with Scope, Any] =
     suite("KafkaBytesReaderTest")(
       test("Reads bytes"){
         for {
@@ -29,6 +29,6 @@ object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with
       }
   )
 
-  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer] =
-    KafkaContainerService.topicLayer("bytes_topic") >+> KafkaConfig.liveConsumer
+  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer] =
+    KafkaContainerService.topicLayer("bytes_topic")
 }

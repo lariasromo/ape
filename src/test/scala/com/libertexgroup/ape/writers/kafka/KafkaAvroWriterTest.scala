@@ -14,7 +14,7 @@ import zio.{Chunk, Scope, ZIO, ZLayer}
 
 import java.time.{LocalDateTime, ZoneOffset}
 
-object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
+object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val sampleObjects: Chunk[dummy] = Chunk(
     dummy("string 1", "other string"),
     dummy("string 2", "some other string")
@@ -28,7 +28,7 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
       )
     })
 
-  override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaConfig with KafkaContainer with TestEnvironment with Scope, Any] =
     suite("KafkaAvroWriterTest")(
       test("Writes avro messages"){
         for {
@@ -48,12 +48,7 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
     _ <- Ape.writers.kafka[KafkaConfig].avro[Any, dummy].write(data(config.topicName))
   } yield ()
 
-  def b: ZLayer[Any, Throwable, KafkaContainer with KafkaConfig with Consumer] = {
-    KafkaContainerService.topicLayer("text_topic") >+>
-      KafkaConfig.liveConsumer >+>
-      ZLayer.fromZIO(setup)
-  }
-
-  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer] = b
+  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer] =
+    KafkaContainerService.topicLayer("text_topic") >+> ZLayer.fromZIO(setup)
 }
 

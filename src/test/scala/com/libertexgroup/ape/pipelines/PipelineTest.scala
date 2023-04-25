@@ -11,14 +11,14 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}
 
-object PipelineTest extends ZIOSpec[Consumer with KafkaContainer with KafkaConfig with MultiClickhouseConfig with ClickHouseContainer] {
-  val pp: ZStream[Consumer with KafkaConfig with Any with MultiClickhouseConfig with Scope, Throwable, dummy] =
+object PipelineTest extends ZIOSpec[KafkaContainer with KafkaConfig with MultiClickhouseConfig with ClickHouseContainer] {
+  val pp: ZStream[KafkaConfig with MultiClickhouseConfig with Scope, Throwable, dummy] =
     Ape.readers.kafka[KafkaConfig].default.**[dummy] --> (
-      Ape.writers.misc.console[Any, Consumer, dummy] <*
-        Ape.writers.clickhouse[MultiClickhouseConfig].default[Consumer, dummy]
+      Ape.writers.misc.console[Any, KafkaConfig, dummy] <*
+        Ape.writers.clickhouse[MultiClickhouseConfig].default[KafkaConfig, dummy]
     )
 
-  override def spec: Spec[Consumer with KafkaContainer with KafkaConfig with MultiClickhouseConfig with ClickHouseContainer with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaContainer with KafkaConfig with MultiClickhouseConfig with ClickHouseContainer with TestEnvironment with Scope, Any] =
     suite("PipelineTest")(
       test("Simple pipeline with PipelineBuilder"){
         for {
@@ -30,7 +30,6 @@ object PipelineTest extends ZIOSpec[Consumer with KafkaContainer with KafkaConfi
       },
     )
 
-  override def bootstrap: ZLayer[Any, Throwable, Consumer with KafkaContainer with KafkaConfig with
-    MultiClickhouseConfig with ClickHouseContainer] =
-    KafkaContainerService.topicLayer("pipe_topic") >+> KafkaConfig.liveConsumer ++ ClickhouseContainerService.layer
+  override def bootstrap: ZLayer[Any, Throwable, KafkaContainer with KafkaConfig with MultiClickhouseConfig with ClickHouseContainer] =
+    KafkaContainerService.topicLayer("pipe_topic") ++ ClickhouseContainerService.layer
 }

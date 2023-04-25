@@ -13,7 +13,7 @@ import zio.{Chunk, Scope, ZIO, ZLayer}
 
 import java.time.{LocalDateTime, ZoneOffset}
 
-object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig with Consumer] {
+object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig] {
   val sampleStrings: Chunk[String] = Chunk(
     "string 1",
     "other string",
@@ -28,7 +28,7 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig with 
       )
     })
 
-  override def spec: Spec[KafkaContainer with KafkaConfig with Consumer with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaContainer with KafkaConfig with TestEnvironment with Scope, Any] =
     suite("KafkaTextWriterTest")(
       test("Writes plaintext messages"){
         for {
@@ -51,10 +51,6 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig with 
     _ <- Ape.writers.kafka[KafkaConfig].string.write(data(config.topicName))
   } yield ()
 
-  def b: ZLayer[Any, Throwable, KafkaContainer with KafkaConfig with Consumer] =
-    KafkaContainerService.topicLayer("text_topic") >+>
-      KafkaConfig.liveConsumer >+>
-      ZLayer.fromZIO(setup)
-
-  override def bootstrap: ZLayer[Any, Any, KafkaContainer with KafkaConfig with Consumer] = b
+  override def bootstrap: ZLayer[Any, Any, KafkaContainer with KafkaConfig] =
+    KafkaContainerService.topicLayer("text_topic") >+> ZLayer.fromZIO(setup)
 }

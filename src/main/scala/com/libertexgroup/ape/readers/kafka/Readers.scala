@@ -12,15 +12,15 @@ import scala.reflect.ClassTag
 
 // Readers
 protected [readers] class Readers[Config <: KafkaConfig :Tag]() {
-  def default: Reader[Config, Consumer, ConsumerRecord[String, Array[Byte]]] =
+  def default: Reader[Config, Config, ConsumerRecord[String, Array[Byte]]] =
     new ape.readers.kafka.DefaultReader()
 
-  def avro[T >:Null :SchemaFor :Decoder :Encoder]: Reader[Config, Consumer, ConsumerRecord[String, Option[T]]] =
+  def avro[T >:Null :SchemaFor :Decoder :Encoder]: Reader[Config, Config, ConsumerRecord[String, Option[T]]] =
     new ape.readers.kafka.AvroReader[T, Config]()
 
-  def string: Reader[Config, Consumer, ConsumerRecord[String, String]] =
+  def string: Reader[Config, Config, ConsumerRecord[String, String]] =
     new ape.readers.kafka.StringReader()
 
-  def jsonCirce[T >:Null :io.circe.Decoder : ClassTag]: Reader[Config, Consumer, ConsumerRecord[String, T]] =
+  def jsonCirce[T >:Null :io.circe.Decoder : ClassTag]: Reader[Config, Config, ConsumerRecord[String, T]] =
     new ape.readers.kafka.JsonCirceReader[T, Config]()
 }

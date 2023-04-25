@@ -8,13 +8,14 @@ import zio.kafka.serde.Serde
 import zio.stream.ZStream
 
 protected[kafka] class StringReader[Config <: KafkaConfig :Tag]
-  extends KafkaReader[Config, Consumer, ConsumerRecord[String, String]] {
+  extends KafkaReader[Config, Config, ConsumerRecord[String, String]] {
 
-  override protected[this] def read: ZIO[Config, Throwable, ZStream[Consumer, Throwable, ConsumerRecord[String, String]]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Config, Throwable, ConsumerRecord[String, String]]] =
     for {
       kafkaConfig <- ZIO.service[Config]
     } yield Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )
       .plainStream(Serde.string, Serde.string)
+      .provideSomeLayer(KafkaConfig.liveConsumer)
       .tap { batch => batch.offset.commit }
       .map(record => record.record)
       .groupedWithin(kafkaConfig.batchSize, kafkaConfig.flushSeconds)
