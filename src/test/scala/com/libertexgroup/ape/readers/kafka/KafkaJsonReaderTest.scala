@@ -9,9 +9,9 @@ import zio.kafka.consumer.Consumer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object KafkaJsonReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with Consumer] {
+object KafkaJsonReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val reader = Ape.readers.kafka[KafkaConfig].jsonCirce[dummy]
-  override def spec: Spec[KafkaConfig with KafkaContainer with Consumer with TestEnvironment with Scope, Any] =
+  override def spec: Spec[KafkaConfig with KafkaContainer with TestEnvironment with Scope, Any] =
     suite("KafkaJsonReaderTest")(
       test("Reads plaintext message"){
         for {
@@ -32,6 +32,6 @@ object KafkaJsonReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer with 
       },
   )
 
-  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer with Consumer] =
-    KafkaContainerService.topicLayer("string_topic") >+> KafkaConfig.liveConsumer
+  override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer] =
+    KafkaContainerService.topicLayer("string_topic")
 }
