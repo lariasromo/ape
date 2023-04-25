@@ -52,11 +52,12 @@ protected [s3] class FileReaderContinuous[Config <: S3Config :Tag, AWSS3 <: S3]
     config <- ZIO.service[Config]
     _ <- printLine("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
     now <- currentDateTime
-    pastDatesStream = config.startDate.map(sd => {
-      ZStream
+    pastDatesStream <- config.startDate.map(sd => for {
+      _ <- printLine("S3 start date is defined, so it will read files from: " + sd.toString)
+    } yield ZStream
         .fromIterable(S3Utils.dateRange(sd, now.toZonedDateTime, config.filePeekDuration.orNull))
         .map(_.toOffsetDateTime)
-    }).getOrElse(ZStream.empty)
+    ).getOrElse(ZIO.succeed(ZStream.empty))
     newFilesStream = ZStream
       .fromSchedule(Schedule.spaced(config.filePeekDuration.orNull))
       .mapZIO(_ => currentDateTime)

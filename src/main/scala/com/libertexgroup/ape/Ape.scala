@@ -23,12 +23,13 @@ object Ape {
     ZStream.unwrap {
       for {
         s <- Ape.apply(reader, writer)
-        _ <- printLine(FigletFont.convertOneLine("APE"))
-        pipe = s.transitions.map(t => s"${t.t0}) -> ${t.op} -> (${t.t1}").mkString("-") + "|"
-        _ <- printLine("Forming a pipeline with transitions...")
-        _ <- printLine("-"*pipe.length)
-        _ <- printLine(pipe)
-        _ <- printLine("-"*pipe.length)
+//        Disable banners
+//        _ <- printLine(FigletFont.convertOneLine("APE"))
+//        pipe = s.transitions.map(t => s"${t.t0}) -> ${t.op} -> (${t.t1}").mkString("-") + "|"
+//        _ <- printLine("Forming a pipeline with transitions...")
+//        _ <- printLine("-"*pipe.length)
+//        _ <- printLine(pipe)
+//        _ <- printLine("-"*pipe.length)
       } yield s.stream
     }
 
