@@ -58,21 +58,28 @@ object Main extends ZIOAppDefault {
 
   val latam = Seq("MX", "AR", "CO")
 
-  type Env = S3FileReaderService with S3Config with MultiClickhouseConfig with KafkaConfig with ProducerSettings
+  type Env = S3FileReaderService[S3Config] with S3Config with MultiClickhouseConfig with KafkaConfig with ProducerSettings
   val pipe: ZIO[Env, Throwable, Ape[S3 with S3Config, ((User, Chunk[User]), ProducerRecord[String, User])]] =
-    Ape.readers.s3JsonLinesCirceReader[User]
+    Ape.readers.s3[S3Config].jsonLinesCirce[User]
       .mapZ(stream => stream
         .flatMap(s => s._2)
         .filter(r => latam.contains(r.country))
       ) --> (
-      Ape.writers.consoleWriter[Any, S3 with S3Config, User] ++
-        Ape.writers.clickhouseWriter[S3 with S3Config, User] ++
-        Ape.writers.kafkaAvroWriter[S3 with S3Config, User].preMap(User.toKafka)
+      Ape.writers.misc.console[Any, S3 with S3Config, User] ++
+        Ape.writers.clickhouse[MultiClickhouseConfig].default[S3 with S3Config, User] ++
+        Ape.writers.kafka[KafkaConfig].avro[S3 with S3Config, User].contramap(User.toKafka)
       )
 
-  val layer = S3Config.live ++
-    (ClickhouseConfig.live >+> MultiClickhouseConfig.liveFromNode) ++
-    KafkaConfig.live ++ KafkaUtils.liveProducerSettings ++ readerService
+  val readerService: ZLayer[S3Config with S3, Throwable, S3FileReaderService[S3Config]] = ZLayer.fromZIO {
+    for {
+      location <- ZIO.service[S3Config].map(_.location.getOrElse(throw new Exception("S3_LOCATION is not set")))
+      service <- S3FileReaderServiceStream.make(S3Utils.pathConverter(location))
+    } yield service
+  }
+
+  val layer = S3Config.live() ++
+    (ClickhouseConfig.live() >+> MultiClickhouseConfig.liveFromNode) ++
+    KafkaConfig.live ++ KafkaConfig.liveProducer ++ readerService
 
   val main = for {
     p <- pipe
