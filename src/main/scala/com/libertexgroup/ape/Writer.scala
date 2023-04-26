@@ -2,9 +2,10 @@ package com.libertexgroup.ape
 
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.Writer._
+import com.libertexgroup.ape.utils.reLayer
 import com.libertexgroup.metrics.ApeMetrics._
 import zio.stream.ZStream
-import zio.{Scope, ZIO}
+import zio.{Scope, Tag, ZIO}
 
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
@@ -58,12 +59,22 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] =
     withTransform(t)
 
-  def contramapZIO[E, T00: ClassTag](t: T00 => ZIO[E, Throwable, T], name:String="contramapZIO"):
-    Writer[E, ZE, T00, T] = concatenate(new UnitZWriter[ZE, E, T00, T](_.mapZIO(t00 => t(t00)), name), this)
+  def contramapZZ[E2: Tag, T00: ClassTag] (
+     t: T00 => ZIO[E2, Throwable, T0],
+     name:String="contramapZZIO" ): Writer[E with E2, ZE, T00, T] = {
+    def tt(i: ZStream[ZE, Throwable, T00]): ZIO[E2, Throwable, ZStream[ZE, Throwable, T0]] =
+      for {
+        l <- reLayer[E2]
+      } yield i.mapZIO(t(_).provideSomeLayer(l))
+    new UnitWriter[E2, ZE, T00, T0](tt, name) --> this
+  }
 
-  def contramapZZIO[E, T00: ClassTag] (t: ZStream[ZE, Throwable, T00] =>
-    ZIO[E, Throwable, ZStream[ZE, Throwable, T]],name:String="contramapZZIO"): Writer[E, ZE, T00, T] =
-    concatenate(new UnitWriter(t(_), name), this)
+  def contramapZZZ[E2, T00: ClassTag] (
+     t: ZStream[ZE, Throwable, T00] => ZIO[E2, Throwable, ZStream[ZE, Throwable, T0]],
+     name:String="contramapZZIO"
+   ): Writer[E with E2, ZE, T00, T] = {
+    concatenate(new UnitWriter(t, name), this)
+  }
 
   def contramap[T00: ClassTag](t: T00 => T0, name:String="contramap"): Writer[E, ZE, T00, T] =
     concatenate(new UnitTWriter(t, name), this)
@@ -292,9 +303,9 @@ object Writer {
   }
 
   class UnitZWriter[E, ZE, T: ClassTag, T2: ClassTag] (
-                                                        t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
-                                                        n:String = "UnitZWriter"
-                                                      ) extends Writer[E, ZE, T, T2]{
+            t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
+            n:String = "UnitZWriter"
+          ) extends Writer[E, ZE, T, T2] {
     override val transitions: Seq[Transition] = Seq(
       Transition(
         implicitly[ClassTag[T]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T2]].runtimeClass.getSimpleName
