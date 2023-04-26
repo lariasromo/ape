@@ -58,6 +58,13 @@ abstract class Writer[-E, ZE, T0: ClassTag, T: ClassTag]{
   def **[T2: ClassTag](implicit t: T => T2): Writer[E, ZE, T0, T2] =
     withTransform(t)
 
+  def contramapZIO[E, T00: ClassTag](t: T00 => ZIO[E, Throwable, T], name:String="contramapZIO"):
+    Writer[E, ZE, T00, T] = concatenate(new UnitZWriter[ZE, E, T00, T](_.mapZIO(t00 => t(t00)), name), this)
+
+  def contramapZZIO[E, T00: ClassTag] (t: ZStream[ZE, Throwable, T00] =>
+    ZIO[E, Throwable, ZStream[ZE, Throwable, T]],name:String="contramapZZIO"): Writer[E, ZE, T00, T] =
+    concatenate(new UnitWriter(t(_), name), this)
+
   def contramap[T00: ClassTag](t: T00 => T0, name:String="contramap"): Writer[E, ZE, T00, T] =
     concatenate(new UnitTWriter(t, name), this)
 
