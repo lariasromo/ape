@@ -35,6 +35,7 @@ object KafkaContainerService extends TestContainerHelper[KafkaContainer]{
       topicName = SimpleKafkaProducer.topic,
       kafkaBrokers = List(container.bootstrapServers),
       consumerGroup = topicName,
+      clientId = topicName,
       flushSeconds = 30.seconds,
       batchSize = 1,
       autoOffsetStrategy = AutoOffsetStrategy.Earliest,

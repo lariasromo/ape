@@ -1,5 +1,6 @@
 package com.libertexgroup.ape.readers.kafka
 
+import com.libertexgroup.ape.utils.reLayer
 import com.libertexgroup.configs.KafkaConfig
 import io.circe.{Decoder, jawn}
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -11,14 +12,15 @@ import zio.stream.ZStream
 import scala.reflect.ClassTag
 
 protected[kafka] class JsonCirceReader[T: Decoder :ClassTag, Config <: KafkaConfig :Tag]
-  extends KafkaReader[Config, Config, ConsumerRecord[String, T]] {
+  extends KafkaReader[Config, Any, ConsumerRecord[String, T]] {
 
-  override protected[this] def read: ZIO[Config, Throwable, ZStream[Config, Throwable, ConsumerRecord[String, T]]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, ConsumerRecord[String, T]]] =
     for {
       kafkaConfig <- ZIO.service[Config]
+      l <- reLayer[Config]
     } yield Consumer.subscribeAnd( Subscription.topics(kafkaConfig.topicName) )
       .plainStream(Serde.string, Serde.string)
-      .provideSomeLayer(KafkaConfig.liveConsumer)
+      .provideSomeLayer(l >>> KafkaConfig.liveConsumer)
       .tap { batch => batch.offset.commit }
       .map(record => record.record)
       .map(r => {
