@@ -12,6 +12,7 @@ case class KafkaConfig(
                         topicName: String,
                         kafkaBrokers: List[String],
                         consumerGroup: String,
+                        clientId: String,
                         flushSeconds: Duration,
                         batchSize: Int,
                         autoOffsetStrategy: AutoOffsetStrategy,
@@ -24,7 +25,7 @@ case class KafkaConfig(
   val consumerSettings: ConsumerSettings = ConsumerSettings(kafkaBrokers)
         .withOffsetRetrieval(OffsetRetrieval.Auto(autoOffsetStrategy))
         .withGroupId(consumerGroup)
-        .withClientId(consumerGroup)
+        .withClientId(clientId)
         .withProperties(additionalProperties)
 }
 
@@ -33,6 +34,7 @@ object KafkaConfig extends ReaderConfig {
   def make(prefix:Option[String]=None): ZIO[Any, SecurityException, KafkaConfig] = {
     val p = prefix.map(s => s + "_").getOrElse("")
     for {
+      clientId <- envOrElse(p + "KAFKA_CLIENT_ID", "")
       offsetStrategy <- envOrElse(p + "KAFKA_OFFSET_STRATEGY", "")
       kafkaBrokers <- envOrElse(p + "KAFKA_BROKERS", "")
       consumerGroup <- envOrElse(p + "KAFKA_CONSUMER_GROUP", "")
@@ -57,7 +59,8 @@ object KafkaConfig extends ReaderConfig {
           AutoOffsetStrategy.Latest
         else AutoOffsetStrategy.Earliest
       },
-      additionalProperties = additionalProperties
+      additionalProperties = additionalProperties,
+      clientId = clientId
     )
   }
 
