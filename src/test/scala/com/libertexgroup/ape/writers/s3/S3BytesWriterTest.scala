@@ -1,28 +1,25 @@
 package com.libertexgroup.ape.writers.s3
 
 import com.libertexgroup.ape.Ape
-import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileReaderServiceStatic}
+import com.libertexgroup.ape.models.{S3ConfigTest, dummy}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.utils.MinioContainerService.setup
 import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
-import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.s3.CompressionType
 import zio.s3.S3
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object S3BytesWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] {
+object S3BytesWriterTest extends ZIOSpec[S3 with MinioContainer with S3ConfigTest] {
   val location = "bytes"
 
-  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config] with TestEnvironment with Scope, Any] =
+  override def spec: Spec[S3 with MinioContainer with S3ConfigTest with TestEnvironment with Scope, Any] =
     suite("S3BytesWriterTest")(
       test("Writes entities to bytes"){
         for {
-          stream <- Ape.readers.s3[S3Config].avro[dummy].apply
-          files <- stream.runCollect
+          files <- Ape.readers.s3[S3ConfigTest].fileReaderSimple(location).readFiles.avro[dummy].stream.runCollect
           data <- ZStream.fromChunk(files).flatMap(_._2).runCollect
         } yield {
           assertTrue(data.nonEmpty)
@@ -31,8 +28,7 @@ object S3BytesWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config wi
       },
     )
 
-  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] =
+  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3ConfigTest] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3Config].avro[Any, dummy].write(sampleData)) >+>
-      S3FileReaderServiceStatic.live[S3Config](location)
+      setup(Ape.writers.s3[S3ConfigTest].fromData.avro[Any, dummy].write(sampleData))
 }

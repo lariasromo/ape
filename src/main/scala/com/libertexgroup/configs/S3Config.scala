@@ -1,7 +1,8 @@
 package com.libertexgroup.configs
 
+import com.libertexgroup.models.s3.BackPressureType.BackPressureType
 import com.libertexgroup.models.s3.CompressionType.CompressionType
-import com.libertexgroup.models.s3.CompressionType
+import com.libertexgroup.models.s3.{BackPressureType, CompressionType}
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
@@ -11,14 +12,15 @@ import zio.s3.errors.ConnectionError
 import zio.s3.{Live, S3}
 import zio.{Duration, Scope, Task, ZIO, ZLayer}
 
+import java.net.URI
 import java.time.{ZoneId, ZonedDateTime}
-import java.time.format.DateTimeFormatter
 import scala.util.Try
 
 case class S3Config (
                       compressionType: CompressionType=CompressionType.NONE,
                       parallelism: Int=1,
-                      enableBackPressure: Boolean=false,
+                      backPressure: BackPressureType=BackPressureType.NONE,
+                      region: String,
                       location: Option[String]=None,
                       locationPattern: Option[ZonedDateTime=>String]=None,
                       s3Bucket: Option[String]=None,
@@ -34,6 +36,25 @@ case class S3Config (
     })
   }
   val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
+
+  def s3: ZIO[Scope, Throwable, Live] =
+    for {
+      service <- ZIO.fromAutoCloseable(
+        ZIO.attempt({
+            val builder = S3AsyncClient
+              .builder()
+              .credentialsProvider(DefaultCredentialsProvider.create())
+              .region(Region.of(region))
+            s3Host.map(h => builder.endpointOverride(URI.create(h)))
+            builder.build()
+        }))
+        .mapBoth(
+          e => ConnectionError(e.getMessage, e.getCause),
+          c => new zio.s3.Live(c)
+        )
+    } yield service
+
+  def liveS3: ZLayer[Any, Throwable, S3] = ZLayer.scoped { s3 }
 }
 
 object S3Config extends ReaderConfig {
@@ -46,15 +67,17 @@ object S3Config extends ReaderConfig {
     s3Bucket <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_BUCKET")
     compressionType <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "COMPRESSION_TYPE", "GZIP")
     s3Host <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_OVERRIDE_URL")
-    enableBackPressure <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_BACK_PRESSURE", "false")
     startDate <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_START_DATE")
+    backPressure <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_BACK_PRESSURE")
+    reg <- envOrElse(prefix.map(s=>s+"_").getOrElse("") +  "S3_AWS_REGION", "eu-west-1")
   } yield S3Config (
+    region = reg,
     location = location,
     s3Bucket = s3Bucket,
     s3Host = s3Host,
     compressionType = CompressionType.withName(compressionType),
     parallelism = Try(parallelism.toInt).toOption.getOrElse(4),
-    enableBackPressure = enableBackPressure.equalsIgnoreCase("true"),
+    backPressure = BackPressureType.withName(backPressure.getOrElse("NONE")),
     fileCacheExpiration = Some(Duration fromJava java.time.Duration.parse(fileCacheExpiration)),
     filePeekDuration = Some(Duration fromJava java.time.Duration.parse(filePeekDuration)),
     filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
@@ -67,20 +90,6 @@ object S3Config extends ReaderConfig {
     conf <- make(prefix)
   } yield conf.copy(locationPattern = Some(pattern), location = None)
 
-  def makeS3Default(prefix:Option[String]=None): ZIO[Scope, Throwable, Live] =
-    for {
-      reg <- envOrElse(prefix.map(s=>s+"_").getOrElse("") +  "AWS_REGION", "eu-west-1")
-      service <- ZIO.fromAutoCloseable(ZIO.attempt(
-        S3AsyncClient
-          .builder()
-          .credentialsProvider(DefaultCredentialsProvider.create())
-          .region(Region.of(reg)).build()))
-        .mapBoth(e => ConnectionError(e.getMessage, e.getCause), new zio.s3.Live(_))
-    } yield service
-
-  def liveS3Default(prefix:Option[String]=None): ZLayer[Any, Throwable, S3] = ZLayer.scoped {
-    makeS3Default(prefix)
-  }
 
   def live(prefix:Option[String]=None): ZLayer[Any, Throwable, S3Config] = ZLayer.fromZIO(make(prefix))
 

@@ -11,4 +11,8 @@ protected[writers] class Writers() {
   def console[E, ET, T: ClassTag]: Writer[E, ET, T, T] = new ConsoleWriter[E, ET, T]
 
   def consoleString[E, ET]: Writer[E, ET, String, String] = new ConsoleWriter[E, ET, String]
+
+  def backPressureFinite[ZE, T: ClassTag] = new BackPressureFiniteWriter[ZE, T]
+
+  def backPressureInfinite[ZE, T: ClassTag] = new BackPressureInfiniteWriter[ZE, T]
 }

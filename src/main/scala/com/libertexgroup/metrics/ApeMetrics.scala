@@ -1,14 +1,13 @@
 package com.libertexgroup.metrics
 
 import com.libertexgroup.configs.ApeMetricsConfig
-import zio.Cause.stack
 import zio.Console.printLine
 import zio._
 import zio.http._
 import zio.http.model.Method
 import zio.metrics._
-import zio.metrics.connectors.{MetricsConfig, prometheus}
 import zio.metrics.connectors.prometheus.PrometheusPublisher
+import zio.metrics.connectors.{MetricsConfig, prometheus}
 import zio.stream.ZStream
 
 import java.net.InetSocketAddress

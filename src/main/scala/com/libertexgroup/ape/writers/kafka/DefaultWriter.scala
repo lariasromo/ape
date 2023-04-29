@@ -1,10 +1,10 @@
 package com.libertexgroup.ape.writers.kafka
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import zio.{Tag, ZIO, ZLayer}
-import zio.kafka.producer.{Producer, ProducerSettings}
+import zio.kafka.producer.Producer
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
+import zio.{Tag, ZIO, ZLayer}
 
 protected[kafka] class DefaultWriter[ET, Config <: KafkaConfig :Tag] extends KafkaWriter[Config, ET, String, String] {
   override protected[this] def pipe(i: ZStream[ET, Throwable, ProducerRecord[String, String]]):

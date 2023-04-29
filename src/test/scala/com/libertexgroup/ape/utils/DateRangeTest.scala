@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.utils
 
-import zio.{Scope, ZIO, ZLayer, durationInt}
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
+import zio.{Scope, ZIO, ZLayer, durationInt}
 
 import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 

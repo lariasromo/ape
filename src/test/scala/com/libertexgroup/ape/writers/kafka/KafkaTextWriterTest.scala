@@ -2,11 +2,9 @@ package com.libertexgroup.ape.writers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.Ape
-import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
+import com.libertexgroup.ape.utils.KafkaContainerService
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import zio.kafka.consumer.Consumer
-import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}

@@ -89,6 +89,11 @@ object Reader {
     override def name: String = input.name
   }
 
+  def tTReader[E, ZE, T0: ClassTag, T1: ClassTag](
+                  input: Reader[E, ZE, T0],
+                  transform:T0=>T1, n:String="TTReader"
+                ) = new TTReader[E, ZE, T0, T1](input, transform, n)
+
   class ZTReader[E, ZE, T0: ClassTag, T1: ClassTag](
                                                      input: Reader[E, ZE, T0],
                                                      transform:ZStream[ZE, Throwable, T0] => ZStream[ZE, Throwable, T1],
@@ -106,6 +111,11 @@ object Reader {
 
     override def name: String = input.name
   }
+  def zTReader[E, ZE, T0: ClassTag, T1: ClassTag](
+                                                   input: Reader[E, ZE, T0],
+                                                   transform:ZStream[ZE, Throwable, T0] => ZStream[ZE, Throwable, T1],
+                                                   n:String="ZTReader"
+                                                 ) = new ZTReader[E, ZE, T0, T1](input, transform, n)
 
   class UnitReader[E, ZE, T: ClassTag] (
                                          stream: ZStream[ZE, Throwable, T],
@@ -118,5 +128,10 @@ object Reader {
 
     override def name: String = n
   }
+
+  def unitReader[E, ZE, T: ClassTag](
+                                      stream: ZStream[ZE, Throwable, T],
+                                      n:String = "UnitReader"
+                                    ) = new UnitReader[E, ZE, T](stream, n)
 }
 

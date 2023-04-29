@@ -1,9 +1,9 @@
-package com.libertexgroup.ape.writers.s3
+package com.libertexgroup.ape.writers.s3.fromData
 
 import com.libertexgroup.configs.S3Config
-import zio.{Tag, ZIO}
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
 protected[s3] class TextWriter[E,
   Config <: S3Config :Tag

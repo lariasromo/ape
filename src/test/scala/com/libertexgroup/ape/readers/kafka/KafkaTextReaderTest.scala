@@ -2,9 +2,8 @@ package com.libertexgroup.ape.readers.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.Ape
-import com.libertexgroup.ape.utils.{KafkaContainerService, KafkaUtils}
+import com.libertexgroup.ape.utils.KafkaContainerService
 import com.libertexgroup.configs.KafkaConfig
-import zio.kafka.consumer.Consumer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 

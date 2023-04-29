@@ -3,22 +3,22 @@ package com.libertexgroup.ape.readers.s3
 import com.libertexgroup.ape.utils.S3Utils
 import com.libertexgroup.configs.S3Config
 import zio.Console.printLine
-import zio.s3.{ListObjectOptions, S3, S3ObjectSummary, listObjects}
+import zio.s3.{ListObjectOptions, S3ObjectSummary, listObjects}
 import zio.stream.ZStream
 import zio.{Chunk, Duration, Tag, ZIO}
 
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
-protected [s3] class FileReaderBounded[Config <: S3Config :Tag, AWSS3 <: S3](
+protected [s3] class FileReaderBounded[Config <: S3Config :Tag](
                          locationPattern:ZIO[Config, Nothing, ZonedDateTime => List[String]],
                          start:ZonedDateTime,
                          end:ZonedDateTime,
                          step:Duration
-                       ) extends S3FileReader[AWSS3 with Config, Any, S3ObjectSummary] {
+                       ) extends S3FileReader[Config, Any] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
-  override protected[this] def read: ZIO[AWSS3 with Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[Config]
     locPattern <- locationPattern
     bucket <- config.taskS3Bucket
@@ -32,7 +32,7 @@ protected [s3] class FileReaderBounded[Config <: S3Config :Tag, AWSS3 <: S3](
         Chunk.fromIterable(d)
       })
       .mapZIO(location => for {
-        objs <- listObjects(bucket, ListObjectOptions.from(location, 100))
+        objs <- listObjects(bucket, ListObjectOptions.from(location, 100)).provideLayer(config.liveS3)
       } yield objs.objectSummaries
       )
   } yield ZStream.fromChunk(c.flatten)

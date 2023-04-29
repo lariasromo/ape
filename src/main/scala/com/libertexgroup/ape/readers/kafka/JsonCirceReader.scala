@@ -1,13 +1,13 @@
 package com.libertexgroup.ape.readers.kafka
 
-import com.libertexgroup.ape.utils.reLayer
+import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.configs.KafkaConfig
 import io.circe.{Decoder, jawn}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.{Tag, ZIO}
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
 import scala.reflect.ClassTag
 

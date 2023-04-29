@@ -1,4 +1,4 @@
-ThisBuild / version := "2.3.7"
+ThisBuild / version := "2.4.0"
 ThisBuild / scalaVersion := "2.13.10"
 
 lazy val root = (project in file("."))
@@ -33,8 +33,26 @@ val zioLibraries = Seq(
   "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
 )
 
+val testLibraries = Seq(
+  "com.redis.testcontainers" % "testcontainers-redis" % "1.6.4",
+  "io.github.scottweaver" %% "zio-2-0-testcontainers-kafka" % "0.10.0" % "test",
+  "io.github.scottweaver" %% "zio-2-0-testcontainers-postgresql" % "0.10.0" % "test",
+  "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
+  "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
+  "com.dimafeng" %% "testcontainers-scala-cassandra" % "0.40.10" % "test",
+  "org.mockito" %% "mockito-scala" % "1.17.12" % "test",
+)
+
+val awsLibraries = Seq(
+  "org.apache.hadoop" % "hadoop-client" % "2.4.0",
+  "org.apache.hadoop" % "hadoop-aws" % "3.3.0",
+  "org.apache.hadoop" % "hadoop-common" % "3.3.0",
+  "com.amazonaws" % "aws-java-sdk-core" % "1.11.563",
+  "com.amazonaws" % "aws-java-sdk-s3" % "1.11.563",
+)
+
 libraryDependencies ++= Seq(
-  "com.github.lalyos" % "jfiglet" % "0.0.9",
+  "org.redisson" % "redisson" % "3.20.1",
   "io.kontainers" %% "purecsv" % "1.3.10",
   "io.github.palanga" %% "zio-cassandra" % "0.10.0",
   "org.apache.parquet" % "parquet-avro" % "1.12.0",
@@ -42,21 +60,10 @@ libraryDependencies ++= Seq(
   "com.softwaremill.sttp.client3" %% "zio" % "3.8.0",
   "org.apache.avro" % "avro" % "1.10.2",
   "com.google.guava" % "guava" % "11.0.2",
-  "org.apache.hadoop" % "hadoop-client" % "2.4.0",
-  "org.apache.hadoop" % "hadoop-aws" % "3.3.0",
-  "org.apache.hadoop" % "hadoop-common" % "3.3.0",
-  "com.amazonaws" % "aws-java-sdk-core" % "1.11.563",
-  "com.amazonaws" % "aws-java-sdk-s3" % "1.11.563",
   "com.sksamuel.avro4s" %% "avro4s-core" % "4.1.0",
   "com.clickhouse" % "clickhouse-jdbc" % "0.3.2-patch11",
   "io.d11"  %% "zhttp"     % "1.0.0.0-RC29",
-  "io.github.scottweaver" %% "zio-2-0-testcontainers-kafka" % "0.10.0" % "test",
-  "io.github.scottweaver" %% "zio-2-0-testcontainers-postgresql" % "0.10.0" % "test",
-  "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
-  "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
-  "com.dimafeng" %% "testcontainers-scala-cassandra" % "0.40.10" % "test",
-  "org.mockito" %% "mockito-scala" % "1.17.12" % "test",
-) ++ zioLibraries ++ circe ++ commonsLibrary
+) ++ awsLibraries ++ circe ++ commonsLibrary ++ testLibraries ++ zioLibraries
 
 // Credentials to get access to Libertex Artifactory maven repositories
 credentials += Credentials(Path.userHome / ".sbt" / "artifactory_credentials")

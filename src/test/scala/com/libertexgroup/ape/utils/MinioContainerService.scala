@@ -1,7 +1,9 @@
 package com.libertexgroup.ape.utils
 
+import com.libertexgroup.ape.models.S3ConfigTest
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.configs.S3Config
+import com.libertexgroup.models.s3.BackPressureType
 import com.libertexgroup.models.s3.CompressionType.CompressionType
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
@@ -14,19 +16,20 @@ import zio.{Scope, Task, UIO, ZIO, ZLayer}
 import scala.reflect.io.File
 
 object MinioContainerService extends TestContainerHelper[MinioContainer] {
-  def config(compressionType: CompressionType, location: Option[String]): ZIO[MinioContainer, Nothing, S3Config] = for {
+  def config(compressionType: CompressionType, location: Option[String]): ZIO[MinioContainer, Nothing, S3ConfigTest] = for {
     container <- ZIO.service[MinioContainer]
-  } yield S3Config(
+  } yield new S3ConfigTest(
+    container=container,
     location = location,
+    region = "eu-west-1",
     s3Bucket = Some("ape"),
     s3Host = Some(container.getHostAddress.toString),
     compressionType = compressionType,
     parallelism = 5,
-    enableBackPressure = true,
-    fileCacheExpiration = None, filePeekDuration = None, filePeekDurationMargin = None
+    backPressure = BackPressureType.ZIO,
   )
 
-  def setup(eff: ZIO[S3 with S3Config, Throwable, Unit]): ZLayer[S3 with S3Config, Throwable, Unit] =
+  def setup(eff: ZIO[S3 with S3ConfigTest, Throwable, Unit]): ZLayer[S3 with S3ConfigTest, Throwable, Unit] =
     ZLayer.fromZIO{
     for {
       _ <- createBBucket
@@ -34,7 +37,7 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     } yield ()
   }
 
-  def configLayer(compressionType: CompressionType, location: Option[String]): ZLayer[MinioContainer, Nothing, S3Config] =
+  def configLayer(compressionType: CompressionType, location: Option[String]): ZLayer[MinioContainer, Nothing, S3ConfigTest] =
     ZLayer.fromZIO(config(compressionType, location))
 
   override val startContainer: Task[MinioContainer] = ZIO.attemptBlocking {

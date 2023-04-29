@@ -1,14 +1,11 @@
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
-import com.libertexgroup.ape.{Ape, Reader, Writer}
-import com.libertexgroup.configs.{KafkaConfig, MultiClickhouseConfig}
-import zio.Config.{LocalDate, LocalTime}
+import com.libertexgroup.ape.{Reader, Writer}
+import zio.Config.LocalDate
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, TestResult, ZIOSpecDefault, assertTrue}
 import zio.{Chunk, Scope, ZIO}
 
-import java.time.{ZoneId, ZonedDateTime}
-import java.time.format.DateTimeFormatter
+import java.time.ZoneId
 
 
 object PipelineTest extends ZIOSpecDefault {

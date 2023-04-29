@@ -2,12 +2,10 @@ package com.libertexgroup.ape.readers.cassandra
 
 import com.datastax.oss.driver.api.core.cql.Row
 import com.libertexgroup.ape.utils.CassandraUtils.query2Chunk
-import com.libertexgroup.ape.utils.reLayer
 import com.libertexgroup.configs.CassandraConfig
 import com.libertexgroup.models.cassandra.CassandraModel
-import palanga.zio.cassandra.CassandraException
+import zio.ZIO
 import zio.stream.ZStream
-import zio.{Scope, ZIO}
 
 import scala.reflect.ClassTag
 

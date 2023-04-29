@@ -1,6 +1,6 @@
 package com.libertexgroup.ape.writers.clickhouse
 
-import com.libertexgroup.ape.{Ape, Writer}
+import com.libertexgroup.ape.Writer
 import com.libertexgroup.configs._
 import com.libertexgroup.models.clickhouse.{ClickhouseDLQModel, ClickhouseModel}
 import zio.stream.ZStream

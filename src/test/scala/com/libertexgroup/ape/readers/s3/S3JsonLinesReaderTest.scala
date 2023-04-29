@@ -12,15 +12,14 @@ import zio.s3.S3
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object S3JsonLinesReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer with S3FileReaderService[S3Config]] {
-  val reader = Ape.readers.s3[S3Config].jsonLines[dummy]
+object S3JsonLinesReaderTest extends ZIOSpec[S3 with S3Config with MinioContainer] {
+  val fileStream = Ape.readers.s3[S3Config].fileReaderSimple(location).readFiles.jsonLines[dummy].stream
 
-  override def spec: Spec[S3 with S3Config with MinioContainer with S3FileReaderService[S3Config] with TestEnvironment with Scope, Any] =
+  override def spec: Spec[S3 with S3Config with MinioContainer with TestEnvironment with Scope, Any] =
     suite("S3JsonLinesReaderTest")(
       test("Reads a json file"){
         for {
-          stream <- reader.apply
-          d <- stream.runCollect
+          d <- fileStream.runCollect
           stream1 <- d.tapEach(s => s._2.runCollect).mapZIO(_._2.runCollect)
           data = stream1.flatten
         } yield {
@@ -31,7 +30,7 @@ object S3JsonLinesReaderTest extends ZIOSpec[S3 with S3Config with MinioContaine
       },
     )
 
-  override def bootstrap: ZLayer[Any, Any, S3 with S3Config with MinioContainer with S3FileReaderService[S3Config]] =
+  override def bootstrap: ZLayer[Any, Any, S3 with S3Config with MinioContainer] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some("json")) >+>
-      ( ZLayer.fromZIO(MinioContainerService.loadSampleData) >>> S3FileReaderServiceStatic.live[S3Config](location))
+      ( ZLayer.fromZIO(MinioContainerService.loadSampleData))
 }

@@ -1,12 +1,10 @@
 package com.libertexgroup.ape.pipelines
 
-import com.github.lalyos.jfiglet.FigletFont
 import com.libertexgroup.ape.{Reader, Writer}
 import zio.Console.printLine
-import zio.ZIO.sleep
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Chunk, Schedule, Scope, ZIO, ZLayer, durationInt}
+import zio.{Chunk, Scope, ZIO, ZLayer}
 
 import scala.reflect.ClassTag
 
