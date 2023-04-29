@@ -1,10 +1,10 @@
-package com.libertexgroup.ape.writers.s3
+package com.libertexgroup.ape.writers.s3.fromData
 
 import com.libertexgroup.configs.S3Config
 import purecsv.unsafe.converter.StringConverterUtils
-import zio.{Tag, ZIO}
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
 import scala.reflect.ClassTag
 

@@ -2,7 +2,6 @@ package com.libertexgroup.ape.writers.s3
 
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileReaderServiceStatic}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.utils.MinioContainerService.setup
@@ -14,15 +13,14 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object S3JsonLinesWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] {
+object S3JsonLinesWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config] {
   val location = "json"
 
-  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config] with TestEnvironment with Scope, Any] =
+  override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] =
     suite("S3JsonLinesWriterTest")(
       test("Writes strings to S3"){
         for {
-          stream <- Ape.readers.s3[S3Config].jsonLines[dummy].apply
-          files <- stream.runCollect
+          files <- Ape.readers.s3[S3Config].fileReaderSimple(location).readFiles.jsonLines[dummy].stream.runCollect
           data <- ZStream.fromChunk(files).flatMap(_._2).runCollect
         } yield {
           assertTrue(data.nonEmpty)
@@ -31,8 +29,7 @@ object S3JsonLinesWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Conf
       },
     )
 
-  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] =
+  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3Config].jsonLines[Any, dummy].write(sampleData)) >+>
-      S3FileReaderServiceStatic.live[S3Config](location)
+      setup(Ape.writers.s3[S3Config].fromData.jsonLines[Any, dummy].write(sampleData))
 }

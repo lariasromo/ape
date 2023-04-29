@@ -2,20 +2,17 @@ package com.libertexgroup.ape.readers
 
 import com.libertexgroup.ape.utils.ParquetUtils.{readParquetGenericRecord, readParquetWithType}
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.s3.CompressionType._
 import com.libertexgroup.models.s3.CompressionType
+import com.libertexgroup.models.s3.CompressionType._
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.avro.generic.GenericRecord
 import software.amazon.awssdk.services.s3.model.S3Exception
-import zio.Console.printLine
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.{ZPipeline, ZStream}
-import zio.{Queue, Tag, ZIO}
-
-import java.io.IOException
+import zio.{Tag, ZIO}
 
 package object s3 {
-  type S3FileWithContent[T] = (S3ObjectSummary, ZStream[S3, Throwable, T])
+  type S3FileWithContent[T] = (S3ObjectSummary, ZStream[Any, Throwable, T])
 
   def readPlainText(compressionType: CompressionType, file: S3ObjectSummary): ZStream[S3, Exception, String] =
   {
@@ -55,25 +52,4 @@ package object s3 {
       config <- ZIO.service[Config]
       stream = readParquetGenericRecord(config, file)
     } yield stream
-
-  def readFileStream[T](stream: ZStream[S3, Throwable, T]): ZIO[S3, Throwable, ZStream[Any, IOException, T]]
-  = for {
-    queue <- Queue.unbounded[T]
-    rand <- ZIO.random
-    queueName <- rand.nextPrintableChar
-    _ <- printLine(s"Reading stream with back pressure (using queue ${queueName})")
-    count <- stream.tap(msg => queue.offer(msg)).runCount
-  } yield ZStream
-    .range(0, count.toInt)
-    .mapZIO(_ => for {
-      t <- queue.take
-    } yield t)
-    .ensuring(queue.shutdown <* printLine(s"Shutting down queue ${queueName}").catchAll(_ => ZIO.unit))
-
-  def readWithBackPressure[T, Config <: S3Config](inputStream:ZStream[Config with S3, Throwable, S3FileWithContent[T]]):
-  ZStream[Config with S3, Throwable, (S3ObjectSummary, ZStream[Any, IOException, T])] = for {
-      streams <- inputStream.mapZIO {
-        case (file, stream) => readFileStream(stream).map(x => (file, x))
-      }
-    } yield streams
 }

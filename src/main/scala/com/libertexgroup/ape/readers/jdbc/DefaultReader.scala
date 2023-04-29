@@ -2,8 +2,8 @@ package com.libertexgroup.ape.readers.jdbc
 
 import com.libertexgroup.ape.utils.GenericJDBCUtils.query2Chunk
 import com.libertexgroup.configs.JDBCConfig
-import zio.{Tag, ZIO}
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
 import java.sql.ResultSet
 import scala.reflect.ClassTag

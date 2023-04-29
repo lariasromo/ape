@@ -1,6 +1,5 @@
 package com.libertexgroup.ape.readers.rest
 
-import com.libertexgroup.ape
 import com.libertexgroup.ape.Reader
 import zio.http.{Client, Request}
 

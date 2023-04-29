@@ -1,7 +1,6 @@
 package com.libertexgroup.ape.writers.s3
 
 import com.libertexgroup.ape.Ape
-import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileReaderServiceStatic}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.utils.MinioContainerService.setup
@@ -12,7 +11,7 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZLayer}
 
-object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] {
+object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config] {
   val sampleStrings: Chunk[String] = Chunk(
     "string 1",
     "other string",
@@ -22,12 +21,11 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config wi
   val data: ZStream[Any, Nothing, String] = ZStream.fromChunk(sampleStrings)
   val location = "bytes"
 
-  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService[S3Config] with TestEnvironment with Scope, Any] =
+  override def spec: Spec[S3 with MinioContainer with S3Config with TestEnvironment with Scope, Any] =
     suite("S3TextWriterTest")(
       test("Writes strings to S3"){
         for {
-          stream <- Ape.readers.s3[S3Config].text.apply
-          files <- stream.runCollect
+          files <- Ape.readers.s3[S3Config].fileReaderSimple(location).readFiles.text.stream.runCollect
           data <- ZStream.fromChunk(files).flatMap(_._2).runCollect
         } yield {
           assertTrue(data.nonEmpty)
@@ -37,8 +35,8 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config wi
     )
 
 
-  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config with S3FileReaderService[S3Config]] =
+  override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
       MinioContainerService.s3Layer >+>
         MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-        setup(Ape.writers.s3[S3Config].text[Any].runDrain(data)) >+> S3FileReaderServiceStatic.live[S3Config](location)
+        setup(Ape.writers.s3[S3Config].fromData.text[Any].runDrain(data))
 }

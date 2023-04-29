@@ -1,8 +1,7 @@
 package com.libertexgroup.ape.models
 
-import com.datastax.oss.driver.api.core.cql.Row
 import com.datastax.oss.driver.api.core.cql
-import com.datastax.oss.driver.api.core.cql.BoundStatement
+import com.datastax.oss.driver.api.core.cql.{BoundStatement, Row}
 import com.libertexgroup.models.cassandra.CassandraModel
 import com.libertexgroup.models.clickhouse.ClickhouseModel
 import io.circe._
@@ -24,6 +23,8 @@ case class dummy(a: String, b: String) extends ClickhouseModel with CassandraMod
   }
 
   override def bind(preparedStatement: cql.PreparedStatement): BoundStatement = preparedStatement.bind(a, b)
+
+  override def toString: String = s"$a, $b"
 }
 
 object dummy {

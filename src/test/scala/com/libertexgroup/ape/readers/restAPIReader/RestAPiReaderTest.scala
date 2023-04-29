@@ -1,27 +1,13 @@
 package com.libertexgroup.ape.readers.restAPIReader
 
-import java.nio.charset.StandardCharsets
-
-import com.libertexgroup.ape.models.dummy
-import zio.test.{Spec, TestEnvironment, ZIOSpec}
-import com.libertexgroup.ape.readers.jdbc.JDBCReaderTest.{reader, suite}
-import com.libertexgroup.ape.readers.restAPIReader.RestAPiReaderTest.test
-import com.libertexgroup.ape.utils.PostgresContainerService
-import com.libertexgroup.configs.HttpClientConfig
-import zio.http.{Body, Client, Request, Response, URL, ZClient}
-import org.mockito.ArgumentMatchers
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{verify, when}
-import org.mockito.MockitoSugar.mock
-import zio.http.model.Scheme.HTTP
-import zio.test.{Assertion, Spec, ZIOSpecDefault, ZTestLogger, assertZIO}
-import zio.{Chunk, Scope, ZIO, ZLayer}
-import zio.http.model.{Headers, Method, Status, Version}
-import java.net.InetAddress
-
 import com.libertexgroup.ape.Ape
-import zio.stream.ZStream
-import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+import org.mockito.MockitoSugar.mock
+import zio.http.model.{Headers, Method, Version}
+import zio.http._
+import zio.test.{ZIOSpecDefault, assertTrue}
+import zio.{ZIO, ZLayer}
 
 object RestAPiReaderTest extends ZIOSpecDefault{
 

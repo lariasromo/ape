@@ -1,18 +1,17 @@
-package com.libertexgroup.ape.writers.s3
+package com.libertexgroup.ape.writers.s3.fromData
 
 import com.libertexgroup.configs.S3Config
-import io.circe.Encoder
-import io.circe.syntax.EncoderOps
-import zio.{Tag, ZIO}
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
 import scala.reflect.ClassTag
 
-protected[s3] class JsonLinesCirceWriter[E,
-  T: Encoder : ClassTag,
+protected[s3] class JsonLinesWriter[E,
+  T: ClassTag,
   Config <: S3Config :Tag
-] extends S3Writer[E with S3 with Config, E, T, T] {
+](implicit enc: T => String)
+ extends S3Writer[E with S3 with Config, E, T, T] {
   def a(stream: ZStream[E, Throwable, T]):
   ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, T]] =
     for {
@@ -20,7 +19,7 @@ protected[s3] class JsonLinesCirceWriter[E,
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
       bytesStream = stream
-        .map(s => s.asJson.noSpaces + "\n")
+        .map(s => enc(s) + "\n")
         .map(_.getBytes)
         .flatMap(bytes => ZStream.fromIterable(bytes))
       fileName <- zio.Random.nextUUID

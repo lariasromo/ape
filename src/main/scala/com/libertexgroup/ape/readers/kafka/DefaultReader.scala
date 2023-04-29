@@ -1,6 +1,6 @@
 package com.libertexgroup.ape.readers.kafka
 
-import com.libertexgroup.ape.utils.reLayer
+import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import zio.kafka.consumer.{Consumer, Subscription}

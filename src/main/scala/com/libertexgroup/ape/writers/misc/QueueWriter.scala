@@ -1,7 +1,6 @@
 package com.libertexgroup.ape.writers.misc
 
 import com.libertexgroup.ape.Writer
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Queue, ZIO}
 

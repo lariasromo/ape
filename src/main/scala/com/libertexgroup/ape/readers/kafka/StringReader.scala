@@ -1,12 +1,12 @@
 package com.libertexgroup.ape.readers.kafka
 
-import com.libertexgroup.ape.utils.reLayer
+import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.configs.KafkaConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.{Tag, ZIO}
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
 protected[kafka] class StringReader[Config <: KafkaConfig :Tag]
   extends KafkaReader[Config, Any, ConsumerRecord[String, String]] {

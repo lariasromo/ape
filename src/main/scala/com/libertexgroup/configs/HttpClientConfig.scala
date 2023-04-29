@@ -2,8 +2,8 @@ package com.libertexgroup.configs
 
 
 import zio.System.envOrElse
-import zio.{ZIO, ZLayer}
 import zio.http.{Path, URL}
+import zio.{ZIO, ZLayer}
 
 case class HttpClientConfig (
                               uri: String

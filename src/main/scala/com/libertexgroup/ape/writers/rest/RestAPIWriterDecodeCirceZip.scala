@@ -2,7 +2,7 @@
 package com.libertexgroup.ape.writers.rest
 
 import com.libertexgroup.ape.utils.RestUtils.sendRequestString
-import com.libertexgroup.ape.utils.reLayer
+import com.libertexgroup.ape.utils.Utils.reLayer
 import io.circe.{Decoder, jawn}
 import zio.ZIO
 import zio.http.{Client, Request}

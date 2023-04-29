@@ -6,7 +6,6 @@ import com.libertexgroup.configs._
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import zio.Tag
-import zio.kafka.consumer.Consumer
 
 import scala.reflect.ClassTag
 

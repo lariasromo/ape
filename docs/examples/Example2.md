@@ -19,7 +19,7 @@ This example consists on a pipeline that will read from S3;
 
 ```scala
 import com.libertexgroup.ape.Ape
-import com.libertexgroup.ape.readers.s3.{S3FileReaderService, S3FileReaderServiceStream}
+import com.libertexgroup.ape.readers.s3.S3FileReaderServiceStream
 import com.libertexgroup.ape.utils.{KafkaUtils, S3Utils}
 import com.libertexgroup.configs.{ClickhouseConfig, KafkaConfig, MultiClickhouseConfig, S3Config}
 import com.libertexgroup.models.clickhouse.ClickhouseModel

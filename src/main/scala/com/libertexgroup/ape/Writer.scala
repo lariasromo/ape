@@ -2,7 +2,7 @@ package com.libertexgroup.ape
 
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.Writer._
-import com.libertexgroup.ape.utils.reLayer
+import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.metrics.ApeMetrics._
 import zio.stream.ZStream
 import zio.{Scope, Tag, ZIO}

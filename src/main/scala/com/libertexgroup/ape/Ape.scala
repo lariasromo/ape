@@ -1,10 +1,8 @@
 package com.libertexgroup.ape
 
-import com.github.lalyos.jfiglet.FigletFont
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.readers.PipelineReaders
 import com.libertexgroup.ape.writers.PipelineWriters
-import zio.Console.printLine
 import zio._
 import zio.stream.{ZSink, ZStream}
 

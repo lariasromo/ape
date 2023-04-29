@@ -1,12 +1,13 @@
 package com.libertexgroup.ape.writers.rest
 
-import scala.reflect.ClassTag
 import com.libertexgroup.ape.utils.RestUtils.sendRequestString
-import com.libertexgroup.ape.utils.reLayer
+import com.libertexgroup.ape.utils.Utils.reLayer
 import io.circe.{Decoder, jawn}
-import zio.{ULayer, ZIO}
+import zio.ZIO
 import zio.http.{Client, Request}
 import zio.stream.ZStream
+
+import scala.reflect.ClassTag
 
 class RestAPIWriterRequestCirce[E, ZE, T:ClassTag, T2: ClassTag :Decoder]
   extends RestApiWriter[E with Client, ZE, (Request,T),(T,Option[T2])] {

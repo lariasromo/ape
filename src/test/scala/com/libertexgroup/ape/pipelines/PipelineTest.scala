@@ -3,13 +3,12 @@ package com.libertexgroup.ape.pipelines
 import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.utils.{ClickhouseContainerService, KafkaContainerService, KafkaUtils}
+import com.libertexgroup.ape.utils.{ClickhouseContainerService, KafkaContainerService}
 import com.libertexgroup.configs.{KafkaConfig, MultiClickhouseConfig}
 import org.testcontainers.containers.ClickHouseContainer
-import zio.kafka.consumer.Consumer
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Chunk, Scope, ZIO, ZLayer}
+import zio.{Scope, ZLayer}
 
 object PipelineTest extends ZIOSpec[KafkaContainer with KafkaConfig with MultiClickhouseConfig with ClickHouseContainer] {
   val pp: ZStream[KafkaConfig with MultiClickhouseConfig with Scope, Throwable, dummy] =

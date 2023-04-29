@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.writers.rest
 
 import com.libertexgroup.ape.utils.RestUtils.sendRequestByte
-import com.libertexgroup.ape.utils.reLayer
+import com.libertexgroup.ape.utils.Utils.reLayer
 import zio.ZIO
 import zio.http._
 import zio.stream.ZStream

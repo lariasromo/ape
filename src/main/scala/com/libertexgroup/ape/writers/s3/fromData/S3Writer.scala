@@ -1,4 +1,4 @@
-package com.libertexgroup.ape.writers.s3
+package com.libertexgroup.ape.writers.s3.fromData
 
 import com.libertexgroup.ape.Writer
 

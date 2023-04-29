@@ -1,6 +1,7 @@
 package com.libertexgroup.ape.readers.kafka
 
-import com.libertexgroup.ape.utils.{AvroUtils, reLayer}
+import com.libertexgroup.ape.utils.AvroUtils
+import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.configs.KafkaConfig
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import org.apache.kafka.clients.consumer.ConsumerRecord
