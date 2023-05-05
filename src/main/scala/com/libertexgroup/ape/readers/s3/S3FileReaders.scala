@@ -18,7 +18,7 @@ class S3FileReaders[Config <: S3Config :Tag] {
              ): Reader[Config, Any, S3ObjectSummary] =
     Ape.readers.s3[Config].fileReaderBounded(locationPattern, start, end, step)
 
-  def simple(location: String): FileReaderSimple[Config] = Ape.readers.s3[Config].fileReaderSimple(location)
+  def simple(location: String): S3FileReader[Config] = Ape.readers.s3[Config].fileReaderSimple(location)
 
   def continuous(locationPattern: ZIO[Config, Nothing, ZonedDateTime => List[String]]): Reader[Config, Any, S3ObjectSummary] = {
     new Reader[Config, Any, S3ObjectSummary]{
