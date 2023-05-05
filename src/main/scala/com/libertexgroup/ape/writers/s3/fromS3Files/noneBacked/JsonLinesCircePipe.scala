@@ -17,7 +17,7 @@ import scala.reflect.ClassTag
  */
 
 class JsonLinesCircePipe[
-  T>:Null :io.circe.Decoder :SchemaFor :Encoder :Decoder :ClassTag :Tag,
+  T :io.circe.Decoder :SchemaFor :Encoder :Decoder :ClassTag :Tag,
   Config <: S3Config :Tag
 ] extends S3ContentPipe[Config, Any, T ] {
   override protected[this] def pipe(i: ZStream[Any, Throwable, S3ObjectSummary]):

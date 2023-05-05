@@ -25,5 +25,5 @@ class JsonLinesPipe[T>:Null :ClassTag :SchemaFor :Encoder :Decoder :Tag,
   ZIO[Config with RConfig, Throwable, ZStream[Any, Throwable, S3FileWithContent[T]]] = for {
     redis <- reLayer[RConfig]
     s <- S3FilePipe.jsonLinesPipe(i, decode)
-  } yield s.mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[Any, T](_).provideSomeLayer(redis))
+  } yield s.mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[T](_).provideSomeLayer(redis))
 }

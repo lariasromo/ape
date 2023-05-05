@@ -26,12 +26,12 @@ object Writers {
   }
 
   class BackPressureWriters[Config <: RedisConfig : Tag] {
-    def finite[ZE, T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag]: Writer[ZE with Config, ZE, T, T] =
+    def finite[ZE, T :SchemaFor :Encoder :Decoder :ClassTag :Tag]: Writer[ZE with Config, ZE, T, T] =
       new BackPressureFiniteWriter[ZE, Config, T]()
 
     def finiteString[ZE]: Writer[ZE with Config, ZE, String, String] = new BackPressureStringFiniteWriter[ZE, Config]()
 
-    def infinite[ZE, T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag]: Writer[ZE with Config, ZE, T, T] =
+    def infinite[ZE, T :SchemaFor :Encoder :Decoder :ClassTag :Tag]: Writer[ZE with Config, ZE, T, T] =
       new BackPressureInfiniteWriter[ZE, Config, T]()
 
     def infiniteString[ZE]: Writer[ZE with Config, ZE, String, String] =
