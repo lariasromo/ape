@@ -51,7 +51,7 @@ object AvroUtils {
       }
       result
     }
-    def decode[T>:Null: SchemaFor : Decoder : Encoder](): List[T] = {
+    def decode[T: SchemaFor : Decoder : Encoder](): List[T] = {
       val result = Try({
         val schema = AvroSchema[T]
         readBinary(bytes, schema)

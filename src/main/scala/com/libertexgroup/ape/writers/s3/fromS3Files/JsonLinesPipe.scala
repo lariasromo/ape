@@ -3,6 +3,7 @@ package com.libertexgroup.ape.writers.s3.fromS3Files
 import com.libertexgroup.ape.readers.s3.{S3FileWithContent, readPlainText}
 import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.configs.S3Config
+import com.libertexgroup.models.s3.BackPressureType
 import zio.s3.S3ObjectSummary
 import zio.stream.ZStream
 import zio.{Tag, ZIO}
@@ -28,5 +29,9 @@ class JsonLinesPipe[ZE, T :ClassTag, Config <: S3Config :Tag](implicit decode: S
       .provideSomeLayer(cl ++ config.liveS3)
       .map(decode)
     )
-  )
+  ).map(data => config.backPressure match {
+      case BackPressureType.NONE => data
+      case BackPressureType.ZIO => S3WithBackPressure.zio[T].backPressure(data)
+      case BackPressureType.REDIS => throw new Exception("REDIS back pressure should be configured on client side")
+    })
 }
