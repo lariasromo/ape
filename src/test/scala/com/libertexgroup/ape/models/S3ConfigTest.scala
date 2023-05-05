@@ -2,9 +2,8 @@ package com.libertexgroup.ape.models
 
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.s3.BackPressureType.BackPressureType
 import com.libertexgroup.models.s3.CompressionType.CompressionType
-import com.libertexgroup.models.s3.{BackPressureType, CompressionType}
+import com.libertexgroup.models.s3.CompressionType
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.s3.Live
@@ -17,7 +16,6 @@ class S3ConfigTest(
                     container: MinioContainer,
                     compressionType: CompressionType=CompressionType.NONE,
                     parallelism: Int=1,
-                    backPressure: BackPressureType=BackPressureType.NONE,
                     region: String,
                     location: Option[String]=None,
                     locationPattern: Option[ZonedDateTime=>String]=None,
@@ -30,7 +28,6 @@ class S3ConfigTest(
                   ) extends S3Config(
                               compressionType=compressionType,
                               parallelism=parallelism,
-                              backPressure=backPressure,
                               region=region,
                               location=location,
                               locationPattern=locationPattern,

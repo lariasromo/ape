@@ -38,5 +38,5 @@ object S3TextWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Config] {
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
       MinioContainerService.s3Layer >+>
         MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-        setup(Ape.writers.s3[S3Config].fromData.text[Any].runDrain(data))
+        setup(Ape.writers.s3[S3Config].text[Any].runDrain(data))
 }

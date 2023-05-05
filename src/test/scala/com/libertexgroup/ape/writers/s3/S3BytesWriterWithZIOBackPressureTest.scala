@@ -39,6 +39,6 @@ object S3BytesWriterWithZIOBackPressureTest extends ZIOSpec[S3 with MinioContain
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3ConfigTest with RedisContainer with RedisConfig] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3ConfigTest].fromData.avro[Any, dummy].write(sampleData)) ++
+      setup(Ape.writers.s3[S3ConfigTest].avro[Any, dummy].write(sampleData)) ++
         RedisContainerService.live
 }

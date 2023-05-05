@@ -1,8 +1,7 @@
 package com.libertexgroup.configs
 
-import com.libertexgroup.models.s3.BackPressureType.BackPressureType
 import com.libertexgroup.models.s3.CompressionType.CompressionType
-import com.libertexgroup.models.s3.{BackPressureType, CompressionType}
+import com.libertexgroup.models.s3.CompressionType
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.core.retry.RetryPolicy
@@ -21,7 +20,6 @@ import scala.util.Try
 case class S3Config (
                       compressionType: CompressionType=CompressionType.NONE,
                       parallelism: Int=1,
-                      backPressure: BackPressureType=BackPressureType.NONE,
                       region: String,
                       location: Option[String]=None,
                       locationPattern: Option[ZonedDateTime=>String]=None,
@@ -81,7 +79,6 @@ object S3Config extends ReaderConfig {
     compressionType <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "COMPRESSION_TYPE", "GZIP")
     s3Host <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_OVERRIDE_URL")
     startDate <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_START_DATE")
-    backPressure <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_BACK_PRESSURE")
     reg <- envOrElse(prefix.map(s=>s+"_").getOrElse("") +  "S3_AWS_REGION", "eu-west-1")
   } yield S3Config (
     region = reg,
@@ -90,7 +87,6 @@ object S3Config extends ReaderConfig {
     s3Host = s3Host,
     compressionType = CompressionType.withName(compressionType),
     parallelism = Try(parallelism.toInt).toOption.getOrElse(4),
-    backPressure = BackPressureType.withName(backPressure.getOrElse("NONE")),
     fileCacheExpiration = Some(Duration fromJava java.time.Duration.parse(fileCacheExpiration)),
     filePeekDuration = Some(Duration fromJava java.time.Duration.parse(filePeekDuration)),
     filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
