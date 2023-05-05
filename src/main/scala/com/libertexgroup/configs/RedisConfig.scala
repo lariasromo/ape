@@ -7,7 +7,7 @@ import zio.System.env
 import zio.{Duration, ZIO, ZLayer, durationInt}
 
 case class RedisConfig(config:Config) {
-  val redisson: RedissonClient = Redisson.create(config)
+  lazy val redisson: RedissonClient = Redisson.create(config)
 }
 
 object RedisConfig {

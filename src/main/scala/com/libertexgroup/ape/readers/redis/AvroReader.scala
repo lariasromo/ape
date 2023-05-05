@@ -17,20 +17,17 @@ class AvroReader[ZE,T : ClassTag :SchemaFor : Decoder : Encoder,Config <: RedisC
 
   def readRedis: ZIO[Config, Nothing, ZStream[Any, Throwable, T]] = for {
     config <- ZIO.service[Config]
-  } yield ZStream
-    .fromZIO(
+  } yield ZStream.fromZIO(
       ZIO.fromTry{
         Try {
           val q: RQueue[Array[Byte]] = config.redisson.getQueue[Array[Byte]](queueName, new ByteArrayCodec())
           val bs: Chunk[Array[Byte]] = if(limit >= 0) Chunk.fromIterable(q.poll(limit).asScala) else Chunk(q.poll)
-//          bs.toList.decode[T]
           bs.filter(_!=null).map(l => {
             Try(l.decode[T]().headOption).toOption.flatten
           })
         }
       })
     .flatMap(ZStream.fromChunk(_))
-
     .filter(_.isDefined).map(_.get)
     .filter(_!=null)
 

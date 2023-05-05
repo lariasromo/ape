@@ -5,7 +5,6 @@ import com.libertexgroup.ape.models.{S3ConfigTest, dummy}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService.setup
 import com.libertexgroup.ape.utils.{MinioContainerService, RedisContainerService}
-import com.libertexgroup.ape.writers.s3.fromS3Files.S3WithBackPressure
 import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
 import com.libertexgroup.configs.RedisConfig
 import com.libertexgroup.models.s3.CompressionType

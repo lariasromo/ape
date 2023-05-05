@@ -2,8 +2,8 @@ package com.libertexgroup.ape.models
 
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.s3.CompressionType.CompressionType
 import com.libertexgroup.models.s3.CompressionType
+import com.libertexgroup.models.s3.CompressionType.CompressionType
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.s3.Live

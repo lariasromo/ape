@@ -1,6 +1,6 @@
 package com.libertexgroup.ape.writers.s3.fromS3Files.redisBacked
 
-import com.libertexgroup.ape.readers.s3.{S3FileWithContent, readPlainText}
+import com.libertexgroup.ape.readers.s3.S3FileWithContent
 import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.ape.writers.s3.fromS3Files.{S3ContentPipe, S3FilePipe, S3WithBackPressure}
 import com.libertexgroup.configs.{RedisConfig, S3Config}
