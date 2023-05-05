@@ -15,7 +15,7 @@ protected [s3] class FileReaderBounded[Config <: S3Config :Tag](
                          start:ZonedDateTime,
                          end:ZonedDateTime,
                          step:Duration
-                       ) extends S3FileReader[Config, Any] {
+                       ) extends S3FileReader[Config] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
   override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {

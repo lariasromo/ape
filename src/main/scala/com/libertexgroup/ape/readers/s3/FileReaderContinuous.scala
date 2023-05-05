@@ -13,7 +13,7 @@ import java.security.MessageDigest
 import java.time.{OffsetDateTime, ZonedDateTime}
 
 protected [s3] class FileReaderContinuous[Config <: S3Config :Tag]
-  (locationPattern:ZIO[Config, Throwable, ZonedDateTime => List[String]]) extends S3FileReader[Config, Any] {
+  (locationPattern:ZIO[Config, Throwable, ZonedDateTime => List[String]]) extends S3FileReader[Config] {
   val md5: String => Array[Byte] = s => MessageDigest.getInstance("MD5").digest(s.getBytes)
 
   def createStreamOfFiles(stream: ZStream[Any, Throwable, OffsetDateTime]):

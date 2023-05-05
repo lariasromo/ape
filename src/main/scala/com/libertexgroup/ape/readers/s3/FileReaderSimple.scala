@@ -9,7 +9,7 @@ import zio.{Chunk, Tag, ZIO}
 import java.time.ZonedDateTime
 
 protected [s3] class FileReaderSimple[Config <: S3Config :Tag]
-(locationPattern:ZIO[Any, Nothing, ZonedDateTime => List[String]]) extends S3FileReader[Config, Any] {
+(locationPattern:ZIO[Any, Nothing, ZonedDateTime => List[String]]) extends S3FileReader[Config] {
 
   override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] =
     for {

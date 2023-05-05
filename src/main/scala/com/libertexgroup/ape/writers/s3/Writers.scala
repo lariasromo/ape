@@ -6,6 +6,6 @@ import zio.Tag
 
 class Writers[Config <: S3Config :Tag] {
   def fromData = new com.libertexgroup.ape.writers.s3.fromData.Writers[Config]
-  def fromS3Files[ZE](reader: S3FileReader[Config, ZE]) =
-    new com.libertexgroup.ape.writers.s3.fromS3Files.Writers[ZE, Config](reader)
+  def fromS3Files[ZE](reader: S3FileReader[Config]) =
+    new com.libertexgroup.ape.writers.s3.fromS3Files.Writers[Any, Config](reader)
 }

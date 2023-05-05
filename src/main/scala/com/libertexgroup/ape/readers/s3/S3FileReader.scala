@@ -7,6 +7,6 @@ import zio.Tag
 import zio.s3.S3ObjectSummary
 
 
-abstract class S3FileReader[Config <: S3Config :Tag, ZE] extends Reader[Config, ZE, S3ObjectSummary]{
-  def readFiles: Writers[ZE, Config] = Ape.writers.s3[Config].fromS3Files(this)
+abstract class S3FileReader[Config <: S3Config :Tag] extends Reader[Config, Any, S3ObjectSummary]{
+  def readFiles: Writers[Any, Config] = Ape.writers.s3[Config].fromS3Files[Any](this)
 }
