@@ -19,7 +19,7 @@ object S3WithBackPressure {
           Reader.unitReader[E, ZE, T](s) --> Ape.writers.redis[Config].backPressure.finite[ZE, T]
         })
     }
-    def backPressureZ[E, T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag](s: S3FileWithContent[T]):
+    def backPressureZ[T:SchemaFor :Encoder :Decoder :ClassTag :Tag](s: S3FileWithContent[T]):
       ZIO[Config, Nothing, S3FileWithContent[T]] =
       for {
         rcL <- reLayer[Config]

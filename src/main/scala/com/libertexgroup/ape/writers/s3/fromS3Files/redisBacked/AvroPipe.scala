@@ -24,5 +24,5 @@ protected[s3] class AvroPipe[T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag
     ZIO[Config with RConfig, Throwable, ZStream[Any, Throwable, S3FileWithContent[T]]] = for {
     redis <- reLayer[RConfig]
     s <- S3FilePipe.avroPipe(i)
-  } yield s.mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[Any, T](_).provideSomeLayer(redis))
+  } yield s.mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[T](_).provideSomeLayer(redis))
 }

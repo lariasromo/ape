@@ -19,7 +19,7 @@ import scala.reflect.ClassTag
  */
 
 class JsonLinesCircePipe[
-  T>:Null :io.circe.Decoder :SchemaFor :Encoder :Decoder :ClassTag :Tag,
+  T :io.circe.Decoder :SchemaFor :Encoder :Decoder :ClassTag :Tag,
   Config <: S3Config :Tag,
   RConfig <: RedisConfig :Tag
 ] extends S3ContentPipe[Config with RConfig, Any, T ] {
@@ -28,6 +28,6 @@ class JsonLinesCircePipe[
     redis <- reLayer[RConfig]
     data <- S3FilePipe.jsonLinesCircePipe(i)
   } yield data
-    .mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[Any, T](_).provideSomeLayer(redis))
+    .mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[T](_).provideSomeLayer(redis))
 
 }

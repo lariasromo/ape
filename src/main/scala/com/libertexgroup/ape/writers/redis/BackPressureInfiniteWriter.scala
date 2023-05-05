@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
 
 // Use with caution as this writer will produce an infinite stream, even if your input stream is finite.
 // If working with a finite stream use BackPressureFiniteWriter
-class BackPressureInfiniteWriter[ZE, Config<:RedisConfig :Tag, T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag]
+class BackPressureInfiniteWriter[ZE, Config<:RedisConfig :Tag, T :SchemaFor :Encoder :Decoder :ClassTag :Tag]
   extends Writer[ZE with Config, ZE, T, T] {
   def readWithBackPressureRedis(stream: ZStream[ZE, Throwable, T]): ZIO[ZE with Config, Throwable, ZStream[ZE, Throwable, T]] =
     for {

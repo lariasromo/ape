@@ -26,5 +26,5 @@ protected[s3] class TextPipe[
   for {
     redis <- reLayer[RConfig]
     s <- S3FilePipe.textPipe(i)
-  } yield s.mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[Any, String](_).provideSomeLayer(redis))
+  } yield s.mapZIO(S3WithBackPressure.redis[RConfig].backPressureZ[String](_).provideSomeLayer(redis))
 }

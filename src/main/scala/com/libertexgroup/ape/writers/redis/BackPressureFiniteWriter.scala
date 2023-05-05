@@ -12,7 +12,7 @@ import scala.util.Random
 
 // Use with caution as this writer will consume stream first then produce a new stream
 // So the first stream needs to be finite, if reading from an infinite stream, use BackPressureInfiniteWriter
-class BackPressureFiniteWriter[ZE, Config<:RedisConfig :Tag, T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag]
+class BackPressureFiniteWriter[ZE, Config<:RedisConfig :Tag, T :SchemaFor :Encoder :Decoder :ClassTag :Tag]
   extends Writer[ZE with Config, ZE, T, T] {
   def readWithBackPressureRedis(stream: ZStream[ZE, Throwable, T]): ZIO[ZE with Config, Throwable, ZStream[ZE, Throwable, T]] =
     for {

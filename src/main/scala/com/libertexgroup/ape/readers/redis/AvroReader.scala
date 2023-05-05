@@ -12,7 +12,7 @@ import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.reflect.ClassTag
 import scala.util.Try
 
-class AvroReader[ZE,T>:Null: ClassTag :SchemaFor : Decoder : Encoder,Config <: RedisConfig :Tag]
+class AvroReader[ZE,T : ClassTag :SchemaFor : Decoder : Encoder,Config <: RedisConfig :Tag]
 (queueName:String, limit:Int= -1) extends RedisReader[Config, ZE, T]{
 
   def readRedis: ZIO[Config, Nothing, ZStream[Any, Throwable, T]] = for {

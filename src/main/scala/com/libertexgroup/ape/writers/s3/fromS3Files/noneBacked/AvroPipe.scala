@@ -15,7 +15,7 @@ import scala.reflect.ClassTag
  * The GenericRecord interface allows to interact with parquet values
  * If the file is just a text file each line will be a string stored in an attribute named `value`
  */
-protected[s3] class AvroPipe[T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag,
+protected[s3] class AvroPipe[T :SchemaFor :Encoder :Decoder :ClassTag :Tag,
   Config <: S3Config :Tag
 ] extends S3ContentPipe[ Config, Any, T ] {
   override protected[this] def pipe(i: ZStream[Any, Throwable, S3ObjectSummary]):
