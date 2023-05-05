@@ -35,7 +35,7 @@ case class S3Config (
       locationPattern.map(l => l(ZonedDateTime.now())).getOrElse("location and location pattern are empty")
     })
   }
-  val taskS3Bucket: Task[String] = ZIO.getOrFail(s3Bucket)
+  val taskS3Bucket: Task[String] = ZIO.succeed(s3Bucket.getOrElse(throw new Exception("No bucket found in S3Config")))
 
   def s3: ZIO[Scope, Throwable, Live] =
     for {
