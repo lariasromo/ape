@@ -4,6 +4,8 @@ import com.libertexgroup.models.s3.BackPressureType.BackPressureType
 import com.libertexgroup.models.s3.CompressionType.CompressionType
 import com.libertexgroup.models.s3.{BackPressureType, CompressionType}
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
+import software.amazon.awssdk.core.retry.RetryPolicy
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import zio.Config.LocalDate
@@ -45,6 +47,17 @@ case class S3Config (
               .builder()
               .credentialsProvider(DefaultCredentialsProvider.create())
               .region(Region.of(region))
+              .overrideConfiguration(
+                ClientOverrideConfiguration
+                  .builder()
+                  .retryPolicy(
+                    RetryPolicy
+                      .builder()
+                      .numRetries(10)
+                      .build()
+                  )
+                  .build()
+              )
             s3Host.map(h => builder.endpointOverride(URI.create(h)))
             builder.build()
         }))
