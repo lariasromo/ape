@@ -21,8 +21,8 @@ object S3WithBackPressure {
     }
   }
 
-  def zio[T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag] = new ZIOBP[T]
-  class ZIOBP[T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag]{
+  def zio[T :ClassTag] = new ZIOBP[T]
+  class ZIOBP[T :ClassTag]{
     def backPressure[E, ZE]: S3FileWithContent[T] => (S3ObjectSummary, ZStream[ZE with E, Throwable, T]) = {
       case (f, s) => (f, {
         Reader.unitReader[E, ZE, T](s) --> Ape.writers.misc.backPressureFinite[ZE, T]

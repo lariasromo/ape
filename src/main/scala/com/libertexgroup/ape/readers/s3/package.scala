@@ -30,7 +30,7 @@ package object s3 {
       case NONE => stream
     }
 
-  def readBytes[T>:Null :SchemaFor :Decoder :Encoder, Config <: S3Config :Tag](file: S3ObjectSummary):
+  def readBytes[T:SchemaFor :Decoder :Encoder, Config <: S3Config :Tag](file: S3ObjectSummary):
   ZIO[S3 with Config, Exception, ZStream[Any, Nothing, T]] =
     for {
       config <- ZIO.service[Config]
