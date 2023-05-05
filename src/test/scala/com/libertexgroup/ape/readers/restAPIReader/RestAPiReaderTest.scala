@@ -4,8 +4,8 @@ import com.libertexgroup.ape.Ape
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.mockito.MockitoSugar.mock
-import zio.http.model.{Headers, Method, Version}
 import zio.http._
+import zio.http.model.{Headers, Method, Version}
 import zio.test.{ZIOSpecDefault, assertTrue}
 import zio.{ZIO, ZLayer}
 

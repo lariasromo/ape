@@ -5,9 +5,9 @@ import com.libertexgroup.ape.utils.Utils.reLayer
 import com.libertexgroup.configs.S3Config
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import io.circe.jawn
-import zio.{Tag, ZIO}
 import zio.s3.S3ObjectSummary
 import zio.stream.ZStream
+import zio.{Tag, ZIO}
 
 object S3FilePipe {
   def avroPipe[ZE, T:SchemaFor :Decoder :Encoder, S3Cfg <: S3Config :Tag](i: ZStream[ZE, Throwable, S3ObjectSummary]):

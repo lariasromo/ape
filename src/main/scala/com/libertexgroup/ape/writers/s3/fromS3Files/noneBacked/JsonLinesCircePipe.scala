@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.writers.s3.fromS3Files.noneBacked
 
 import com.libertexgroup.ape.readers.s3.S3FileWithContent
-import com.libertexgroup.ape.writers.s3.fromS3Files.{S3ContentPipe, S3FilePipe, S3WithBackPressure}
+import com.libertexgroup.ape.writers.s3.fromS3Files.{S3ContentPipe, S3FilePipe}
 import com.libertexgroup.configs.S3Config
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import zio.s3.S3ObjectSummary

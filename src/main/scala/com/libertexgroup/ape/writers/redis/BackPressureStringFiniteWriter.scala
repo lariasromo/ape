@@ -2,12 +2,10 @@ package com.libertexgroup.ape.writers.redis
 
 import com.libertexgroup.ape.{Ape, Reader, Writer}
 import com.libertexgroup.configs.RedisConfig
-import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Tag, ZIO}
 
-import scala.reflect.ClassTag
 import scala.util.Random
 
 // Use with caution as this writer will consume stream first then produce a new stream
