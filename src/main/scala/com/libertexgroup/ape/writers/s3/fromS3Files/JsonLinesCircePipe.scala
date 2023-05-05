@@ -18,7 +18,7 @@ import scala.reflect.ClassTag
 
 class JsonLinesCircePipe[ZE, T: Decoder :ClassTag, Config <: S3Config :Tag]
   extends S3ContentPipe[Config, ZE, T ] {
-  def mapContent(x: ZStream[S3, Throwable, String]): ZStream[S3, Throwable, T] =
+  def mapContent(x: ZStream[Any, Throwable, String]): ZStream[Any, Throwable, T] =
     x.map(l => jawn.decode[T](l).toOption).filter(_.isDefined).map(_.get)
 
   override protected[this] def pipe(i: ZStream[ZE, Throwable, S3ObjectSummary]):
@@ -26,11 +26,11 @@ class JsonLinesCircePipe[ZE, T: Decoder :ClassTag, Config <: S3Config :Tag]
     cl <- reLayer[Config]
     config <- ZIO.service[Config]
   } yield i.map(file =>
-      (
-        file,
-        mapContent(
-          readPlainText(config.compressionType, file).provideSomeLayer(cl ++ config.liveS3)
-        )
+    (
+      file,
+      mapContent(
+        readPlainText(config.compressionType, file).provideSomeLayer(cl ++ config.liveS3)
       )
+    )
   )
 }
