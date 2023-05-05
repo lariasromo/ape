@@ -1,5 +1,6 @@
 package com.libertexgroup.ape.writers
 
+import com.libertexgroup.ape.readers.s3.S3FileReader
 import com.libertexgroup.configs._
 import zio.Tag
 
@@ -11,5 +12,7 @@ class PipelineWriters() {
   def misc = new com.libertexgroup.ape.writers.misc.Writers()
   def redis[Config <:RedisConfig :Tag] = new com.libertexgroup.ape.writers.redis.Writers.Writers[Config]()
   def rest = new com.libertexgroup.ape.writers.rest.Writers
-  def s3[Config <: S3Config :Tag] = new com.libertexgroup.ape.writers.s3.Writers[Config]
+  def s3[Config <: S3Config :Tag] = new com.libertexgroup.ape.writers.s3.fromData.Writers[Config]
+  def s3FileReader[Config <: S3Config :Tag](reader: S3FileReader[Config]) =
+    new com.libertexgroup.ape.writers.s3.fromS3Files.Writers[Config](reader)
 }

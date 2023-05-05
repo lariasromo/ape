@@ -3,7 +3,6 @@ package com.libertexgroup.ape.utils
 import com.libertexgroup.ape.models.S3ConfigTest
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.configs.S3Config
-import com.libertexgroup.models.s3.BackPressureType
 import com.libertexgroup.models.s3.CompressionType.CompressionType
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
@@ -26,7 +25,6 @@ object MinioContainerService extends TestContainerHelper[MinioContainer] {
     s3Host = Some(container.getHostAddress.toString),
     compressionType = compressionType,
     parallelism = 5,
-    backPressure = BackPressureType.ZIO,
   )
 
   def setup(eff: ZIO[S3 with S3ConfigTest, Throwable, Unit]): ZLayer[S3 with S3ConfigTest, Throwable, Unit] =

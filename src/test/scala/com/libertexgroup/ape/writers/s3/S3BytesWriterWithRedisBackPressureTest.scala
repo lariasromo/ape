@@ -20,9 +20,8 @@ object S3BytesWriterWithRedisBackPressureTest extends ZIOSpec[S3 with MinioConta
 
   val reader = Ape.readers.s3[S3ConfigTest]
     .fileReaderSimple(location)
-    .readFiles
+    .readFilesWithRedis[RedisConfig]
     .avro[dummy]
-    .map(S3WithBackPressure.redis[RedisConfig].backPressure)
 
   override def spec: Spec[S3 with MinioContainer with S3ConfigTest with RedisContainer with RedisConfig with TestEnvironment with Scope, Any] =
     suite("S3BytesWriterTest")(
@@ -39,6 +38,6 @@ object S3BytesWriterWithRedisBackPressureTest extends ZIOSpec[S3 with MinioConta
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3ConfigTest with RedisContainer with RedisConfig] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3ConfigTest].fromData.avro[Any, dummy].write(sampleData)) ++
+      setup(Ape.writers.s3[S3ConfigTest].avro[Any, dummy].write(sampleData)) ++
         RedisContainerService.live
 }
