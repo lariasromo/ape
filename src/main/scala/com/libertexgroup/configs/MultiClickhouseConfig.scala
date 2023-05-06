@@ -1,7 +1,7 @@
 package com.libertexgroup.configs
 
-import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.query2Chunk
 import com.libertexgroup.configs.MultiClickhouseConfig.ReplicatedMode
+import com.libertexgroup.utils.ClickhouseJDBCUtils.query2Chunk
 import zio.{ULayer, ZIO, ZLayer, durationInt}
 
 import java.sql.ResultSet

@@ -21,8 +21,8 @@ The APE contains a handy method `S3Utils.pathConverter(location)` which will app
 
 ```scala
 import com.libertexgroup.ape.readers.s3.S3FileReaderServiceStream
-import com.libertexgroup.ape.utils.S3Utils
 import com.libertexgroup.configs.S3Config
+import com.libertexgroup.utils.S3Utils
 import zio.s3.S3
 import zio.ZLayer
 

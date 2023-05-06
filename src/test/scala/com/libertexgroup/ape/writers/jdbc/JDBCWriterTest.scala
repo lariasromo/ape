@@ -3,19 +3,19 @@ package com.libertexgroup.ape.writers.jdbc
 import com.dimafeng.testcontainers.PostgreSQLContainer
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.utils.GenericJDBCUtils.query2Chunk
 import com.libertexgroup.ape.utils.PostgresContainerService
 import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
 import com.libertexgroup.configs.JDBCConfig
+import com.libertexgroup.utils.GenericJDBCUtils
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}
 
 object JDBCWriterTest  extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
   def readsSampleData: ZIO[JDBCConfig, Nothing, Chunk[dummy]] = for {
-    data <- query2Chunk[dummy, JDBCConfig]("SELECT * FROM dummy;")
+    data <- GenericJDBCUtils.query2Chunk[dummy, JDBCConfig]("SELECT * FROM dummy;")
   } yield data
 
-  val writer = Ape.writers.jdbc[JDBCConfig].default[Any, dummy]
+  val writer = Ape.pipes.jdbc[JDBCConfig].default[Any, dummy]
 
   override def spec: Spec[JDBCConfig with PostgreSQLContainer with TestEnvironment with Scope, Any] =
     suite("JDBCWriterTest")(

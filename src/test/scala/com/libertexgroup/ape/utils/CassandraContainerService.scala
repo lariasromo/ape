@@ -3,6 +3,7 @@ package com.libertexgroup.ape.utils
 import com.datastax.oss.driver.api.core.cql.{AsyncResultSet, SimpleStatement}
 import com.dimafeng.testcontainers.CassandraContainer
 import com.libertexgroup.configs.CassandraConfig
+import com.libertexgroup.utils.CassandraUtils
 import palanga.zio.cassandra.CassandraException
 import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 

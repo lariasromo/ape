@@ -48,7 +48,7 @@ val reader = Ape.readers.kafkaAvroReader[Message]
 import com.libertexgroup.ape.Ape
 import zio.kafka.consumer.Consumer
 
-val writer = Ape.writers.kafkaAvroWriter[Consumer, Message2]
+val writer = Ape.pipes.kafkaAvroWriter[Consumer, Message2]
         .preMap(Message2.toKafka)
 ```
 4. Create your pipeline and run it using the `run` method

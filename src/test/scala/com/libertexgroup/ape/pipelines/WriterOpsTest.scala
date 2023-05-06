@@ -1,6 +1,7 @@
 package com.libertexgroup.ape.pipelines
 
-import com.libertexgroup.ape.{Reader, Writer}
+import com.libertexgroup.ape.pipe.Pipe
+import com.libertexgroup.ape.reader.Reader
 import zio.Console.printLine
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
@@ -10,36 +11,36 @@ import scala.reflect.ClassTag
 
 object WriterOpsTest extends ZIOSpec[Unit] {
   val stream = ZStream.apply("file1", "file2", "file3", "file4", "file5")
-  val reader = new Reader.UnitReader[Any, Any, String](stream)
-  val writer1 = new Writer.UnitZWriter[Any, Any, String, Unit](
+  val reader = Reader.UnitReader[Any, Any, String](stream)
+  val writer1 = Pipe.UnitZWriter[Any, Any, String, Unit](
     s => s.tap(i => printLine("InsertWithDlq: " + i) *> ZIO.succeed((1 to 1000000000).foreach(_ => ()))).map(_=>())
   )
 
-  val writer10 = new Writer.UnitZWriter[Any, Any, String, String](
+  val writer10 = Pipe.UnitZWriter[Any, Any, String, String](
     s => s.tap(i => printLine("Read: " + i))
   )
-  val writer11 = new Writer.UnitZWriter[Any, Any, String, Unit](
+  val writer11 = Pipe.UnitZWriter[Any, Any, String, Unit](
     s => s.tap(i => printLine("Insert: " + i)).map(_=>())
   )
-  val writer12 = new Writer.UnitZWriter[Any, Any, Unit, Unit](
+  val writer12 = Pipe.UnitZWriter[Any, Any, Unit, Unit](
     s => s.tap(_ => printLine("Dlq ")).map(_=>())
   )
-  val writer2 = new Writer.UnitZWriter[Any, Any, String, Unit](
+  val writer2 = Pipe.UnitZWriter[Any, Any, String, Unit](
     s => s.tap(i => printLine("Counting: " + i)).map(_=>())
   )
 
-  val c2: Writer[Any with Scope, Any, String, String] = (writer10 ++ (writer11 --> writer12)).map(_._1)
-  val cL2: Writer[Any with Scope, Any, String, Unit] = c2 --> writer2
-  val cross:       Writer[Any with Scope, Any, String, Any] = writer1 <*> writer2
-  val crossLeft:   Writer[Any with Scope, Any, String, Unit] = writer1 <* writer2
-  val crossRight:  Writer[Any with Scope, Any, String, Unit] = writer1 *> writer2
-  val interleave: Writer[Any with Scope, Any, String, Any] = writer1 >>> writer2
-  val merge:       Writer[Any with Scope, Any, String, Any] = writer1 <+> writer2
-  val mergeLeft:   Writer[Any with Scope, Any, String, Unit] = writer1 <+ writer2
-  val mergeRight:  Writer[Any with Scope, Any, String, Unit] = writer1 +> writer2
-  val zip:         Writer[Any with Scope, Any, String, (Unit, Unit)] = writer1 ++ writer2
+  val c2: Pipe[Any with Scope, Any, String, String] = (writer10 ++ (writer11 --> writer12)).map(_._1)
+  val cL2: Pipe[Any with Scope, Any, String, Unit] = c2 --> writer2
+  val cross:       Pipe[Any with Scope, Any, String, Any] = writer1 <*> writer2
+  val crossLeft:   Pipe[Any with Scope, Any, String, Unit] = writer1 <* writer2
+  val crossRight:  Pipe[Any with Scope, Any, String, Unit] = writer1 *> writer2
+  val interleave: Pipe[Any with Scope, Any, String, Any] = writer1 >>> writer2
+  val merge:       Pipe[Any with Scope, Any, String, Any] = writer1 <+> writer2
+  val mergeLeft:   Pipe[Any with Scope, Any, String, Unit] = writer1 <+ writer2
+  val mergeRight:  Pipe[Any with Scope, Any, String, Unit] = writer1 +> writer2
+  val zip:         Pipe[Any with Scope, Any, String, (Unit, Unit)] = writer1 ++ writer2
 
-  def runPipe[B:ClassTag](name:String, w: Writer[Any with Scope, Any, String, B]): ZIO[Any, Throwable, Chunk[B]] = for {
+  def runPipe[B:ClassTag](name:String, w: Pipe[Any with Scope, Any, String, B]): ZIO[Any, Throwable, Chunk[B]] = for {
     _ <- printLine(name)
     results <- ZIO.scoped((reader --> w).runCollect)
     _ <- results.mapZIO(r => printLine(r))

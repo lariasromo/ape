@@ -1,8 +1,8 @@
 package com.libertexgroup.ape.utils
 
 import com.dimafeng.testcontainers.PostgreSQLContainer
-import com.libertexgroup.ape.utils.GenericJDBCUtils.executeQuery
 import com.libertexgroup.configs.JDBCConfig
+import com.libertexgroup.utils.GenericJDBCUtils.executeQuery
 import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 
 

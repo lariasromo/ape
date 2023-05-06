@@ -46,7 +46,7 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig] {
   val setup: ZIO[KafkaConfig, Throwable, Unit] = for {
     config <- ZIO.service[KafkaConfig]
     _ <- zio.Console.printLine("Sending text message")
-    _ <- Ape.writers.kafka[KafkaConfig].string.write(data(config.topicName))
+    _ <- Ape.pipes.kafka[KafkaConfig].string.write(data(config.topicName))
   } yield ()
 
   override def bootstrap: ZLayer[Any, Any, KafkaContainer with KafkaConfig] =
