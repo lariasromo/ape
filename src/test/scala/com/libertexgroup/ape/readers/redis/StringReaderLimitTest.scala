@@ -10,7 +10,7 @@ import zio.{Scope, ZIO, ZLayer}
 object StringReaderLimitTest extends ZIOSpec[RedisContainer with RedisConfig]{
 
   def setup: ZIO[RedisConfig, Throwable, Unit] = for {
-    _ <- (stringReader --> Ape.writers.redis[RedisConfig].generalPurpose.string("someQueue")).runDrain
+    _ <- (stringReader --> Ape.pipes.redis[RedisConfig].generalPurpose.string("someQueue")).runDrain
   } yield ()
 
   override def spec: Spec[RedisContainer with RedisConfig with TestEnvironment with Scope, Any] =
@@ -19,7 +19,7 @@ object StringReaderLimitTest extends ZIOSpec[RedisContainer with RedisConfig]{
         for {
           msgs <- (
             Ape.readers.redis[RedisConfig].string("someQueue", stringData.length) -->
-              Ape.writers.misc.consoleString[Any, Any]
+              Ape.pipes.misc.consoleString[Any, Any]
             ).runCollect
         } yield {
           assertTrue(msgs.toList.sorted equals stringData.toList.sorted)

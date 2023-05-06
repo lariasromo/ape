@@ -12,7 +12,7 @@ object AvroBytesReaderLimitTest extends ZIOSpec[RedisContainer with RedisConfig]
 
 
   def setup: ZIO[RedisConfig, Throwable, Unit] = for {
-    _ <- (dummyReader --> Ape.writers.redis[RedisConfig].generalPurpose.default("someQueue")).runDrain
+    _ <- (dummyReader --> Ape.pipes.redis[RedisConfig].generalPurpose.default("someQueue")).runDrain
   } yield ()
 
   override def spec: Spec[RedisContainer with RedisConfig with TestEnvironment with Scope, Any] =
@@ -21,7 +21,7 @@ object AvroBytesReaderLimitTest extends ZIOSpec[RedisContainer with RedisConfig]
         for {
           msgs <- (
             Ape.readers.redis[RedisConfig].default[Any, dummy]("someQueue", dummyData.length) -->
-              Ape.writers.misc.console[Any, Any, dummy]
+              Ape.pipes.misc.console[Any, Any, dummy]
             ).runCollect
         } yield {
           assertTrue(msgs.map(_.toString).toList.sorted equals dummyData.map(_.toString).toList.sorted)

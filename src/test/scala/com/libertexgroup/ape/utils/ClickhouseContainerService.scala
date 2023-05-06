@@ -1,8 +1,8 @@
 package com.libertexgroup.ape.utils
 
 import com.clickhouse.jdbc.ClickHouseConnection
-import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.executeQueryMulti
 import com.libertexgroup.configs.{ClickhouseConfig, MultiClickhouseConfig}
+import com.libertexgroup.utils.ClickhouseJDBCUtils.executeQueryMulti
 import org.testcontainers.containers.ClickHouseContainer
 import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 

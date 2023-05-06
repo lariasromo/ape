@@ -3,9 +3,9 @@ package com.libertexgroup.ape.writers.clickhouse
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.utils.ClickhouseContainerService
-import com.libertexgroup.ape.utils.ClickhouseJDBCUtils.query2ChunkMulti
 import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
 import com.libertexgroup.configs.MultiClickhouseConfig
+import com.libertexgroup.utils.ClickhouseJDBCUtils.query2ChunkMulti
 import org.testcontainers.containers.ClickHouseContainer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}
@@ -16,7 +16,7 @@ object ClickhouseWriterTest extends ZIOSpec[MultiClickhouseConfig with ClickHous
     data <- query2ChunkMulti[dummy]("SELECT * FROM dummy;")
   } yield data
 
-  val writer = Ape.writers.clickhouse[MultiClickhouseConfig].default[Any, dummy]
+  val writer = Ape.pipes.clickhouse[MultiClickhouseConfig].default[Any, dummy]
 
   override def spec: Spec[MultiClickhouseConfig with ClickHouseContainer with TestEnvironment with Scope, Any] =
     suite("ClickhouseWriterTest")(

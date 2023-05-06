@@ -5,10 +5,10 @@ import com.libertexgroup.ape.models.{S3ConfigTest, dummy}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService.setup
 import com.libertexgroup.ape.utils.{MinioContainerService, RedisContainerService}
-import com.libertexgroup.ape.writers.s3.fromS3Files.S3WithBackPressure
 import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
 import com.libertexgroup.configs.RedisConfig
 import com.libertexgroup.models.s3.CompressionType
+import com.libertexgroup.pipes.s3.fromS3Files.S3WithBackPressure
 import com.redis.testcontainers.RedisContainer
 import zio.s3.S3
 import zio.stream.ZStream
@@ -39,6 +39,6 @@ object S3BytesWriterWithZIOBackPressureTest extends ZIOSpec[S3 with MinioContain
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3ConfigTest with RedisContainer with RedisConfig] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3ConfigTest].avro[Any, dummy].write(sampleData)) ++
+      setup(Ape.pipes.s3[S3ConfigTest].avro[Any, dummy].write(sampleData)) ++
         RedisContainerService.live
 }

@@ -1,5 +1,6 @@
 import com.libertexgroup.ape.models.dummy
-import com.libertexgroup.ape.{Reader, Writer}
+import com.libertexgroup.ape.pipe.Pipe
+import com.libertexgroup.ape.reader.Reader
 import zio.Config.LocalDate
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, TestResult, ZIOSpecDefault, assertTrue}
@@ -23,7 +24,7 @@ object PipelineTest extends ZIOSpecDefault {
       None,
     )
   )
-  val reader: Reader[Any, Any, Option[dummy]] = new Reader.UnitReader[Any, Any, Option[dummy]](sampleDataOptions)
+  val reader: Reader[Any, Any, Option[dummy]] = Reader.UnitReader[Any, Any, Option[dummy]](sampleDataOptions)
   val dummyT: Option[dummy] => Option[dummy] = d => d
   val sampleDataNoOp: Chunk[dummy] = Chunk(
     dummy("value1", "value2"),
@@ -48,7 +49,7 @@ object PipelineTest extends ZIOSpecDefault {
     },
     test("Writer safeGet") {
       for {
-        chunkResult <- (reader --> new Writer.UnitTWriter[Any, Any, Option[dummy], Option[dummy]](dummyT).safeGet[dummy]).runCollect
+        chunkResult <- (reader --> Pipe.UnitTWriter[Any, Any, Option[dummy], Option[dummy]](dummyT).safeGet[dummy]).runCollect
       } yield {
         assertTrue(chunkResult.equals(sampleDataNoOp))
       }

@@ -38,7 +38,7 @@ object S3CsvWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config] {
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3Config]
+      setup(Ape.pipes.s3[S3Config]
         .csv[Any, dummy]( ";", Some(Seq("b", "a")))
         .write(sampleDataWithCharacters))
 }

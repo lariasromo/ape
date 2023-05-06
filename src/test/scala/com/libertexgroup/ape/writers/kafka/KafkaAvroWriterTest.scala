@@ -43,7 +43,7 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val setup: ZIO[KafkaConfig, Throwable, Unit] = for {
     config <- ZIO.service[KafkaConfig]
     _ <- zio.Console.printLine("Sending dummy message")
-    _ <- Ape.writers.kafka[KafkaConfig].avro[Any, dummy].write(data(config.topicName))
+    _ <- Ape.pipes.kafka[KafkaConfig].avro[Any, dummy].write(data(config.topicName))
   } yield ()
 
   override def bootstrap: ZLayer[Any, Any, KafkaConfig with KafkaContainer] =

@@ -1,5 +1,6 @@
 package com.libertexgroup.ape.utils
 
+import com.libertexgroup.utils.S3Utils
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZIO, ZLayer, durationInt}
 

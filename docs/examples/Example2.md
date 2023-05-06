@@ -20,9 +20,9 @@ This example consists on a pipeline that will read from S3;
 ```scala
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.readers.s3.S3FileReaderServiceStream
-import com.libertexgroup.ape.utils.{KafkaUtils, S3Utils}
 import com.libertexgroup.configs.{ClickhouseConfig, KafkaConfig, MultiClickhouseConfig, S3Config}
 import com.libertexgroup.models.clickhouse.ClickhouseModel
+import com.libertexgroup.utils.{KafkaUtils, S3Utils}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -65,9 +65,9 @@ object Main extends ZIOAppDefault {
         .flatMap(s => s._2)
         .filter(r => latam.contains(r.country))
       ) --> (
-      Ape.writers.misc.console[Any, S3 with S3Config, User] ++
-        Ape.writers.clickhouse[MultiClickhouseConfig].default[S3 with S3Config, User] ++
-        Ape.writers.kafka[KafkaConfig].avro[S3 with S3Config, User].contramap(User.toKafka)
+      Ape.pipes.misc.console[Any, S3 with S3Config, User] ++
+        Ape.pipes.clickhouse[MultiClickhouseConfig].default[S3 with S3Config, User] ++
+        Ape.pipes.kafka[KafkaConfig].avro[S3 with S3Config, User].contramap(User.toKafka)
       )
 
   val readerService: ZLayer[S3Config with S3, Throwable, S3FileReaderService[S3Config]] = ZLayer.fromZIO {

@@ -15,7 +15,7 @@
 //
 //object S3ParquetWriterTest extends ZIOSpec[S3 with MinioContainer with S3Config with S3FileReaderService] {
 //  val location = "parquet"
-//  val writer = Ape.writers.s3ParquetWriter[Any, dummy](1, 1.minute)
+//  val writer = Ape.pipes.s3ParquetWriter[Any, dummy](1, 1.minute)
 //  val reader = Ape.readers.s3TypedParquetReader[dummy]
 //
 //  override def spec: Spec[S3 with MinioContainer with S3Config with S3FileReaderService with TestEnvironment with Scope, Any] =

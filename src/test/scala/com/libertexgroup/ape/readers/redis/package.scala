@@ -1,7 +1,7 @@
 package com.libertexgroup.ape.readers
 
-import com.libertexgroup.ape.Reader
 import com.libertexgroup.ape.models.dummy
+import com.libertexgroup.ape.reader.Reader
 import zio.Chunk
 import zio.stream.ZStream
 
@@ -30,6 +30,6 @@ package object redis {
   )
   val stringStream: ZStream[Any, Nothing, String] = ZStream.fromChunk(stringData)
 
-  val dummyReader = Reader.unitReader[Any, Any, dummy](dummyStream)
-  val stringReader = Reader.unitReader[Any, Any, String](stringStream)
+  val dummyReader = Reader.UnitReader[Any, Any, dummy](dummyStream)
+  val stringReader = Reader.UnitReader[Any, Any, String](stringStream)
 }

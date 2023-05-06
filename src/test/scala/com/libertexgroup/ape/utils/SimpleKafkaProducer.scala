@@ -10,7 +10,7 @@ import java.time.{LocalDateTime, ZoneOffset}
 import java.util.Properties
 import java.util.concurrent.CompletableFuture
 import scala.jdk.javaapi.FutureConverters
-
+import com.libertexgroup.utils.AvroUtils.implicits._
 
 object SimpleKafkaProducer {
   val topic = "test_topic"
@@ -53,7 +53,6 @@ object SimpleKafkaProducer {
       props.put("bootstrap.servers",kafkaConfig.kafkaBrokers.mkString(","))
       props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
       props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
-      import AvroUtils.implicits._
       val bytes: Array[Byte] = value.encode().orNull
       val producer = new KafkaProducer[String, Array[Byte]](props)
 

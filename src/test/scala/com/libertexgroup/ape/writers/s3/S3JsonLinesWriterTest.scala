@@ -31,5 +31,5 @@ object S3JsonLinesWriterTest  extends ZIOSpec[S3 with MinioContainer with S3Conf
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.writers.s3[S3Config].jsonLines[Any, dummy].write(sampleData))
+      setup(Ape.pipes.s3[S3Config].jsonLines[Any, dummy].write(sampleData))
 }
