@@ -18,7 +18,7 @@ object StringReaderTest extends ZIOSpec[RedisContainer with RedisConfig]{
         for {
           msgs <- (
             Ape.readers.redis[RedisConfig].string("someQueue") -->
-              Ape.pipes.misc.consoleString[Any, Any]
+              Ape.pipes.misc.console.ofString
             ).take(stringData.length).runCollect
         } yield {
           assertTrue(msgs.toList.sorted equals stringData.toList.sorted)

@@ -28,7 +28,7 @@ object StreamOffloadingTest extends ZIOApp {
   )
 
   val pipeWithBackPressure =
-    Reader.UnitReader(stream1) --> (writer1 --> Ape.pipes.misc.backPressureInfinite[Any, Int] --> writer2)
+    Reader.UnitReader(stream1) --> (writer1 --> Ape.pipes.misc.backPressure.infinite[Int] --> writer2)
   val pipe =
     Reader.UnitReader(stream1) --> (writer1 --> writer2)
 

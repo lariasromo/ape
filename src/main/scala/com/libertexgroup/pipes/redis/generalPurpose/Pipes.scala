@@ -7,11 +7,10 @@ import zio.Tag
 
 import scala.reflect.ClassTag
 
-class Pipes[Config <: RedisConfig : Tag] {
-  // general purpose
-  def avro[ZE, T: ClassTag : Tag : SchemaFor : Encoder](queueName: String): Pipe[Config, ZE, T, T] = new AvroPipe[ZE, Config, T](queueName)
+class Pipes[ZE, Config <: RedisConfig : Tag] {
+  // will try to encode case classes into bytes using avro so it can be easily decoded when read
+  def typed[T: ClassTag : Tag : SchemaFor : Encoder](queueName: String): Pipe[Config, ZE, T, T] =
+    new AvroPipe[ZE, Config, T](queueName)
 
-  def default[ZE, T: ClassTag : Tag : SchemaFor : Encoder](queueName: String): Pipe[Config, ZE, T, T] = avro[ZE, T](queueName)
-
-  def string[ZE](queueName: String): Pipe[Config, ZE, String, String] = new StringPipe[ZE, Config](queueName)
+  def string(queueName: String): Pipe[Config, ZE, String, String] = new StringPipe[ZE, Config](queueName)
 }

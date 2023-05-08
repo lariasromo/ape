@@ -7,11 +7,12 @@ import zio.Tag
 
 import scala.reflect.ClassTag
 
-class Readers[Config <: RedisConfig :Tag] {
-  def avro[ZE, T :ClassTag :SchemaFor : Decoder : Encoder](queueName:String, limit:Int= -1):
-    Reader[Config, ZE, T] = new AvroReader[ZE, T, Config](queueName, limit)
-  def default[ZE, T>:Null: ClassTag :SchemaFor : Decoder : Encoder](queueName:String, limit:Int= -1):
-    Reader[Config, ZE, T] = avro(queueName, limit)
-  def string[ZE](queueName:String, limit:Int= -1): Reader[Config, ZE, String] =
-    new StringReader[ZE, Config](queueName, limit)
+
+class Readers[Config <: RedisConfig :Tag] extends RedisReaders[Config]{
+  def avro[T :ClassTag :SchemaFor : Decoder : Encoder](queueName:String, limit:Int= -1):
+    Reader[Config, Any, T] = new AvroReader[Any, T, Config](queueName, limit)
+  def default[T>:Null: ClassTag :SchemaFor : Decoder : Encoder](queueName:String, limit:Int= -1):
+    Reader[Config, Any, T] = avro(queueName, limit)
+  def string(queueName:String, limit:Int= -1): Reader[Config, Any, String] =
+    new StringReader[Any, Config](queueName, limit)
 }

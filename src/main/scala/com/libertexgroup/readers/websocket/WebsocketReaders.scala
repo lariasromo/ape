@@ -5,8 +5,6 @@ import com.libertexgroup.models.websocket.Message
 import sttp.ws.WebSocket
 import zio.Task
 
-
-// Readers
-protected [readers] class Readers() extends WebsocketReaders {
-  def default(ws: WebSocket[Task]): Reader[Any, Any, Message] = new DefaultReader[Any](ws)
+trait WebsocketReaders {
+  def default(ws: WebSocket[Task]): Reader[Any, Any, Message]
 }

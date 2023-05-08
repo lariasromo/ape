@@ -11,7 +11,7 @@ import zio.{Scope, ZLayer}
 
 object CassandraWriterTest  extends ZIOSpec[CassandraConfig with CassandraContainer] {
   val writer = Ape.pipes.cassandra[CassandraConfig].default[Any, dummy]
-  val reader = Ape.readers.cassandra[CassandraConfig].default[Any, dummy]("select * from dummy")
+  val reader = Ape.readers.cassandra[CassandraConfig].default[dummy]("select * from dummy")
 
   override def spec: Spec[CassandraConfig with CassandraContainer with TestEnvironment with Scope, Any] =
     suite("CassandraWriterTest")(

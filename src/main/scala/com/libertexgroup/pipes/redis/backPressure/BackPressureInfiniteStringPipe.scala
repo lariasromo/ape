@@ -10,21 +10,21 @@ import zio.{Tag, ZIO}
 
 // Use with caution as this writer will produce an infinite stream, even if your input stream is finite.
 // If working with a finite stream use BackPressureFiniteWriter
-class BackPressureInfiniteStringPipe[ZE, Config<:RedisConfig :Tag]
-  extends Pipe[ZE with Config, ZE, String, String] {
-  def readWithBackPressureRedis(stream: ZStream[ZE, Throwable, String]): ZIO[ZE with Config, Throwable, ZStream[ZE, Throwable, String]] =
+class BackPressureInfiniteStringPipe[E, ZE, Config<:RedisConfig :Tag]
+  extends Pipe[E with ZE with Config, ZE, String, String] {
+  def readWithBackPressureRedis(stream: ZStream[ZE, Throwable, String]): ZIO[E with ZE with Config, Throwable, ZStream[ZE, Throwable, String]] =
     for {
       rand <- ZIO.random
       queueName <- rand.nextString(10)
       _ <- printLine(s"Reading stream with back pressure (using Redis queue ${queueName})")
       _ <- {
         val r: Reader[Any, ZE, String] = Reader.UnitReader[Any, ZE, String](stream)
-        val w: Pipe[Config, ZE, String, String] = Ape.pipes.redis[Config].generalPurpose.default[ZE, String](queueName)
+        val w: Pipe[Config, ZE, String, String] = Ape.pipes.redis[Config].generalPurpose[ZE].string(queueName)
         r --> w
       }.runDrain.fork
-      s <- Ape.readers.redis[Config].avro[Any, String](queueName).apply
+      s <- Ape.readers.redis[Config].avro[String](queueName).apply
     } yield s
 
-  override protected[this] def pipe(i: ZStream[ZE, Throwable, String]): ZIO[ZE with Config, Throwable, ZStream[ZE, Throwable, String]] =
-    readWithBackPressureRedis(i)
+  override protected[this] def pipe(i: ZStream[ZE, Throwable, String]):
+    ZIO[E with ZE with Config, Throwable, ZStream[ZE, Throwable, String]] = readWithBackPressureRedis(i)
 }
