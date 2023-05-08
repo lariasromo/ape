@@ -7,8 +7,9 @@ import zio.Tag
 import java.sql.ResultSet
 import scala.reflect.ClassTag
 
+
 // Readers
-protected [readers] class Readers[Config <: JDBCConfig :Tag]() {
-  def default[ET, T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[Config, ET, T] =
-    new DefaultReader[ET, T, Config](sql)
+protected [readers] class Readers[Config <: JDBCConfig :Tag]() extends JDBCReaders[Config] {
+  def default[ZE, T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[Config, ZE, T] =
+    new DefaultReader[ZE, T, Config](sql)
 }

@@ -30,5 +30,5 @@ object S3BytesWriterTest extends ZIOSpec[S3 with MinioContainer with S3ConfigTes
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3ConfigTest] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.pipes.s3[S3ConfigTest].avro[Any, dummy].write(sampleData))
+      setup(Ape.pipes.s3[S3ConfigTest].encoded.avro[dummy].write(sampleData))
 }

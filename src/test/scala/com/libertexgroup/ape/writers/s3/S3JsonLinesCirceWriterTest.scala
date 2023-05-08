@@ -31,5 +31,5 @@ object S3JsonLinesCirceWriterTest extends ZIOSpec[S3 with MinioContainer with S3
 
   override def bootstrap: ZLayer[Any, Any, S3 with MinioContainer with S3Config] =
     MinioContainerService.s3Layer >+> MinioContainerService.configLayer(CompressionType.NONE, Some(location)) >+>
-      setup(Ape.pipes.s3[S3Config].jsonLinesCirce[Any, dummy].write(sampleData))
+      setup(Ape.pipes.s3[S3Config].jsonLines.circe[dummy].write(sampleData))
 }

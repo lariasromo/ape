@@ -12,21 +12,21 @@ import scala.util.Random
 
 // Use with caution as this writer will consume stream first then produce a new stream
 // So the first stream needs to be finite, if reading from an infinite stream, use BackPressureInfiniteWriter
-class BackPressureStringFinitePipe[ZE, Config<:RedisConfig :Tag]
-  extends Pipe[ZE with Config, ZE, String, String] {
+class BackPressureStringFinitePipe[E, ZE, Config<:RedisConfig :Tag]
+  extends Pipe[E with ZE with Config, ZE, String, String] {
   def readWithBackPressureRedis(stream: ZStream[ZE, Throwable, String]):
-    ZIO[ZE with Config, Throwable, ZStream[ZE, Throwable, String]] =
+    ZIO[E with ZE with Config, Throwable, ZStream[ZE, Throwable, String]] =
     for {
       queueName <- ZIO.succeed(Random.alphanumeric.filter(_.isLetter).take(10).mkString)
       _ <- printLine(s"Reading stream with back pressure (using Redis queue ${queueName})")
       count <- {
         val r: Reader[Any, ZE, String] = Reader.UnitReader[Any, ZE, String](stream)
-        val w: Pipe[Config, ZE, String, String] = Ape.pipes.redis[Config].generalPurpose.string[ZE](queueName)
+        val w: Pipe[Config, ZE, String, String] = Ape.pipes.redis[Config].generalPurpose[ZE].string(queueName)
         r --> w
       }.runCount
-      s <- Ape.readers.redis[Config].string[Any](queueName, count.toInt).apply
+      s <- Ape.readers.redis[Config].string(queueName, count.toInt).apply
     } yield s
 
   override protected[this] def pipe(i: ZStream[ZE, Throwable, String]):
-    ZIO[ZE with Config, Throwable, ZStream[ZE, Throwable, String]] = readWithBackPressureRedis(i)
+    ZIO[E with ZE with Config, Throwable, ZStream[ZE, Throwable, String]] = readWithBackPressureRedis(i)
 }

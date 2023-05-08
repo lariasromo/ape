@@ -13,7 +13,7 @@ import zio.{Scope, ZLayer}
 object PipelineTest extends ZIOSpec[KafkaContainer with KafkaConfig with MultiClickhouseConfig with ClickHouseContainer] {
   val pp: ZStream[KafkaConfig with MultiClickhouseConfig with Scope, Throwable, dummy] =
     Ape.readers.kafka[KafkaConfig].default.**[dummy] --> (
-      Ape.pipes.misc.console[Any, Any, dummy] <*
+      Ape.pipes.misc.console.of[dummy] <*
         Ape.pipes.clickhouse[MultiClickhouseConfig].default[Any, dummy]
     )
 

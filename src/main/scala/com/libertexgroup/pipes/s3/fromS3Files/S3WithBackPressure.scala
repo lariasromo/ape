@@ -17,14 +17,14 @@ object S3WithBackPressure {
     def backPressure[E, ZE, T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag]:
       S3FileWithContent[T] => (S3ObjectSummary, ZStream[ZE with E with Config, Throwable, T]) = {
         case (f, s) => (f, {
-          Reader.UnitReader[E, ZE, T](s) --> Ape.pipes.redis[Config].backPressure.finite[ZE, T]
+          Reader.UnitReader[E, ZE, T](s) --> Ape.pipes.redis[Config].backPressure.finite[E, ZE].typed[T]
         })
     }
     def backPressureZ[T:SchemaFor :Encoder :Decoder :ClassTag :Tag](s: S3FileWithContent[T]):
       ZIO[Config, Nothing, S3FileWithContent[T]] =
       for {
         rcL <- reLayer[Config]
-        pipe = Reader.UnitReader[Any, Any, T](s._2) --> Ape.pipes.redis[Config].backPressure.finite[Any, T]
+        pipe = Reader.UnitReader[Any, Any, T](s._2) --> Ape.pipes.redis[Config].backPressure.finite.typed[T]
       } yield (s._1, pipe.provideSomeLayer(rcL))
   }
   def redis[RC <: RedisConfig :Tag] = new Redis[RC]
@@ -32,7 +32,7 @@ object S3WithBackPressure {
   class ZIOBP[T :ClassTag]{
     def backPressure[E, ZE]: S3FileWithContent[T] => (S3ObjectSummary, ZStream[ZE with E, Throwable, T]) = {
       case (f, s) => (f, {
-        Reader.UnitReader[E, ZE, T](s) --> Ape.pipes.misc.backPressureFinite[ZE, T]
+        Reader.UnitReader[E, ZE, T](s) --> Ape.pipes.misc.backPressure[ZE].finite[T]
       })
     }
   }

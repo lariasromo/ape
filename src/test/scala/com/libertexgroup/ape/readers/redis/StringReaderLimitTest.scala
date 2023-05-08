@@ -19,7 +19,7 @@ object StringReaderLimitTest extends ZIOSpec[RedisContainer with RedisConfig]{
         for {
           msgs <- (
             Ape.readers.redis[RedisConfig].string("someQueue", stringData.length) -->
-              Ape.pipes.misc.consoleString[Any, Any]
+              Ape.pipes.misc.console.ofString
             ).runCollect
         } yield {
           assertTrue(msgs.toList.sorted equals stringData.toList.sorted)

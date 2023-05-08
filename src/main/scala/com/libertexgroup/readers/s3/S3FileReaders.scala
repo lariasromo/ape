@@ -28,7 +28,7 @@ class S3FileReaders[Config <: S3Config :Tag] {
           queue <- Queue.unbounded[S3ObjectSummary]
           _ <- {
             Ape.readers.s3[Config].fileReaderContinuous(locationPattern) -->
-              Ape.pipes.misc.queue[Config, Any, S3ObjectSummary](queue)
+              Ape.pipes.misc.queue[Config, Any].of[S3ObjectSummary](queue)
           }.runDrain.ensuring( for {
             _ <- printLine("Shutting down queue").catchAll(_=>ZIO.unit)
             _ <- queue.shutdown
