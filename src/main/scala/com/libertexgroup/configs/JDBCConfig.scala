@@ -16,9 +16,9 @@ case class JDBCConfig(
                        )
 
 object JDBCConfig {
-  def live(prefix:Option[String]=None): ZLayer[System, SecurityException, JDBCConfig] = ZLayer(make(prefix))
+  def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, JDBCConfig] = ZLayer.fromZIO(make(prefix))
 
-  def make(prefix:Option[String]=None): ZIO[System, SecurityException, JDBCConfig] = for {
+  def make(prefix:Option[String]=None): ZIO[Any, SecurityException, JDBCConfig] = for {
     syncDuration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_SYNC_DURATION", "5")
     batchSize <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_BATCH_SIZE", "10000")
     driverName <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "JDBC_DRIVER_NAME", "")

@@ -10,10 +10,10 @@ import scala.reflect.ClassTag
 
 class Pipes[ SConfig <: S3Config :Tag ](reader: S3FileReader[SConfig]) {
 
-  def avro[T:SchemaFor :Encoder :Decoder :ClassTag :Tag]: Reader[Any, SConfig, S3FileWithContent[T]] =
+  def avro[T :SchemaFor :Encoder :Decoder :ClassTag :Tag]: Reader[Any, SConfig, S3FileWithContent[T]] =
     Reader.UnitReader(reader --> new AvroPipe[T, SConfig])
 
-  def jsonLines[T  :SchemaFor :Encoder :Decoder :ClassTag :Tag]
+  def jsonLines[T :SchemaFor :Encoder :Decoder :ClassTag :Tag]
     (implicit decode: String => T): Reader[Any, SConfig, S3FileWithContent[T]] =
     Reader.UnitReader(reader --> new JsonLinesPipe[T, SConfig])
 

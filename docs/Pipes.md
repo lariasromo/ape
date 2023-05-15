@@ -1,4 +1,4 @@
-[Writers](src/main/scala/com/libertexgroup/ape/writers)
+[Pipes](src/main/scala/com/libertexgroup/pipes)
 ------
 
 A writer has a main method `apply` that uses a stream of type `InputType` and stores this stream effect-fully with an environment of type `EnvType` and able to fail with a `Throwable` side effect
