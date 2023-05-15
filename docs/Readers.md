@@ -1,4 +1,4 @@
-[Readers](src/main/scala/com/libertexgroup/ape/readers)
+[Readers](src/main/scala/com/libertexgroup/readers)
 ------
 A `Reader` is a component that will start a stream of data using the `ZStream` interface.
 
@@ -9,7 +9,7 @@ Particular implementations could be `AnodotKafkaReader` or `FxbankReader` if spe
 otherwise just direct to the `KafkaDefaultReader` which produces a generic `GenericRecord`. See below...
 
 ```scala
-
+import com.libertexgroup.ape.reader.Reader
 //Example of a reader that reads from Kafka
 trait KafkaReader extends Reader
 

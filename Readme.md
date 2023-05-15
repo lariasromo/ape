@@ -64,5 +64,5 @@ More resources
  - ### [List of readers and writers](docs/ReadersWritetsList.md)
  - ### [Examples of pipelines](docs/examples/Example1.md)
  - ### [Description and usage of Readers](docs/Readers.md)
- - ### [Description and usage of Writers](docs/Writers.md)
+ - ### [Description and usage of Writers](docs/Pipes.md)
  - ### [Description and usage of Config](docs/Configs.md)

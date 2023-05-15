@@ -2,15 +2,6 @@
 
 We can keep reusable configuration case classes associated to a source or target e.g. `JDBCConfig`, `S3Config`, `ClickhouseConfig` etc.
 
-We also keep have a [common config](src/main/scala/com/libertexgroup/configs/ProgramConfig.scala) (`ProgramConfig`) class for the whole pipeline that contains information about which reader or writer should be use.
-```scala
-case class ProgramConfig(
-                             reader: String,
-                             transformer: String,
-                             streamConfig: Option[StreamConfig],
-                             writer: String
-                           )
-```
 
 Example of a config to connect to a source or target (kafka)
 ```scala
@@ -24,13 +15,47 @@ case class KafkaConfig(
 ```
 This project also includes `live` methods that creates an instance of these config classes using environment variables as sources.
 
-***It is important that when we create layers with config classes we use default values since the environment can keep growing
+**Same config type for two different sources/targets**
 
-### Real life example
-[PipelineExample](src/main/scala/com/libertexgroup/PipelineExample.scala)
+In some cases we will need to read and write from different location using the same config type e.g. reading from a kafka broker and writing records to a different broker.
+Although when we build our pipeline we will have a `ZStream` with two instances of the same config type.
+
 ```scala
-  def main: ZIO[Clock with Blocking with system.System with Console, Throwable, Unit] = for {
-    kLayer <- KafkaConfig.kafkaConsumer.provideLayer(layer)
-    _ <- DefaultPipeline.run.provideLayer(layer ++ kLayer ++ ProgramConfig.fromJsonString(configJson))
-  } yield ()
+class Kafka1(
+              topicName: String,
+              kafkaBrokers: List[String],
+              consumerGroup: String,
+              flushSeconds: Duration,
+              batchSize: Int
+) extends KafkaConfig(
+  topicName, 
+  kafkaBrokers, 
+  consumerGroup, 
+  flushSeconds, 
+  batchSize
+)
+```
+```scala
+class Kafka2(
+              topicName: String,
+              kafkaBrokers: List[String],
+              consumerGroup: String,
+              flushSeconds: Duration,
+              batchSize: Int
+) extends KafkaConfig(
+  topicName, 
+  kafkaBrokers, 
+  consumerGroup, 
+  flushSeconds, 
+  batchSize
+)
+```
+
+## Example
+Read and write to kafka using the same config type with different values each.
+```scala
+import com.libertexgroup.ape.Ape
+
+Ape.readers.kafka[Kafka1].string --> 
+  Ape.pipes.kafka[Kafka2].string
 ```

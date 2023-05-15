@@ -18,33 +18,4 @@ This example consists on a pipeline that will;
 3. Apply a simple filter (status=SUCCEEDED or SUCCESS)
 4. Write the filtered record to Cassandra and PostgreSQL
 
-```scala
-import com.libertexgroup.ape.reader.Reader
-import com.libertexgroup.ape.Ape
-import com.libertexgroup.ape.pipe.Pipe
-import com.libertexgroup.configs.{CassandraConfig, JDBCConfig, KafkaConfig}
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import zio.{ZIO, ZIOAppDefault, ZLayer}
-import zio.kafka.consumer.Consumer
-import zio.stream.ZStream
-
-object Main extends ZIOAppDefault {
-
-  case class Transaction(status: String, transactionType: String, clientId: String)
-
-  val pipe = Ape.readers.kafka[KafkaConfig].avro[Transaction]
-    .mapZ(s => s
-      .map(_.value()) // Getting the value of the ConsumerRecord
-      .filter(_.isDefined) //filtering broken avro records
-      .map(_.orNull) // safely getting the options after the above filtering
-      .filter(r => Seq("SUCCESS", "SUCCEEDED").contains(r.status)) // filtering specific status values)
-    ) --> (Ape.pipes.cassandra[CassandraConfig].default ++ Ape.pipes.jdbc[JDBCConfig].default)
-
-  val layer: ZLayer[Any with System, Throwable, KafkaConfig with Consumer with CassandraConfig with JDBCConfig] =
-    (KafkaConfig.live() >+> KafkaConfig.liveConsumer) ++ CassandraConfig.live() ++ JDBCConfig.live()
-
-  override def run = (for {
-    _ <- pipe.runDrain
-  } yield ()).provideLayer(layer)
-}
-```
+See the example code on this file [Example 1](/src/main/scala/examples/pipes/Example1.scala)
