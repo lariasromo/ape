@@ -2,9 +2,7 @@ package com.libertexgroup.readers.kafka
 
 import com.libertexgroup.ape.reader.Reader
 import com.libertexgroup.configs._
-import com.libertexgroup.readers.jdbc.Readers
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
-import io.circe
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import zio.Tag
 

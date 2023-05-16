@@ -1,10 +1,10 @@
-package com.libertexgroup.ape.writers.jdbc
+package com.libertexgroup.ape.pipes.jdbc
 
 import com.dimafeng.testcontainers.PostgreSQLContainer
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.utils.PostgresContainerService
-import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
+import com.libertexgroup.ape.pipes.{sampleData, sampleRecords}
 import com.libertexgroup.configs.JDBCConfig
 import com.libertexgroup.utils.GenericJDBCUtils
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}

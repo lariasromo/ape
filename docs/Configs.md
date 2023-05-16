@@ -1,4 +1,6 @@
 # [Configs](src/main/scala/com/libertexgroup/configs)
+ 
+ - [Config List](ConfigList.md) 
 
 We can keep reusable configuration case classes associated to a source or target e.g. `JDBCConfig`, `S3Config`, `ClickhouseConfig` etc.
 

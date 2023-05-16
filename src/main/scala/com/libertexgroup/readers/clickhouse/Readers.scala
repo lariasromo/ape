@@ -7,7 +7,7 @@ import java.sql.ResultSet
 import scala.reflect.ClassTag
 
 class Readers[Config <: MultiClickhouseConfig] extends ClickhouseReaders[Config] {
-  def default[ZE, T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[Config, ZE, T] =
-    new DefaultReader[ZE, T, Config](sql)
+  def default[T: ClassTag](sql: String)(implicit r2o: ResultSet => T): Reader[Config, Any, T] =
+    new DefaultReader[Any, T, Config](sql)
 }
 

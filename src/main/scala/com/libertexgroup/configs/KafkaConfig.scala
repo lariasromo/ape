@@ -15,8 +15,8 @@ case class KafkaConfig(
                         clientId: String,
                         flushSeconds: Duration,
                         batchSize: Int,
-                        autoOffsetStrategy: AutoOffsetStrategy,
-                        additionalProperties: Map[String, String]
+                        autoOffsetStrategy: AutoOffsetStrategy=AutoOffsetStrategy.Latest,
+                        additionalProperties: Map[String, String]=Map.empty
   ){
   val producerSettings: ProducerSettings = ProducerSettings(kafkaBrokers)
         .withClientId(consumerGroup)

@@ -33,7 +33,7 @@ object CassandraUtils {
   def layer[Config <: CassandraConfig]: ZLayer[Config, SessionOpenException, ZCqlSession] =
     ZLayer.scoped(sessionFromCqlSession)
 
-  def query2Chunk[EZ, Config <: CassandraConfig, T <: CassandraModel](sql:String)(implicit row2Object: Row => T):
+  def query2Chunk[Config <: CassandraConfig, T](sql:String)(implicit row2Object: Row => T):
     ZIO[Config, CassandraException, ZStream[Any, Nothing, T]]
   = ZIO.scoped[Config] {
       for {

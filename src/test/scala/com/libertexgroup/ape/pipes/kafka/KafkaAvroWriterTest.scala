@@ -1,4 +1,4 @@
-package com.libertexgroup.ape.writers.kafka
+package com.libertexgroup.ape.pipes.kafka
 
 import com.dimafeng.testcontainers.KafkaContainer
 import com.libertexgroup.ape.Ape

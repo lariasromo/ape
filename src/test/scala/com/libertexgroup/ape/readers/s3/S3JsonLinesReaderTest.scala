@@ -5,7 +5,7 @@ import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.readers.s3.S3JsonLinesCirceReaderTest.location
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
-import com.libertexgroup.ape.writers.sampleRecords
+import com.libertexgroup.ape.pipes.sampleRecords
 import com.libertexgroup.configs.S3Config
 import com.libertexgroup.models.s3.CompressionType
 import zio.s3.S3

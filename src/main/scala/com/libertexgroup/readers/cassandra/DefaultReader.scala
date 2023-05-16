@@ -9,7 +9,7 @@ import zio.stream.ZStream
 
 import scala.reflect.ClassTag
 
-protected[cassandra] class DefaultReader[EZ, T <:CassandraModel :ClassTag , Config <: CassandraConfig]
+protected[cassandra] class DefaultReader[EZ, T :ClassTag , Config <: CassandraConfig]
   (sql:String)(implicit t: Row => T) extends CassandraReader[Config, EZ, T] {
   override protected[this] def read: ZIO[Config, Throwable, ZStream[EZ, Throwable, T]] = query2Chunk(sql)
 }

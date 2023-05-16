@@ -4,7 +4,7 @@ import com.libertexgroup.ape.models.dummy
 import zio.Chunk
 import zio.stream.ZStream
 
-package object writers {
+package object pipes {
   val sampleRecords: Chunk[dummy] = Chunk(
     dummy("value1", "value2"),
     dummy("value3", "value4"),
