@@ -6,7 +6,7 @@ import zio.http.{Client, Request}
 
 // Readers
 protected [readers] class Readers() extends RestReaders {
-  def byte[E](request: Request): Reader[Client,E,Byte] = new RestAPIReaderByte[E](request)
+  def byte(request: Request): Reader[Client,Any,Byte] = new RestAPIReaderByte(request)
 
-  def string[E](request: Request): Reader[Client,E,String] = new RestAPIReaderString[E](request)
+  def string(request: Request): Reader[Client,Any,String] = new RestAPIReaderString(request)
 }

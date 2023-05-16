@@ -1,11 +1,11 @@
-package com.libertexgroup.ape.writers.s3
+package com.libertexgroup.ape.pipes.s3
 
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.{S3ConfigTest, dummy}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService
 import com.libertexgroup.ape.utils.MinioContainerService.setup
-import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
+import com.libertexgroup.ape.pipes.{sampleData, sampleRecords}
 import com.libertexgroup.models.s3.CompressionType
 import zio.s3.S3
 import zio.stream.ZStream

@@ -4,6 +4,7 @@ import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.Ape.Transition
 import com.libertexgroup.ape.pipe.Pipe
 import com.libertexgroup.metrics.ApeMetrics._
+import com.libertexgroup.utils.Utils.:=
 import zio.ZIO
 import zio.stream.ZStream
 
@@ -77,17 +78,20 @@ object Reader {
   def TTReader[E, ZE, T0: ClassTag, T1: ClassTag](
                   input: Reader[E, ZE, T0],
                   transform:T0=>T1, n:String="TTReader"
-                ) = new TTReader[E, ZE, T0, T1](input, transform, n)
+                )(implicit d: E := Any, d1: ZE := Any): Reader[E, ZE, T1] =
+    new TTReader[E, ZE, T0, T1](input, transform, n)
 
   def ZTReader[E, ZE, T0: ClassTag, T1: ClassTag](
                  input: Reader[E, ZE, T0],
                  transform:ZStream[ZE, Throwable, T0] => ZStream[ZE, Throwable, T1],
                  n:String="ZTReader"
-               ) = new ZTReader[E, ZE, T0, T1](input, transform, n)
+               )(implicit d: E := Any, d1: ZE := Any): Reader[E, ZE, T1] =
+    new ZTReader[E, ZE, T0, T1](input, transform, n)
 
   def UnitReader[E, ZE, T: ClassTag](
                   stream: ZStream[ZE, Throwable, T],
                   n:String = "UnitReader"
-                ) = new UnitReader[E, ZE, T](stream, n)
+                )(implicit d: E := Any, d1: ZE := Any): Reader[E, ZE, T] =
+    new UnitReader[E, ZE, T](stream, n)
 }
 

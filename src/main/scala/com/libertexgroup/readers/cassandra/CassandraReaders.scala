@@ -8,5 +8,5 @@ import com.libertexgroup.models.cassandra.CassandraModel
 import scala.reflect.ClassTag
 
 trait CassandraReaders[Config <: CassandraConfig]{
-  def default[T <:CassandraModel :ClassTag](sql: String)(implicit t: Row => T): Reader[Config, Any, T]
+  def default[T :ClassTag](sql: String)(implicit t: Row => T): Reader[Config, Any, T]
 }

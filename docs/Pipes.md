@@ -1,21 +1,45 @@
-[Pipes](src/main/scala/com/libertexgroup/pipes)
+Pipes
 ------
+- [List of Pipes](PipeList.md)
+- [Pipe operations](PipeOps.md)
+## Description
 
-A writer has a main method `apply` that uses a stream of type `InputType` and stores this stream effect-fully with an environment of type `EnvType` and able to fail with a `Throwable` side effect
+The class Pipe is an abstraction of an entity that will convert a stream of elements `T0` execute and action and give 
+back a new type `T1`
 
-A good practice (like we do with readers) we keep a common trait for writers to the same target e.g. `ClickhouseWriter`, `S3Writer`, `KafkaWriter`, etc.
-In most cases the same config we use for reading from a source can be reused to write to a target.
 
-Example...
+```text
+
+
+   ┌────────────────┐        ┌─────────────────┐      ┌─────────────────┐
+   │                │        │                 │      │                 │
+   │                │        │                 │      │                 │
+   │     Reader     │   T0   │     Pipe 1      │ T1   │     Pipe 2      │ T2
+   │                ├────────►                 ├──────►                 ├─────────►
+   │                │        │                 │      │                 │
+   │                │        │                 │      │                 │
+   └────────────────┘        └─────────────────┘      └─────────────────┘
+
+
+```
+
+To create a new `Pipe` the class should implement a method `pipe` 
+```scala
+protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
+```
+This method will take a stream of `T0` and effectfully create a new stream of `T`
+
+### Example
 
 ```scala
+import com.libertexgroup.ape.pipe.Pipe
+import zio.ZIO
+import zio.stream.ZStream
 
-trait S3Writer[T] extends Writer[T]
+import scala.reflect.ClassTag
 
-class DefaultWriter[E] extends S3Writer[E] {
-   override type EnvType = s3.S3 with E with Has[S3Config]
-   override type InputType = Array[Byte]
-
-   override def apply(stream: ZStream[E, Throwable, InputType]): ZIO[EnvType, Throwable, Unit] = ???
+class ExamplePipe[E, ET, T: ClassTag] extends Pipe[E, ET, T, T] {
+  override protected[this] def pipe(i: ZStream[ET, Throwable, T]): ZIO[E, Throwable, ZStream[ET, Throwable, T]] =
+    ZIO.succeed(i.tap(r => zio.Console.printLine(r.toString)))
 }
 ```

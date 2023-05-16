@@ -1,26 +1,28 @@
-package com.libertexgroup.ape.writers.s3
+package com.libertexgroup.ape.pipes.s3
 
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.{S3ConfigTest, dummy}
 import com.libertexgroup.ape.utils.MinioContainer.MinioContainer
 import com.libertexgroup.ape.utils.MinioContainerService.setup
 import com.libertexgroup.ape.utils.{MinioContainerService, RedisContainerService}
-import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
+import com.libertexgroup.ape.pipes.{sampleData, sampleRecords}
 import com.libertexgroup.configs.RedisConfig
 import com.libertexgroup.models.s3.CompressionType
+import com.libertexgroup.pipes.s3.fromS3Files.S3WithBackPressure
 import com.redis.testcontainers.RedisContainer
 import zio.s3.S3
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZLayer}
 
-object S3BytesWriterWithRedisBackPressureTest extends ZIOSpec[S3 with MinioContainer with S3ConfigTest with RedisContainer with RedisConfig] {
+object S3BytesWriterWithZIOBackPressureTest extends ZIOSpec[S3 with MinioContainer with S3ConfigTest with RedisContainer with RedisConfig] {
   val location = "bytes"
 
   val reader = Ape.readers.s3[S3ConfigTest]
     .fileReaderSimple(location)
-    .readFilesWithRedis[RedisConfig]
+    .readFiles
     .avro[dummy]
+    .map(S3WithBackPressure.zio[dummy].backPressure)
 
   override def spec: Spec[S3 with MinioContainer with S3ConfigTest with RedisContainer with RedisConfig with TestEnvironment with Scope, Any] =
     suite("S3BytesWriterTest")(

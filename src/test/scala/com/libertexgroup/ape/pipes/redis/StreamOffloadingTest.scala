@@ -1,4 +1,4 @@
-package com.libertexgroup.ape.writers.redis
+package com.libertexgroup.ape.pipes.redis
 
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.pipe.Pipe

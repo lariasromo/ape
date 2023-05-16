@@ -1,9 +1,9 @@
-package com.libertexgroup.ape.writers.clickhouse
+package com.libertexgroup.ape.pipes.clickhouse
 
 import com.libertexgroup.ape.Ape
 import com.libertexgroup.ape.models.dummy
 import com.libertexgroup.ape.utils.ClickhouseContainerService
-import com.libertexgroup.ape.writers.{sampleData, sampleRecords}
+import com.libertexgroup.ape.pipes.{sampleData, sampleRecords}
 import com.libertexgroup.configs.MultiClickhouseConfig
 import com.libertexgroup.utils.ClickhouseJDBCUtils.query2ChunkMulti
 import org.testcontainers.containers.ClickHouseContainer
