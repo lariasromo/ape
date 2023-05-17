@@ -71,9 +71,7 @@ class Kafka2(
 case class Message1(value:String)
 case class Message2(value:String)
 
-object Message2 {
-    implicit val schemaFor = SchemaFor[Message2]
-    
+object Message2 {    
    val fromKafka: ConsumerRecord[String, Option[Message1]] => Option[Message2] =
       consumerRecord => consumerRecord.value().map(msg => Message2(value = msg.value))
    
