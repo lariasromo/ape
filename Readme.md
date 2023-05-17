@@ -1,4 +1,4 @@
-# Alexandria Pipeline Engine
+# Alexandria Pipeline Engine (APE)
 
 The goal of this project is to generate a common approach when creating new data-consuming services.
 
@@ -31,73 +31,68 @@ following:
 
 1. Since our example reads and writes to different kafka topics, possibly different brokers. We need to define 2 
    different config classes.
-```scala
-import com.libertexgroup.configs.KafkaConfig
-import zio.Duration
-import zio.kafka.consumer.Consumer.AutoOffsetStrategy
-
-class Kafka1(
-        topicName: String,
-        kafkaBrokers: List[String],
-        consumerGroup: String,
-        clientId: String,
-        flushSeconds: Duration,
-        batchSize: Int
-) extends KafkaConfig(topicName,kafkaBrokers,consumerGroup,clientId,flushSeconds,batchSize)
-            
-class Kafka2(
-              topicName: String,
-              kafkaBrokers: List[String],
-              consumerGroup: String,
-              clientId: String,
-              flushSeconds: Duration,
-              batchSize: Int
-) extends KafkaConfig(topicName,kafkaBrokers,consumerGroup,clientId,flushSeconds,batchSize)
-```
 2. Define your input class A (this class can come from a schema registry or produced using an avro schema with some 
    online tool)
-```scala
-case class Message(value:String)
-```
-2. Define an output class B
-```scala
-case class Message2(value:String)
-```
-3. We add 2 helper functions `fromKafka` and `toKafka` which will read from the kafka interfaces `ConsumerRecord` 
+3. Define an output class B
+4. We add 2 helper functions `fromKafka` and `toKafka` which will read from the kafka interfaces `ConsumerRecord` 
    and `ProducerRecord` respectively, we add these to `Message2` companion object. We also use an implicit that will 
    help us decode/encode into Avro bytes.
+5. Define your reader and filters any broken record
+6. Define your writer
+7. Create your pipeline and run it using the `run` method
+
 ```scala
 import com.sksamuel.avro4s.SchemaFor
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerRecord
+import com.libertexgroup.configs.KafkaConfig
+import zio.{Duration, ZIO}
+import zio.kafka.consumer.Consumer.AutoOffsetStrategy
+import com.libertexgroup.ape.Ape
+import com.libertexgroup.ape.pipe.Pipe
+import com.libertexgroup.ape.reader.Reader
+
+class Kafka1(
+                    topicName: String,
+                    kafkaBrokers: List[String],
+                    consumerGroup: String,
+                    clientId: String
+            ) extends KafkaConfig(topicName,kafkaBrokers,consumerGroup,clientId)
+
+class Kafka2(
+                    topicName: String,
+                    kafkaBrokers: List[String],
+                    consumerGroup: String,
+                    clientId: String,
+                    flushSeconds: Duration,
+                    batchSize: Int
+            ) extends KafkaConfig(topicName,kafkaBrokers,consumerGroup,clientId,flushSeconds,batchSize)
+
+case class Message1(value:String)
+case class Message2(value:String)
 
 object Message2 {
     implicit val schemaFor = SchemaFor[Message2]
     
-   val fromKafka: ConsumerRecord[String, Option[Message]] => Option[Message2] =
+   val fromKafka: ConsumerRecord[String, Option[Message1]] => Option[Message2] =
       consumerRecord => consumerRecord.value().map(msg => Message2(value = msg.value))
    
     val toKafka: Message2 => ProducerRecord[String, Message2] = record => new ProducerRecord("", record)
 }
-```
-5. Define your reader and filters any broken record
-```scala
-import com.libertexgroup.ape.Ape
-import com.libertexgroup.configs.KafkaConfig
 
-val reader = Ape.readers.kafka[KafkaConfig].avro[Message]
+val reader: Reader[KafkaConfig, Any, Message2] = 
+   Ape.readers
+        .kafka[KafkaConfig]
+        .avro[Message1]
         .map(Message2.fromKafka)
         .mapZ(_.filter(_.isDefined).map(_.get))
-```
-4. Define your writer
-```scala
-import com.libertexgroup.ape.Ape
-import zio.kafka.consumer.Consumer
 
-val writer = Ape.pipes.kafka.avro.of[Message2]
+val writer: Pipe[Nothing, Any, Message2, ProducerRecord[String, Message2]] = 
+   Ape.pipes
+        .kafka
+        .avro.of[Message2]
         .contramap(Message2.toKafka)
-```
-4. Create your pipeline and run it using the `run` method
-```scala
-val main = (reader --> writer).runDrain
+
+val main: ZIO[Any with KafkaConfig with Nothing, Throwable, Unit] = 
+   (reader --> writer).runDrain
 ```

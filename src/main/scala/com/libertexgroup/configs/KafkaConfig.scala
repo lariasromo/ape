@@ -13,8 +13,8 @@ case class KafkaConfig(
                         kafkaBrokers: List[String],
                         consumerGroup: String,
                         clientId: String,
-                        flushSeconds: Duration,
-                        batchSize: Int,
+                        flushSeconds: Duration = 1.seconds,
+                        batchSize: Int = 1,
                         autoOffsetStrategy: AutoOffsetStrategy=AutoOffsetStrategy.Latest,
                         additionalProperties: Map[String, String]=Map.empty
   ){
