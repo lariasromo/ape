@@ -57,7 +57,7 @@ class Kafka1(
                     kafkaBrokers: List[String],
                     consumerGroup: String,
                     clientId: String
-            ) extends KafkaConfig(topicName,kafkaBrokers,consumerGroup,clientId)
+            ) extends KafkaConfig(topicName, kafkaBrokers, consumerGroup, clientId)
 
 class Kafka2(
                     topicName: String,
@@ -66,31 +66,49 @@ class Kafka2(
                     clientId: String,
                     flushSeconds: Duration,
                     batchSize: Int
-            ) extends KafkaConfig(topicName,kafkaBrokers,consumerGroup,clientId,flushSeconds,batchSize)
+            ) extends KafkaConfig(topicName, kafkaBrokers, consumerGroup, clientId, flushSeconds, batchSize)
 
-case class Message1(value:String)
-case class Message2(value:String)
+case class Message1(value: String)
+case class Message2(value: String)
 
-object Message2 {    
+object Message2 {
    val fromKafka: ConsumerRecord[String, Option[Message1]] => Option[Message2] =
       consumerRecord => consumerRecord.value().map(msg => Message2(value = msg.value))
-   
-    val toKafka: Message2 => ProducerRecord[String, Message2] = record => new ProducerRecord("", record)
+
+   val toKafka: Message2 => ProducerRecord[String, Message2] = record => new ProducerRecord("", record)
 }
 
-val reader: Reader[KafkaConfig, Any, Message2] = 
+val reader: Reader[KafkaConfig, Any, Message2] =
    Ape.readers
-        .kafka[KafkaConfig]
-        .avro[Message1]
-        .map(Message2.fromKafka)
-        .mapZ(_.filter(_.isDefined).map(_.get))
+           .kafka[KafkaConfig]
+           .avro[Message1]
+           .map(Message2.fromKafka)
+           .mapZ(_.filter(_.isDefined).map(_.get))
 
-val writer: Pipe[Nothing, Any, Message2, ProducerRecord[String, Message2]] = 
+val writer: Pipe[Nothing, Any, Message2, ProducerRecord[String, Message2]] =
    Ape.pipes
-        .kafka
-        .avro.of[Message2]
-        .contramap(Message2.toKafka)
+           .kafka
+           .avro.of[Message2]
+           .contramap(Message2.toKafka)
 
-val main: ZIO[Any with KafkaConfig with Nothing, Throwable, Unit] = 
+val main: ZIO[Any with KafkaConfig with Nothing, Throwable, Unit] =
    (reader --> writer).runDrain
+   
+// or 
+
+val readerType2: Reader[KafkaConfig, Any, ProducerRecord[String, Message2]] =
+   Ape.readers
+           .kafka[KafkaConfig]
+           .avro[Message1]
+           .map(Message2.fromKafka)
+           .mapZ(_.filter(_.isDefined).map(_.get))
+           .map(Message2.toKafka)
+
+val writerType2: Pipe[Nothing, Any, ProducerRecord[String, Message2], ProducerRecord[String, Message2]] =
+   Ape.pipes
+           .kafka
+           .avro.of[Message2]
+   
+val mainType2: ZIO[Any with KafkaConfig with Nothing, Throwable, Unit] =
+   (readerType2 --> writerType2).runDrain
 ```
