@@ -1,4 +1,4 @@
-# Alexandria Pipeline Engine (APE)
+# APE Pipeline Engine
 
 The goal of this project is to generate a common approach when creating new data-consuming services.
 
