@@ -1,80 +1,94 @@
-ThisBuild / version := "2.6.2"
+import Dependencies._
+
+ThisBuild / version := "3.0.0"
 ThisBuild / scalaVersion := "2.13.10"
 
-lazy val root = (project in file("."))
-  .settings(
-    name := "pipelineEngine"
+lazy val cassandra = (project in file("connectors/cassandra"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries ++ cassandraLibraries)
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core, misc)
+
+lazy val clickhouse = (project in file("connectors/clickhouse"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries ++ clickhouseLibraries
   )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
 
-val zioVersion = "2.0.10"
-val circeVersion = "0.14.3"
+lazy val jdbc = (project in file("connectors/jdbc"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
 
-val commonsLibrary = Seq(
-  "com.fxclub.commons" %% "http-trace" % "3.0.0"
+lazy val kafka = (project in file("connectors/kafka"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries ++ kafkaLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
+
+lazy val misc = (project in file("connectors/misc"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
+
+lazy val redis = (project in file("connectors/redis"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries ++ redisLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core, misc)
+
+lazy val rest = (project in file("connectors/rest"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries ++ httpLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
+
+lazy val s3 = (project in file("connectors/s3"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries ++ awsLibraries ++ s3Libraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core, redis, misc)
+
+lazy val websocket = (project in file("connectors/websocket"))
+  .settings(commonSettings,
+    libraryDependencies ++= commonLibraries ++ httpLibraries ++ testLibraries)
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
+
+
+lazy val examples = (project in file("examples"))
+  .settings(commonSettings,
+    libraryDependencies ++= cassandraLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(cassandra, clickhouse, jdbc, kafka, misc, redis, rest, s3, websocket, core)
+
+
+lazy val commonSettings = Seq(
+  name := "pipelineEngine",
+  organization := "com.libertexgroup",
+  //  libraryDependencies ++= deps,
+  resolvers := res
 )
 
-val circe = Seq(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
-).map(_ % circeVersion)
+lazy val core = (project in file("core"))
+  .settings(
+    commonSettings,
+    libraryDependencies ++= commonLibraries ++ kafkaLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
 
-val zioLibraries = Seq(
-  "dev.zio" %% "zio"            % zioVersion,
-  "dev.zio" %% "zio-concurrent" % zioVersion,
-  "dev.zio" %% "zio-zmx" % "2.0.0-RC4",
-  "dev.zio" %% "zio-metrics-connectors" % "2.0.7",
-  "dev.zio" %% "zio-http" % "0.0.4",
-//  "dev.zio" %% "zio-config"     % zioVersion,
-  "dev.zio" %% "zio-kafka" % "2.0.6",
-  "dev.zio" %% "zio-s3"    % "0.4.2.3",
-  "dev.zio" %% "zio-json"  % "0.4.2",
-  "dev.zio" %% "zio-test"     % zioVersion % "test",
-  "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
-)
-
-val testLibraries = Seq(
-  "com.redis.testcontainers" % "testcontainers-redis" % "1.6.4",
-  "io.github.scottweaver" %% "zio-2-0-testcontainers-kafka" % "0.10.0" % "test",
-  "io.github.scottweaver" %% "zio-2-0-testcontainers-postgresql" % "0.10.0" % "test",
-  "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
-  "com.dimafeng" %% "testcontainers-scala-clickhouse" % "0.40.10" % "test",
-  "com.dimafeng" %% "testcontainers-scala-cassandra" % "0.40.10" % "test",
-  "org.mockito" %% "mockito-scala" % "1.17.12" % "test",
-)
-
-val awsLibraries = Seq(
-  "org.apache.hadoop" % "hadoop-client" % "2.4.0",
-  "org.apache.hadoop" % "hadoop-aws" % "3.3.0",
-  "org.apache.hadoop" % "hadoop-common" % "3.3.0",
-  "com.amazonaws" % "aws-java-sdk-core" % "1.11.563",
-  "com.amazonaws" % "aws-java-sdk-s3" % "1.11.563",
-)
-
-libraryDependencies ++= Seq(
-  "org.redisson" % "redisson" % "3.20.1",
-  "io.kontainers" %% "purecsv" % "1.3.10",
-  "io.github.palanga" %% "zio-cassandra" % "0.10.0",
-  "org.apache.parquet" % "parquet-avro" % "1.12.0",
-  "com.softwaremill.sttp.client3" %% "core" % "3.8.0",
-  "com.softwaremill.sttp.client3" %% "zio" % "3.8.0",
-  "org.apache.avro" % "avro" % "1.10.2",
-  "com.google.guava" % "guava" % "11.0.2",
-  "com.sksamuel.avro4s" %% "avro4s-core" % "4.1.0",
-  "com.clickhouse" % "clickhouse-jdbc" % "0.3.2-patch11",
-  "io.d11"  %% "zhttp"     % "1.0.0.0-RC29",
-) ++ awsLibraries ++ circe ++ commonsLibrary ++ testLibraries ++ zioLibraries
-
-// Credentials to get access to Libertex Artifactory maven repositories
-credentials += Credentials(Path.userHome / ".sbt" / "artifactory_credentials")
-
-// Libertex Artifactory repository resolver
-resolvers += "Artifactory Realm" at s"https://lbx.jfrog.io/artifactory/alexandria-release"
-resolvers += "Artifactory Realm snapshot" at s"https://lbx.jfrog.io/artifactory/alexandria-snapshot"
-resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-
-enablePlugins(DockerPlugin)
-enablePlugins(JavaAppPackaging)
+lazy val root = (project in file("."))
+  .aggregate(core)
 
 assembly / assemblyMergeStrategy := {
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
@@ -85,9 +99,19 @@ assembly / assemblyMergeStrategy := {
 publishTo := {
   val artifactory = "https://lbx.jfrog.io/"
   if (isSnapshot.value)
-    Some("Artifactory Realm snapshot" at artifactory + "artifactory/alexandria-snapshot")
+  Some("Artifactory Realm snapshot" at artifactory + "artifactory/alexandria-snapshot")
   else
-    Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release")
+  Some("Artifactory Realm"  at artifactory + "artifactory/alexandria-release")
 }
 
 Test / parallelExecution := false
+
+// Credentials to get access to Libertex Artifactory maven repositories
+credentials += Credentials(Path.userHome / ".sbt" / "artifactory_credentials")
+
+// Libertex Artifactory repository resolver
+val res = Seq(
+  "Artifactory Realm" at s"https://lbx.jfrog.io/artifactory/alexandria-release",
+  "Artifactory Realm snapshot" at s"https://lbx.jfrog.io/artifactory/alexandria-snapshot",
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+)
