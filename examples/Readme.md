@@ -54,18 +54,18 @@ object Message2 {
 
 type KafkaRecord = ProducerRecord[String, Message2]
 
-val reader: Reader[KafkaConfig, Any, KafkaRecord] =
+val reader: Reader[Kafka1, Any, KafkaRecord] =
    ape.kafka.Readers
-           .readers[KafkaConfig]
+           .readers[Kafka1]
            .avro[Message1]
            .map(Message2.fromKafka)
            .safeGet[Message2]
            .map(Message2.toKafka)
 
-val writer: Pipe[Nothing, Any, KafkaRecord, KafkaRecord] =
+val writer: Pipe[Kafka2, Any, KafkaRecord, KafkaRecord] =
    ape.kafka.Pipes
-           .pipes
+           .pipes[Kafka2]
            .avro.of[Message2]
 
-val main: ZIO[Any with KafkaConfig with Nothing, Throwable, Unit] = (reader --> writer).runDrain
+val main: ZIO[Kafka1 with Kafka2, Throwable, Unit] = (reader --> writer).runDrain
 ```
