@@ -58,6 +58,11 @@ object Dependencies {
     "com.datastax.cassandra" % "cassandra-driver-core" % "4.0.0" pomOnly()
   )
 
+  val dataHubLibraries = Seq(
+    "io.acryl" % "datahub-client" % "0.10.3-1rc1",
+    "org.apache.httpcomponents" % "httpasyncclient" % "4.1.5"
+  )
+
   val testLibraries = Seq(
     "com.redis.testcontainers" % "testcontainers-redis" % "1.6.4",
     "io.github.scottweaver" %% "zio-2-0-testcontainers-kafka" % "0.10.0" % "test",
