@@ -3,14 +3,21 @@ import Dependencies._
 ThisBuild / version := "3.0.0"
 ThisBuild / scalaVersion := "2.13.10"
 
+lazy val commonSettings = Seq(
+  organization := "com.libertexgroup",
+  resolvers := res
+)
+
 lazy val cassandra = (project in file("connectors/cassandra"))
   .settings(commonSettings,
+    name := "ape-cassandra",
     libraryDependencies ++= commonLibraries ++ cassandraLibraries)
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(core, misc)
+  .dependsOn(core)
 
 lazy val clickhouse = (project in file("connectors/clickhouse"))
   .settings(commonSettings,
+    name := "ape-clickhouse",
     libraryDependencies ++= commonLibraries ++ clickhouseLibraries
   )
   .enablePlugins(JavaAppPackaging)
@@ -18,6 +25,7 @@ lazy val clickhouse = (project in file("connectors/clickhouse"))
 
 lazy val jdbc = (project in file("connectors/jdbc"))
   .settings(commonSettings,
+    name := "ape-jdbc",
     libraryDependencies ++= commonLibraries
   )
   .enablePlugins(JavaAppPackaging)
@@ -25,27 +33,23 @@ lazy val jdbc = (project in file("connectors/jdbc"))
 
 lazy val kafka = (project in file("connectors/kafka"))
   .settings(commonSettings,
+    name := "ape-kafka",
     libraryDependencies ++= commonLibraries ++ kafkaLibraries
-  )
-  .enablePlugins(JavaAppPackaging)
-  .dependsOn(core)
-
-lazy val misc = (project in file("connectors/misc"))
-  .settings(commonSettings,
-    libraryDependencies ++= commonLibraries
   )
   .enablePlugins(JavaAppPackaging)
   .dependsOn(core)
 
 lazy val redis = (project in file("connectors/redis"))
   .settings(commonSettings,
+    name := "ape-redis",
     libraryDependencies ++= commonLibraries ++ redisLibraries
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(core, misc)
+  .dependsOn(core)
 
 lazy val rest = (project in file("connectors/rest"))
   .settings(commonSettings,
+    name := "ape-rest",
     libraryDependencies ++= commonLibraries ++ httpLibraries
   )
   .enablePlugins(JavaAppPackaging)
@@ -53,42 +57,37 @@ lazy val rest = (project in file("connectors/rest"))
 
 lazy val s3 = (project in file("connectors/s3"))
   .settings(commonSettings,
+    name := "ape-s3",
     libraryDependencies ++= commonLibraries ++ awsLibraries ++ s3Libraries
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(core, redis, misc)
+  .dependsOn(core, redis)
 
 lazy val websocket = (project in file("connectors/websocket"))
-  .settings(commonSettings,
+  .settings( commonSettings,
+    name := "ape-websocket",
     libraryDependencies ++= commonLibraries ++ httpLibraries ++ testLibraries)
   .enablePlugins(JavaAppPackaging)
   .dependsOn(core)
 
-
 lazy val examples = (project in file("examples"))
   .settings(commonSettings,
+    publish / skip := true,
     libraryDependencies ++= cassandraLibraries
   )
   .enablePlugins(JavaAppPackaging)
-  .dependsOn(cassandra, clickhouse, jdbc, kafka, misc, redis, rest, s3, websocket, core)
-
-
-lazy val commonSettings = Seq(
-  name := "pipelineEngine",
-  organization := "com.libertexgroup",
-  //  libraryDependencies ++= deps,
-  resolvers := res
-)
+  .dependsOn(cassandra, clickhouse, jdbc, kafka, redis, rest, s3, websocket, core)
 
 lazy val core = (project in file("core"))
   .settings(
+    name := "ape-core",
     commonSettings,
     libraryDependencies ++= commonLibraries ++ kafkaLibraries
   )
   .enablePlugins(JavaAppPackaging)
 
-lazy val root = (project in file("."))
-  .aggregate(core)
+//lazy val ape = (project in file("."))
+//  .aggregate(core)
 
 assembly / assemblyMergeStrategy := {
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
@@ -96,7 +95,7 @@ assembly / assemblyMergeStrategy := {
 }
 
 // Libertex Artifactory maven repositories (artifact publishing configuration)
-publishTo := {
+ThisBuild / publishTo := {
   val artifactory = "https://lbx.jfrog.io/"
   if (isSnapshot.value)
   Some("Artifactory Realm snapshot" at artifactory + "artifactory/alexandria-snapshot")
