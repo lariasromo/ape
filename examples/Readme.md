@@ -42,6 +42,7 @@ class Kafka2(
             ) extends KafkaConfig(topicName, kafkaBrokers, consumerGroup, clientId, flushSeconds, batchSize)
 
 case class Message1(value: String)
+
 case class Message2(value: String)
 
 object Message2 {
@@ -51,40 +52,20 @@ object Message2 {
    val toKafka: Message2 => ProducerRecord[String, Message2] = record => new ProducerRecord("", record)
 }
 
-val reader: Reader[KafkaConfig, Any, Message2] =
+type KafkaRecord = ProducerRecord[String, Message2]
+
+val reader: Reader[Kafka1, Any, KafkaRecord] =
    ape.kafka.Readers
-           .readers[KafkaConfig]
+           .readers[Kafka1]
            .avro[Message1]
            .map(Message2.fromKafka)
-           .mapZ(_.filter(_.isDefined).map(_.get))
-
-val writer: Pipe[Nothing, Any, Message2, ProducerRecord[String, Message2]] = {
-   ape.kafka.Pipes
-           .pipes
-           .avro.of[Message2]
-           .contramap(Message2.toKafka)
-}
-
-val main: ZIO[Any with KafkaConfig with Nothing, Throwable, Unit] =
-   (reader --> writer).runDrain
-   
-// or 
-
-val readerType2: Reader[KafkaConfig, Any, ProducerRecord[String, Message2]] = {
-   ape.kafka.Readers
-           .readers[KafkaConfig]
-           .avro[Message1]
-           .map(Message2.fromKafka)
-           .mapZ(_.filter(_.isDefined).map(_.get))
+           .safeGet[Message2]
            .map(Message2.toKafka)
-}
 
-val writerType2: Pipe[Nothing, Any, ProducerRecord[String, Message2], ProducerRecord[String, Message2]] = {
+val writer: Pipe[Kafka2, Any, KafkaRecord, KafkaRecord] =
    ape.kafka.Pipes
-           .pipes
+           .pipes[Kafka2]
            .avro.of[Message2]
-}
 
-val mainType2: ZIO[Any with KafkaConfig with Nothing, Throwable, Unit] =
-   (readerType2 --> writerType2).runDrain
+val main: ZIO[Kafka1 with Kafka2, Throwable, Unit] = (reader --> writer).runDrain
 ```
