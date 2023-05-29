@@ -49,7 +49,8 @@ object PipelineTest extends ZIOSpecDefault {
     },
     test("Writer safeGet") {
       for {
-        chunkResult <- (reader --> Pipe.UnitTWriter[Any, Any, Option[dummy], Option[dummy]](dummyT).safeGet[dummy]).runCollect
+        chunkResult <- (reader --> Pipe.UnitTPipe[Any, Any, Option[dummy], Option[dummy]](dummyT).safeGet[dummy])
+          .runCollect
       } yield {
         assertTrue(chunkResult.equals(sampleDataNoOp))
       }

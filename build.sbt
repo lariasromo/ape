@@ -23,6 +23,14 @@ lazy val clickhouse = (project in file("connectors/clickhouse"))
   .enablePlugins(JavaAppPackaging)
   .dependsOn(core)
 
+lazy val datahub = (project in file("connectors/datahub"))
+  .settings(commonSettings,
+    name := "ape-datahub",
+    libraryDependencies ++= commonLibraries ++ dataHubLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
+
 lazy val jdbc = (project in file("connectors/jdbc"))
   .settings(commonSettings,
     name := "ape-jdbc",

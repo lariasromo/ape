@@ -21,7 +21,7 @@ abstract class Reader[E, ZE, T: ClassTag]{
     s <- read
   } yield s.withMetrics(name)
 
-  def pipe: Pipe[E, ZE, T, T] = Pipe.UnitWriter[E, ZE, T, T](_ => apply)
+  def pipe: Pipe[E, ZE, T, T] = Pipe.UnitPipe[E, ZE, T, T](_ => apply)
 
   def stream: ZStream[ZE with E, Throwable, T] = ZStream.unwrap(apply)
 
