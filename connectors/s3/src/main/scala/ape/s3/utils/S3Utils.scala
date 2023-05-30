@@ -1,7 +1,7 @@
 package ape.s3.utils
 
 import ape.s3.configs.S3Config
-import zio.{Duration, ZIO}
+import zio.ZIO
 
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
 
@@ -16,7 +16,7 @@ object S3Utils {
   } yield {
     val conv: ZonedDateTime => List[String] = date => {
       val zero: Int => String = i => if (i < 10) s"0$i" else i.toString
-      val margin = config.filePeekDurationMargin.getOrElse(Duration.Zero)
+      val margin = config.filePeekDurationMargin.getOrElse(zio.Duration.Zero)
       date.minus(margin).toEpochSecond
         .to(date.toEpochSecond)
         .map(s => LocalDateTime.ofEpochSecond(s, 0, ZoneOffset.UTC))
