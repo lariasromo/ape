@@ -12,17 +12,22 @@ import scala.util.Try
 
 abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
   def name:String = this.getClass.getSimpleName
+
   def transitions: Seq[Transition] = Seq(
     Transition(
       implicitly[ClassTag[T0]].runtimeClass.getSimpleName, name, implicitly[ClassTag[T]].runtimeClass.getSimpleName
     ))
+
   protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
+
   def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]] =
     pipe(i).flatMap(s => ZIO.succeed(s.withMetrics(name)))
+
   def write(i: ZStream[ZE, Throwable, T0]): ZIO[ZE with E, Throwable, Unit] = for {
     s <- apply(i)
     _ <- s.runDrain
   } yield ()
+
   def runDrain(i: ZStream[ZE, Throwable, T0]): ZIO[ZE with E, Throwable, Unit] = write(i)
 
   def <*>[E2, T2: ClassTag](that: Pipe[E2, ZE, T0, T2]): Pipe[E with E2 with ZE with Scope, ZE, T0, Any] =
@@ -42,8 +47,10 @@ abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
 
   def withTransform[T2: ClassTag](t: T => T2, name:String="withTransform"): Pipe[E, ZE, T0, T2] =
     new TTPipe(this, t, name)
+
   def map[T2: ClassTag](t: T => T2, name:String="map"): Pipe[E, ZE, T0, T2] =
     withTransform(t, name)
+
   def **[T2: ClassTag](implicit t: T => T2): Pipe[E, ZE, T0, T2] =
     withTransform(t)
 
@@ -69,10 +76,14 @@ abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
 
   def withZTransform[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2], name:String="withZTransform"):
     Pipe[E, ZE, T0, T2] = new ZTPipe(this, t, name)
+
   def mapZ[T2: ClassTag](t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2], name:String="mapZ"): Pipe[E, ZE, T0, T2] =
     withZTransform(t, name)
+
   def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Pipe[E, ZE, T0, T2] =
     withZTransform(t)
+
+  def tap(t: T => ZIO[ZE, Throwable, T], name:String="tap"): Pipe[E, ZE, T0, T] = mapZ(s => s.tap(t), name)
 
   def contramapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0], name:String="contramapZ"):
     Pipe[E, ZE, T00, T] = concatenate(new UnitZPipe(t, name), this)
