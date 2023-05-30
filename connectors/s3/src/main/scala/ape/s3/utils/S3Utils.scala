@@ -6,7 +6,7 @@ import zio.{Duration, ZIO}
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
 
 object S3Utils {
-  def dateRange(start: ZonedDateTime, end: ZonedDateTime, step: Duration): Seq[ZonedDateTime] = {
+  def dateRange(start: ZonedDateTime, end: ZonedDateTime, step: zio.Duration): Seq[ZonedDateTime] = {
     val e = (end.toEpochSecond - start.toEpochSecond) / step.toSeconds
     (0L to e).map(s => end.minus(step multipliedBy s))
   }
