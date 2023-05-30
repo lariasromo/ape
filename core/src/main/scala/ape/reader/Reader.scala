@@ -55,6 +55,8 @@ abstract class Reader[E, ZE, T: ClassTag]{
                           name:String="mapZ"
                         ): Reader[E, ZE, T2] = withZTransform(t, name)
 
+  def tap(t: T => ZIO[ZE, Throwable, T], name:String="tap"): Reader[E, ZE, T] = mapZ(s => s.tap(t), name)
+
   def safeGet[V :ClassTag]: Reader[E, ZE, V] = {
     implicit class ClassTagOps[U](val classTag: ClassTag[U]){
       def <<:(other: ClassTag[_]): Boolean = classTag.runtimeClass.isAssignableFrom(other.runtimeClass)
