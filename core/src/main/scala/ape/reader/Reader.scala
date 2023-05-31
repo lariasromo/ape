@@ -1,12 +1,11 @@
 package ape.reader
 
 import ape.Ape
-import ape.Ape.Transition
 import ape.metrics.ApeMetrics._
 import ape.pipe.Pipe
 import ape.utils.Utils.:=
-import zio.ZIO
 import zio.stream.ZStream
+import zio.{Scope, ZIO}
 
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
@@ -72,6 +71,10 @@ abstract class Reader[E, ZE, T: ClassTag]{
   def as[V :ClassTag]: Reader[E, ZE, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 
   def filter(predicate: T => Boolean, name:String="filter"): Reader[E, ZE, T] = mapZ(_.filter(predicate), name)
+
+  def +++[E2]( pipes: Pipe[E2, ZE, T, _]* ): ZStream[ZE with E with E2 with Scope, Throwable, T] = {
+    this --> Pipe.broadcast[E with E2, ZE, T](pipes : _*)
+  }
 }
 
 object Reader {
