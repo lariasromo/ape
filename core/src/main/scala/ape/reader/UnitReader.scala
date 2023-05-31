@@ -1,6 +1,5 @@
 package ape.reader
 
-import ape.Ape.Transition
 import zio.ZIO
 import zio.stream.ZStream
 
