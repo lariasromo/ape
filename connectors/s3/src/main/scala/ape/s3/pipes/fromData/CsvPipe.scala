@@ -36,7 +36,8 @@ protected[s3] class CsvPipe[ZE, T: ClassTag,Config <: S3Config :Tag]
         } + "\n")
         .map(_.getBytes)
         .flatMap(bytes => ZStream.fromIterable(bytes))
-      fileName <- zio.Random.nextUUID
+      randomUUID <- zio.Random.nextUUID
+      fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
       _ <- multipartUpload(
         bucket,
         s"${location}/${fileName}.csv",
