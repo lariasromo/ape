@@ -28,7 +28,10 @@ case class S3Config (
                       fileCacheExpiration: Option[zio.Duration]=None,
                       filePeekDuration: Option[zio.Duration]=None,
                       filePeekDurationMargin: Option[zio.Duration]=None,
-                      startDate: Option[ZonedDateTime]=None
+                      startDate: Option[ZonedDateTime]=None,
+                      fileName:Option[String]=None,
+                      filePrefix:Option[String]=None,
+                      fileSuffix:Option[String]=None,
   ) {
   val taskLocation: Task[String] = ZIO.succeed{
     location.getOrElse({
@@ -80,6 +83,9 @@ object S3Config {
     s3Host <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_OVERRIDE_URL")
     startDate <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_START_DATE")
     reg <- envOrElse(prefix.map(s=>s+"_").getOrElse("") +  "S3_AWS_REGION", "eu-west-1")
+    fileName <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_NAME")
+    fileSuffix <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_SUFFIX")
+    filePrefix <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_PREFIX")
   } yield S3Config (
     region = reg,
     location = location,
@@ -92,7 +98,10 @@ object S3Config {
     filePeekDurationMargin = Some(Duration fromJava java.time.Duration.parse(filePeekDurationMargin)),
     startDate = startDate.flatMap(sd => {
       LocalDate.parse(sd).map(dt => dt.atStartOfDay(ZoneId.of("UTC"))).toOption
-    })
+    }),
+    fileName=fileName,
+    fileSuffix=fileSuffix,
+    filePrefix=filePrefix
   )
 
   def makeWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {
