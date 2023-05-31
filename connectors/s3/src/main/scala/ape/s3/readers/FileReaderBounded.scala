@@ -31,7 +31,7 @@ protected [s3] class FileReaderBounded[Config <: S3Config :Tag](
         val d = locs.distinct
         Chunk.fromIterable(d)
       })
-      .mapZIO(location => for {
+      .mapZIOPar(location => for {
         objs <- listObjects(bucket, ListObjectOptions.from(location, 100)).provideLayer(config.liveS3)
         _ <- printLine(s"Got a total of ${objs.objectSummaries.length} from (${location})")
       } yield objs.objectSummaries
