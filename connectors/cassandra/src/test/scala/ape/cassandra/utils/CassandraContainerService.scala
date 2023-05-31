@@ -55,7 +55,7 @@ object CassandraContainerService {
     for {
       container <- ZIO.service[CassandraContainer]
       config = CassandraConfig(
-        batchSize=100,
+        batchSize=1,
         syncDuration=1.minute,
         host=container.host,
         port=container.mappedPort(9042),

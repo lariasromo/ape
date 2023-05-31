@@ -1,6 +1,5 @@
 package ape.pipe
 
-import ape.Ape.Transition
 import ape.metrics.ApeMetrics._
 import ape.pipe.Pipe.concatenate
 import ape.utils.Utils.{:=, reLayer}
@@ -12,11 +11,6 @@ import scala.util.Try
 
 abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
   def name:String = this.getClass.getSimpleName
-
-  def transitions: Seq[Transition] = Seq(
-    Transition(
-      implicitly[ClassTag[T0]].runtimeClass.getSimpleName, name, implicitly[ClassTag[T]].runtimeClass.getSimpleName
-    ))
 
   protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
 
@@ -103,26 +97,42 @@ abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
   def as[V :ClassTag]: Pipe[E, ZE, T0, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 
   def filter(predicate: T => Boolean, name:String="filter"): Pipe[E, ZE, T0, T] = mapZ(_.filter(predicate), name)
+
+  def +++[E2]( pipes: Pipe[E2, ZE, T0, _]* ): Pipe[E with E2 with ZE with Scope, ZE, T0, T0] = {
+    val ps: Seq[Pipe[E with E2, ZE, T0, _]] = Seq(this) ++ pipes
+    Pipe.broadcast[E with E2, ZE, T0](ps : _*)
+  }
 }
 
 
 object Pipe {
+  def broadcast[E, ZE, T0: ClassTag]( pipes: Pipe[E, ZE, T0, _]* ):
+  Pipe[E with ZE with Scope, ZE, T0, T0] =
+    new Pipe[ZE with E with Scope, ZE, T0, T0] {
+      override protected[this] def pipe(i: ZStream[ZE, Throwable, T0]):
+        ZIO[ZE with E with Scope, Throwable, ZStream[ZE, Throwable, T0]]  =
+        for {
+          inputStreamCopies <- i.broadcast(pipes.length, 100)
+          _ <- ZIO.foreach(
+            inputStreamCopies.zip(pipes)
+          ) {
+            case (sourceStream, pipe) => for {
+              s <- pipe(sourceStream)
+              _ <- s.runDrain.fork
+            } yield ()
+          }
+        } yield i
+    }
+
   def broadcastOp[E, E2, ZE, T0 :ClassTag, T :ClassTag, T2 :ClassTag, T3 :ClassTag](
-                                                                                     writer1: Pipe[E, ZE, T0, T],
-                                                                                     writer2: Pipe[E2, ZE, T0, T2],
-                                                                                     op: (ZStream[ZE, Throwable, T], ZStream[ZE, Throwable, T2]) => ZStream[ZE, Throwable, T3],
-                                                                                     n:String="broadcastOp",
-                                                                                     maximumLag: Int=100,
-                                           ): Pipe[E with E2 with ZE with Scope, ZE, T0, T3] =
+       writer1: Pipe[E, ZE, T0, T],
+       writer2: Pipe[E2, ZE, T0, T2],
+       op: (ZStream[ZE, Throwable, T], ZStream[ZE, Throwable, T2]) => ZStream[ZE, Throwable, T3],
+       n:String="broadcastOp",
+       maximumLag: Int=100,
+   ): Pipe[E with E2 with ZE with Scope, ZE, T0, T3] =
     new Pipe[E with E2 with ZE with Scope, ZE, T0, T3] {
       override def name: String = n
-
-      override val transitions: Seq[Transition] = writer1.transitions ++
-        Seq(
-          Transition(
-            implicitly[ClassTag[T]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T3]].runtimeClass.getSimpleName
-          )
-        ) ++ writer2.transitions
 
       override protected[this] def pipe(i: ZStream[ZE, Throwable, T0]):
       ZIO[E with E2 with ZE with Scope, Throwable, ZStream[ZE, Throwable, T3]] =
