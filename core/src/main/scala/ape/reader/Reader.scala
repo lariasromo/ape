@@ -13,7 +13,6 @@ import scala.util.Try
 
 abstract class Reader[E, ZE, T: ClassTag]{
   def name:String = this.getClass.getSimpleName
-  def transitions: Seq[Transition] = Seq(Transition("|", name, implicitly[ClassTag[T]].runtimeClass.getSimpleName))
 
   protected[this] def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
 
