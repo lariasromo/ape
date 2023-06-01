@@ -25,22 +25,24 @@ object PostgresContainerService {
       _ <- runScoped("INSERT INTO dummy(a, b) VALUES ('value3', 'value4');")
   } yield ()
 
-  val chL: ZLayer[Any, Throwable, PostgreSQLContainer] = ZLayer.scoped {
+  val postgresContainer: ZLayer[Any, Throwable, PostgreSQLContainer] = ZLayer.scoped {
     ZIO.acquireRelease(startContainer)(stopContainer)
   }
 
-  val jdbcConfig: ZIO[PostgreSQLContainer, Nothing, JDBCConfig] = for {
+  def jdbcConfig(parallelism:Int): ZIO[PostgreSQLContainer, Nothing, JDBCConfig] = for {
     container <- ZIO.service[PostgreSQLContainer]
   } yield JDBCConfig(
-    batchSize = 1,
+    batchSize = 5,
     syncDuration = 1.minute,
     driverName=container.driverClassName,
     jdbcUrl=container.jdbcUrl,
     username=container.username,
-    password=container.password
+    password=container.password,
+    parallelism = parallelism
   )
 
-  val jdbcConfigLayer: ZLayer[PostgreSQLContainer, Nothing, JDBCConfig] = ZLayer.fromZIO(jdbcConfig)
-
-  val layer: ZLayer[Any, Throwable, JDBCConfig with PostgreSQLContainer] = chL >+> jdbcConfigLayer
+  val layer: ZLayer[Any, Throwable, JDBCConfig with PostgreSQLContainer] =
+    postgresContainer >+> ZLayer.fromZIO(jdbcConfig(1))
+  def layerWithParallelism(parallelism:Int): ZLayer[Any, Throwable, JDBCConfig with PostgreSQLContainer] =
+    postgresContainer >+> ZLayer.fromZIO(jdbcConfig(parallelism))
 }
