@@ -2,12 +2,11 @@ package ape.cassandra.readers
 
 import ape.cassandra.configs.CassandraConfig
 import ape.cassandra.models.dummy
-import ape.cassandra.pipes.CassandraPipeTest.{suite, test}
 import ape.cassandra.utils.CassandraContainerService
 import com.dimafeng.testcontainers.CassandraContainer
-import zio.{Chunk, Scope, ZLayer}
 import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
+import zio.{Chunk, Scope, ZLayer}
 
 class CassandraReaderTest extends ZIOSpec[CassandraConfig with CassandraContainer] {
   val sampleRecords: Chunk[dummy] = Chunk(

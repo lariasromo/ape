@@ -15,9 +15,11 @@ import zio.{Duration, Scope, Task, ZIO, ZLayer}
 
 import java.net.URI
 import java.time.{ZoneId, ZonedDateTime}
+import scala.annotation.meta.param
 import scala.util.Try
 
 case class S3Config (
+                    @param
                       compressionType: CompressionType=CompressionType.NONE,
                       parallelism: Int=1,
                       region: String,

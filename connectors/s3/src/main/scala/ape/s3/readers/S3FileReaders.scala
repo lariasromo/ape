@@ -1,10 +1,9 @@
 package ape.s3.readers
 
+import ape.misc.Pipes.{pipes => misc}
 import ape.reader.Reader
 import ape.s3.Readers
 import ape.s3.configs.S3Config
-import ape.misc.Pipes.{pipes => misc}
-import zio.Console.printLine
 import zio.s3.S3ObjectSummary
 import zio.stream.ZStream
 import zio.{Duration, Queue, Tag, ZIO}
@@ -31,7 +30,7 @@ class S3FileReaders[Config <: S3Config :Tag] {
             Readers.fileReader[Config].fileReaderContinuous(locationPattern) -->
              misc.queue[Config, Any].of[S3ObjectSummary](queue)
           }.runDrain.ensuring( for {
-            _ <- printLine("Shutting down queue").catchAll(_=>ZIO.unit)
+            _ <- ZIO.logError("Shutting down queue")
             _ <- queue.shutdown
           } yield ()).fork
           stream = ZStream.fromQueue(queue)

@@ -2,8 +2,8 @@ package ape.utils
 
 import io.circe.{Decoder, Encoder}
 import zio.{Tag, ULayer, ZIO, ZLayer}
-import scala.language.experimental.macros
 
+import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
 object Utils {

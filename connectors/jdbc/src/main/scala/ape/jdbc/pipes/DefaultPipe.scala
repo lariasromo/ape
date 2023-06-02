@@ -3,7 +3,6 @@ package ape.jdbc.pipes
 import ape.jdbc.configs.JDBCConfig
 import ape.jdbc.models.JDBCModel
 import ape.jdbc.utils.GenericJDBCUtils.runConnect
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Chunk, Tag, ZIO, ZLayer}
 
@@ -46,7 +45,7 @@ protected[jdbc] class DefaultPipe[ET,
           }.mapZIOParByKey(_._1) {
             case (ix: Int, size: Int, eff: ZIO[Nothing, Throwable, Chunk[Model]]) =>
               for {
-                _ <- printLine(s"Inserting batch on parallel index $ix and a batch size of $size")
+                _ <- ZIO.logInfo(s"Inserting batch on parallel index $ix and a batch size of $size")
                 eff <- ZIO.scoped(eff)
               } yield eff
           }

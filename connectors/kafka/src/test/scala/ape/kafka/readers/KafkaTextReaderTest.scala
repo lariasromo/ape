@@ -4,7 +4,7 @@ import ape.kafka.configs.KafkaConfig
 import ape.kafka.utils.KafkaContainerService
 import com.dimafeng.testcontainers.KafkaContainer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Scope, ZLayer}
+import zio.{Scope, ZIO, ZLayer}
 
 object KafkaTextReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val reader = ape.kafka.Readers.readers[KafkaConfig].string
@@ -13,13 +13,11 @@ object KafkaTextReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
     suite("KafkaReaderTest")(
       test("Reads plaintext message") {
         for {
-          _ <- zio.Console.printLine("Sending text message")
+          _ <- ZIO.logInfo("Sending text message")
           _ <- KafkaContainerService.sendPlaintextMessage
           stream <- reader.apply
           data <- stream
-            .tap(d => {
-              zio.Console.printLine(d.value())
-            })
+            .tap(d => ZIO.logInfo(d.value()))
             .runHead
         } yield {
           assertTrue(data.nonEmpty)

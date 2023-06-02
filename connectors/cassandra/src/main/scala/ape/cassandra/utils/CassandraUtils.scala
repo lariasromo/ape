@@ -1,8 +1,8 @@
 package ape.cassandra.utils
 
 import ape.cassandra.configs.CassandraConfig
-import com.datastax.oss.driver.api.core.{CqlSession => DatastaxSession}
 import com.datastax.oss.driver.api.core.cql.Row
+import com.datastax.oss.driver.api.core.{CqlSession => DatastaxSession}
 import palanga.zio.cassandra.CassandraException.SessionOpenException
 import palanga.zio.cassandra.ZStatement.StringOps
 import palanga.zio.cassandra.{CassandraException, ZCqlSession, session}

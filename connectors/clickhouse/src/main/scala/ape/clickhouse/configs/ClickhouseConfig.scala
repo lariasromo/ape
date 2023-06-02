@@ -1,6 +1,6 @@
 package ape.clickhouse.configs
 
-import zio.System.{env, envOrElse}
+import zio.System.envOrElse
 import zio.{Duration, ZIO, ZLayer, durationInt}
 
 import scala.util.Try

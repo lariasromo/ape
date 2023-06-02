@@ -4,7 +4,7 @@ import ape.kafka.configs.KafkaConfig
 import ape.kafka.utils.KafkaContainerService
 import com.dimafeng.testcontainers.KafkaContainer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Scope, ZLayer}
+import zio.{Scope, ZIO, ZLayer}
 
 object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val reader = ape.kafka.Readers.readers[KafkaConfig].default
@@ -13,11 +13,11 @@ object KafkaBytesReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
     suite("KafkaBytesReaderTest")(
       test("Reads bytes") {
         for {
-          _ <- zio.Console.printLine("Sending bytes")
+          _ <- ZIO.logInfo("Sending bytes")
           _ <- KafkaContainerService.sendBytes
           stream <- reader.apply
           data <- stream
-            .tap(d => zio.Console.printLine(d.value().mkString))
+            .tap(d => ZIO.logInfo(d.value().mkString))
             .runHead
         } yield {
           assertTrue(data.nonEmpty)
