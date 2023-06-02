@@ -1,7 +1,6 @@
 package ape.misc.pipes
 
 import ape.pipe.Pipe
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Queue, ZIO}
 
@@ -16,10 +15,10 @@ class BackPressureInfinitePipe[ZE, T: ClassTag] extends Pipe[ZE, ZE, T, T]{
       queue <- Queue.unbounded[T]
       rand <- ZIO.random
       queueName <- rand.nextPrintableChar
-      _ <- printLine(s"Reading stream with back pressure (using queue ${queueName})")
+      _ <- ZIO.logInfo(s"Reading stream with back pressure (using queue ${queueName})")
       _ <- stream.tap(msg => queue.offer(msg)).runDrain.fork
     } yield ZStream.fromQueue(queue)
-      .ensuring(queue.shutdown <* printLine(s"Shutting down queue ${queueName}").catchAll(_ => ZIO.unit))
+      .ensuring(queue.shutdown <* ZIO.logInfo(s"Shutting down queue ${queueName}"))
 
   override protected[this] def pipe(i: ZStream[ZE, Throwable, T]): ZIO[ZE, Throwable, ZStream[ZE, Throwable, T]] =
     readWithBackPressure(i)

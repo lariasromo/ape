@@ -1,6 +1,5 @@
 package ape.metrics
 
-import zio.Console.printLine
 import zio._
 import zio.http._
 import zio.http.model.Method
@@ -43,7 +42,7 @@ object ApeMetrics {
     ZIO.acquireRelease(
       for {
         conf <- ZIO.service[ApeMetricsConfig]
-        _ <- printLine(s"Starting metrics server on port ${conf.port} and path: /${conf.path}")
+        _ <- ZIO.logInfo(s"Starting metrics server on port ${conf.port} and path: /${conf.path}")
         server <- Server.serve((app(conf.path) ++ healthApp).withDefaultErrorResponse)
           .provide(
             // general config for all metric backend
@@ -53,14 +52,14 @@ object ApeMetrics {
             prometheus.prometheusLayer,
             ZLayer.succeed(ServerConfig(address = new InetSocketAddress(conf.port))) >>> Server.live
           )
-          .onInterrupt(printLine("Metrics server interrupted").catchAll(_=>ZIO.unit))
+          .onInterrupt(ZIO.logError("Metrics server interrupted"))
           .catchAll(ex => for {
-            _ <- printLine("Something happened with the metrics server " + ex.getMessage)
+            _ <- ZIO.logError("Something happened with the metrics server " + ex.getMessage)
           } yield throw new Exception(ex))
           .fork
       } yield server
     )(s => for {
-      _ <- printLine("Metrics server stopped").catchAll(_ => ZIO.unit)
+      _ <- ZIO.logError("Metrics server stopped")
       _ <- s.interruptFork
     } yield ())
 

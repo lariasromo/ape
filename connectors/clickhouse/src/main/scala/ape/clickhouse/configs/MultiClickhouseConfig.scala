@@ -1,6 +1,6 @@
 package ape.clickhouse.configs
 
-import MultiClickhouseConfig.ReplicatedMode
+import ape.clickhouse.configs.MultiClickhouseConfig.ReplicatedMode
 import ape.clickhouse.utils.ClickhouseJDBCUtils.query2Chunk
 import zio.System.{env, envOrElse}
 import zio.{ULayer, ZIO, ZLayer, durationInt}

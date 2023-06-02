@@ -5,7 +5,7 @@ import ape.kafka.models.dummy
 import ape.kafka.utils.KafkaContainerService
 import com.dimafeng.testcontainers.KafkaContainer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Scope, ZLayer}
+import zio.{Scope, ZIO, ZLayer}
 
 object KafkaAvroReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val reader = ape.kafka.Readers.readers[KafkaConfig].avro[dummy]
@@ -14,12 +14,12 @@ object KafkaAvroReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
     suite("KafkaReaderTest")(
       test("Reads avro message") {
         for {
-          _ <- zio.Console.printLine("Sending Avro messages")
+          _ <- ZIO.logInfo("Sending Avro messages")
           _ <- KafkaContainerService.sendAvroMessage
           stream <- reader.apply
           data <- stream.tap(d => {
             val dummy = d.value().get
-            zio.Console.printLine(s"a: ${dummy.a} b: ${dummy.b}")
+            ZIO.logInfo(s"a: ${dummy.a} b: ${dummy.b}")
           }).take(1).runCollect
         } yield {
           assertTrue(data.nonEmpty)

@@ -2,7 +2,6 @@ package ape.clickhouse.utils
 
 import ape.clickhouse.configs.{ClickhouseConfig, MultiClickhouseConfig}
 import com.clickhouse.jdbc.{ClickHouseConnection, ClickHouseDataSource}
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Chunk, Duration, Scope, ZIO, ZLayer}
 
@@ -22,8 +21,8 @@ object ClickhouseJDBCUtils {
         conn <- connect
         chk <- ZIO.fromTry(Try(toChunk(conn.createStatement().executeQuery(query))))
           .catchAll(ex => for {
-            _ <- printLine(ex.getMessage)
-            _ <- printLine("No data found on node: " + conf)
+            _ <- ZIO.logError(ex.getMessage)
+            _ <- ZIO.logError("No data found on node: " + conf)
           } yield Chunk.empty)
       } yield chk
     }

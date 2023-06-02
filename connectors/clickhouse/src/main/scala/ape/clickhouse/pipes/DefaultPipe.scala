@@ -4,7 +4,6 @@ import ape.clickhouse.configs.{ClickhouseConfig, MultiClickhouseConfig}
 import ape.clickhouse.models.ClickhouseModel
 import ape.clickhouse.utils.ClickhouseJDBCUtils.runConnect
 import com.clickhouse.jdbc.ClickHouseConnection
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Chunk, Tag, ZIO, ZLayer}
 
@@ -38,7 +37,7 @@ protected[clickhouse] class DefaultPipe[ET, T <:ClickhouseModel :ClassTag, Confi
     errors <- runConnect(insertRetrieveResults(batch))
       .catchAll{ error => {
           for {
-            _ <- printLine(error.getMessage).catchAll(_=>ZIO.unit)
+            _ <- ZIO.logError(error.getMessage)
           } yield batch.map(t => (t, Statement.EXECUTE_FAILED)) // if the whole batch failed, mark all rows as failed
         }
       }
@@ -63,7 +62,8 @@ protected[clickhouse] class DefaultPipe[ET, T <:ClickhouseModel :ClassTag, Confi
         }.mapZIOParByKey(_._1) {
           case (((config: ClickhouseConfig, ix: Int), size: Int, eff: ZIO[Any, Nothing, Chunk[(T, Int)]])) =>
             for {
-              _ <- printLine(s"Inserting batch on parallel index $ix for CH instance ${config.host} and a batch size of $size")
+              _ <- ZIO.logInfo(s"Inserting batch on parallel index $ix for CH instance ${config.host} and a batch size " +
+                s"of $size")
               eff <- ZIO.scoped(eff)
             } yield eff
         }
