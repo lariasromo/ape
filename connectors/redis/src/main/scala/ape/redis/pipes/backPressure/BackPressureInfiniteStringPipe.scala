@@ -3,7 +3,6 @@ package ape.redis.pipes.backPressure
 import ape.pipe.Pipe
 import ape.reader.Reader
 import ape.redis.configs.RedisConfig
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Tag, ZIO}
 
@@ -15,7 +14,7 @@ class BackPressureInfiniteStringPipe[E, ZE, Config<:RedisConfig :Tag]
     for {
       rand <- ZIO.random
       queueName <- rand.nextString(10)
-      _ <- printLine(s"Reading stream with back pressure (using Redis queue ${queueName})")
+      _ <- ZIO.logInfo(s"Reading stream with back pressure (using Redis queue ${queueName})")
       _ <- {
         val r: Reader[Any, ZE, String] = Reader.UnitReader[Any, ZE, String](stream)
         val w: Pipe[Config, ZE, String, String] = ape.redis.Pipes.pipes[Config].generalPurpose[ZE].string(queueName)

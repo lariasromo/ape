@@ -3,7 +3,6 @@ package ape.s3.readers
 import ape.s3.configs.S3Config
 import ape.s3.utils.S3Utils
 import zio.Clock.currentDateTime
-import zio.Console.printLine
 import zio.concurrent.ConcurrentMap
 import zio.s3.{ListObjectOptions, S3ObjectSummary, listObjects}
 import zio.stream.ZStream
@@ -23,7 +22,7 @@ protected [s3] class FileReaderContinuous[Config <: S3Config :Tag]
       locPattern <- locationPattern
       bucket <- config.taskS3Bucket
       trackedFiles <- ConcurrentMap.empty[Array[Byte], ZonedDateTime]
-      _ <- printLine("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
+      _ <- ZIO.logInfo("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
     } yield
       stream
         .tap { now => trackedFiles.removeIf((_, date) => date.toEpochSecond < now.minus(config.fileCacheExpiration.orNull).toEpochSecond) }
@@ -48,10 +47,10 @@ protected [s3] class FileReaderContinuous[Config <: S3Config :Tag]
 
   override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[Config]
-    _ <- printLine("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
+    _ <- ZIO.logInfo("Starting s3 files stream reader with periodicity of: " + config.filePeekDuration.orNull)
     now <- currentDateTime
     pastDatesStream <- config.startDate.map(sd => for {
-      _ <- printLine("S3 start date is defined, so it will read files from: " + sd.toString)
+      _ <- ZIO.logInfo("S3 start date is defined, so it will read files from: " + sd.toString)
     } yield ZStream
         .fromIterable(S3Utils.dateRange(sd, now.toZonedDateTime, config.filePeekDuration.orNull))
         .map(_.toOffsetDateTime)

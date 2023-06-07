@@ -8,7 +8,7 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}
 
-object JDBCPipeTest  extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
+object JDBCPipeParallelTest  extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
   val sampleRecords: Chunk[dummy] = Chunk(
     dummy("value1", "value2"),
     dummy("value3", "value4"),
@@ -43,5 +43,5 @@ object JDBCPipeTest  extends ZIOSpec[JDBCConfig with PostgreSQLContainer] {
   } yield ()
 
   override def bootstrap: ZLayer[Any, Any, JDBCConfig with PostgreSQLContainer] =
-    PostgresContainerService.layer >+> ZLayer.fromZIO(setup)
+    PostgresContainerService.layerWithParallelism(3) >+> ZLayer.fromZIO(setup)
 }

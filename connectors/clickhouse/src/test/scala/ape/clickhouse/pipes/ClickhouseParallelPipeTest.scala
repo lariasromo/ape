@@ -9,7 +9,7 @@ import zio.stream.ZStream
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Chunk, Scope, ZIO, ZLayer}
 
-object ClickhousePipeTest extends ZIOSpec[MultiClickhouseConfig with ClickHouseContainer]  {
+object ClickhouseParallelPipeTest extends ZIOSpec[MultiClickhouseConfig with ClickHouseContainer]  {
   val sampleRecords: Chunk[dummy] = Chunk(
     dummy("value1", "value2"),
     dummy("value3", "value4"),
@@ -33,7 +33,7 @@ object ClickhousePipeTest extends ZIOSpec[MultiClickhouseConfig with ClickHouseC
           data <- readsSampleData
         } yield {
           assertTrue(data.nonEmpty)
-          assertTrue(data.equals(sampleRecords))
+          assertTrue(data.map(_.toString).sorted.equals(sampleRecords.map(_.toString).sorted))
         }
       }
     )
@@ -44,5 +44,5 @@ object ClickhousePipeTest extends ZIOSpec[MultiClickhouseConfig with ClickHouseC
   } yield ()
 
   override def bootstrap: ZLayer[Any, Any, MultiClickhouseConfig with ClickHouseContainer] =
-    ClickhouseContainerService.layer >+> ZLayer.fromZIO(setup)
+    ClickhouseContainerService.layerWithParallelism(5) >+> ZLayer.fromZIO(setup)
 }

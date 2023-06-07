@@ -19,7 +19,8 @@ protected[s3] class AvroPipe[E,
     config <- ZIO.service[Config]
     bucket <- config.taskS3Bucket
     location <- config.taskLocation
-    fileName <- zio.Random.nextUUID
+    randomUUID <- zio.Random.nextUUID
+    fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
     _ <- multipartUpload(
       bucket,
       s"${location}/${fileName}",

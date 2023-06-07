@@ -26,3 +26,20 @@ different sources the fastest and easiest possible way.
 
 # Getting started
 - [See example](examples/Readme.md)
+
+### Include APE in your build
+```scala
+val apeVersion = "3.0.0"
+
+libraryDependencies ++= Seq(
+  "com.libertexgroup" %% "ape-core" % apeVersion,
+  "com.libertexgroup" %% "ape-cassandra" % apeVersion,
+  "com.libertexgroup" %% "ape-clickhouse" % apeVersion,
+  "com.libertexgroup" %% "ape-jdbc" % apeVersion,
+  "com.libertexgroup" %% "ape-kafka" % apeVersion,
+  "com.libertexgroup" %% "ape-redis" % apeVersion,
+  "com.libertexgroup" %% "ape-rest" % apeVersion,
+  "com.libertexgroup" %% "ape-s3" % apeVersion,
+  "com.libertexgroup" %% "ape-websocket" % apeVersion,
+)
+```

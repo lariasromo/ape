@@ -1,19 +1,17 @@
 package ape.reader
 
 import ape.Ape
-import ape.Ape.Transition
 import ape.metrics.ApeMetrics._
 import ape.pipe.Pipe
 import ape.utils.Utils.:=
-import zio.ZIO
 import zio.stream.ZStream
+import zio.{Scope, ZIO}
 
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
 abstract class Reader[E, ZE, T: ClassTag]{
   def name:String = this.getClass.getSimpleName
-  def transitions: Seq[Transition] = Seq(Transition("|", name, implicitly[ClassTag[T]].runtimeClass.getSimpleName))
 
   protected[this] def read: ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
 
@@ -55,6 +53,8 @@ abstract class Reader[E, ZE, T: ClassTag]{
                           name:String="mapZ"
                         ): Reader[E, ZE, T2] = withZTransform(t, name)
 
+  def tap(t: T => ZIO[ZE, Throwable, T], name:String="tap"): Reader[E, ZE, T] = mapZ(s => s.tap(t), name)
+
   def safeGet[V :ClassTag]: Reader[E, ZE, V] = {
     implicit class ClassTagOps[U](val classTag: ClassTag[U]){
       def <<:(other: ClassTag[_]): Boolean = classTag.runtimeClass.isAssignableFrom(other.runtimeClass)
@@ -71,6 +71,10 @@ abstract class Reader[E, ZE, T: ClassTag]{
   def as[V :ClassTag]: Reader[E, ZE, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 
   def filter(predicate: T => Boolean, name:String="filter"): Reader[E, ZE, T] = mapZ(_.filter(predicate), name)
+
+  def +++[E2]( pipes: Pipe[E2, ZE, T, _]* ): ZStream[ZE with E with E2 with Scope, Throwable, T] = {
+    this --> Pipe.broadcast[E with E2, ZE, T](pipes : _*)
+  }
 }
 
 object Reader {

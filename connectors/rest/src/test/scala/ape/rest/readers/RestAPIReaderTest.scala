@@ -59,11 +59,11 @@ object RestAPIReaderTest extends ZIOSpecDefault{
         stream<- ape.rest.Readers.readers.byte(request).apply.provideLayer(zio.http.Client.default)
 
         data <- stream.runCollect
-      _<-  zio.Console.printLine("data:  " +data.toString)
+      _<-  ZIO.logInfo("data:  " +data.toString)
          //new String( data.toArray, StandardCharsets.UTF_16))
       } yield {
 
-         zio.Console.printLine("data:  " + data.toArray.toString)
+        ZIO.logInfo("data:  " + data.toArray.toString)
         assertTrue(data.nonEmpty)
         assertTrue(data.toArray.map(_.toChar).mkString == "{\"codeiso3\":\"COL\",\"bu\":\"BU LatAm\",\"code\":\"CO\",\"country\":\"Colombia\"}" )
       }

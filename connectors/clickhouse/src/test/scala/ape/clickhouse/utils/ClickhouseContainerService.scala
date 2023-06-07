@@ -31,24 +31,28 @@ object ClickhouseContainerService {
     _ <- runScoped("INSERT INTO dummy(a, b) VALUES ('value3', 'value4');")
   } yield ()
 
-  val clickhouseConfigLayer: ZLayer[ClickHouseContainer, Nothing, MultiClickhouseConfig] = ZLayer.fromZIO(
+  def clickhouseConfigLayer(parallelism: Int): ZLayer[ClickHouseContainer, Nothing, MultiClickhouseConfig] = ZLayer.fromZIO(
     for {
       container <- ZIO.service[ClickHouseContainer]
-    } yield MultiClickhouseConfig.makeFromCHConfig(
-      ClickhouseConfig(
-        batchSize = 100,
-        syncDuration = 1.minute,
-        host = container.getHost,
-        port = container.getMappedPort(8123),
-        databaseName = "default",
-        username = container.getUsername,
-        password = container.getPassword,
-        clusterName = None
-      )
+    } yield MultiClickhouseConfig
+      .makeFromCHConfig(
+        ClickhouseConfig(
+          batchSize = 100,
+          syncDuration = 1.minute,
+          host = container.getHost,
+          port = container.getMappedPort(8123),
+          databaseName = "default",
+          username = container.getUsername,
+          password = container.getPassword,
+        ), "", parallelism
     )
   )
 
-  val layer: ZLayer[Any, Throwable, MultiClickhouseConfig with ClickHouseContainer] = ZLayer.scoped {
+  def layerWithParallelism(parallelism: Int): ZLayer[Any, Throwable, MultiClickhouseConfig with ClickHouseContainer] = ZLayer.scoped {
     ZIO.acquireRelease(startContainer)(stopContainer)
-  } >+> clickhouseConfigLayer
+  } >+> clickhouseConfigLayer(parallelism)
+
+  def layer: ZLayer[Any, Throwable, MultiClickhouseConfig with ClickHouseContainer] = ZLayer.scoped {
+    ZIO.acquireRelease(startContainer)(stopContainer)
+  } >+> clickhouseConfigLayer(1)
 }

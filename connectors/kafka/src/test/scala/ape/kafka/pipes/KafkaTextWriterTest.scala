@@ -31,7 +31,7 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig] {
         for {
           stream <- ape.kafka.Readers.readers[KafkaConfig].string.apply
           data <- stream
-            .tap(d => zio.Console.printLine(d.value()))
+            .tap(d => ZIO.logInfo(d.value()))
             .runHead
         } yield {
           assertTrue(data.nonEmpty)
@@ -44,7 +44,7 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig] {
 
   val setup: ZIO[KafkaConfig, Throwable, Unit] = for {
     config <- ZIO.service[KafkaConfig]
-    _ <- zio.Console.printLine("Sending text message")
+    _ <- ZIO.logInfo("Sending text message")
     _ <- ape.kafka.Pipes.pipes[KafkaConfig].string.default.write(data(config.topicName))
   } yield ()
 
