@@ -6,7 +6,6 @@ import ape.s3.models.{S3ConfigTest, dummy}
 import ape.s3.utils.MinioContainer.MinioContainer
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import zio.Console.printLine
 import zio.s3.errors.ConnectionError
 import zio.s3.{S3, UploadOptions, createBucket, putObject}
 import zio.stream.ZStream
@@ -59,7 +58,7 @@ object MinioContainerService {
   def createBBucket: ZIO[S3 with S3Config, Throwable, String] = for {
     s3Config <- ZIO.service[S3Config]
     bucket <- s3Config.taskS3Bucket
-    _ <- createBucket(bucket).catchAll(ex => printLine(ex.getMessage))
+    _ <- createBucket(bucket).catchAll(ex => ZIO.logError(ex.getMessage))
   } yield bucket
 
   def loadSampleData: ZIO[S3 with S3Config, Throwable, Unit] =  for {

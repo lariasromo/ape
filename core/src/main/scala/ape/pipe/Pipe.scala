@@ -1,6 +1,5 @@
 package ape.pipe
 
-import ape.Ape.Transition
 import ape.metrics.ApeMetrics._
 import ape.pipe.Pipe.concatenate
 import ape.utils.Utils.{:=, reLayer}
@@ -14,11 +13,6 @@ abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
   def name:String = this.getClass.getSimpleName
 
   protected[this] def pipe(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]]
-
-  def transitions: Seq[Transition] = Seq(
-    Transition(
-      implicitly[ClassTag[T0]].runtimeClass.getSimpleName, name, implicitly[ClassTag[T]].runtimeClass.getSimpleName
-    ))
 
   def apply(i: ZStream[ZE, Throwable, T0]): ZIO[E, Throwable, ZStream[ZE, Throwable, T]] =
     pipe(i).flatMap(s => ZIO.succeed(s.withMetrics(name)))
@@ -46,7 +40,7 @@ abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
     Pipe.concatenate(this, that)
 
   def withTransform[T2: ClassTag](t: T => T2, name:String="withTransform"): Pipe[E, ZE, T0, T2] =
-    Pipe.TTPipe(this, t, name)
+    new TTPipe(this, t, name)
 
   def map[T2: ClassTag](t: T => T2, name:String="map"): Pipe[E, ZE, T0, T2] =
     withTransform(t, name)
@@ -83,6 +77,8 @@ abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
   def ***[T2: ClassTag](implicit t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2]): Pipe[E, ZE, T0, T2] =
     withZTransform(t)
 
+  def tap(t: T => ZIO[ZE, Throwable, T], name:String="tap"): Pipe[E, ZE, T0, T] = mapZ(s => s.tap(t), name)
+
   def contramapZ[T00: ClassTag](t: ZStream[ZE, Throwable, T00] => ZStream[ZE, Throwable, T0], name:String="contramapZ"):
     Pipe[E, ZE, T00, T] = concatenate(new UnitZPipe(t, name), this)
 
@@ -101,26 +97,42 @@ abstract class Pipe[-E, ZE, T0: ClassTag, T: ClassTag]{
   def as[V :ClassTag]: Pipe[E, ZE, T0, V] = map(x => Try(x.asInstanceOf[V]).toOption).safeGet[V]
 
   def filter(predicate: T => Boolean, name:String="filter"): Pipe[E, ZE, T0, T] = mapZ(_.filter(predicate), name)
+
+  def +++[E2]( pipes: Pipe[E2, ZE, T0, _]* ): Pipe[E with E2 with ZE with Scope, ZE, T0, T0] = {
+    val ps: Seq[Pipe[E with E2, ZE, T0, _]] = Seq(this) ++ pipes
+    Pipe.broadcast[E with E2, ZE, T0](ps : _*)
+  }
 }
 
 
 object Pipe {
+  def broadcast[E, ZE, T0: ClassTag]( pipes: Pipe[E, ZE, T0, _]* ):
+  Pipe[E with ZE with Scope, ZE, T0, T0] =
+    new Pipe[ZE with E with Scope, ZE, T0, T0] {
+      override protected[this] def pipe(i: ZStream[ZE, Throwable, T0]):
+        ZIO[ZE with E with Scope, Throwable, ZStream[ZE, Throwable, T0]]  =
+        for {
+          inputStreamCopies <- i.broadcast(pipes.length, 100)
+          _ <- ZIO.foreach(
+            inputStreamCopies.zip(pipes)
+          ) {
+            case (sourceStream, pipe) => for {
+              s <- pipe(sourceStream)
+              _ <- s.runDrain.fork
+            } yield ()
+          }
+        } yield i
+    }
+
   def broadcastOp[E, E2, ZE, T0 :ClassTag, T :ClassTag, T2 :ClassTag, T3 :ClassTag](
-           writer1: Pipe[E, ZE, T0, T],
-           writer2: Pipe[E2, ZE, T0, T2],
-           op: (ZStream[ZE, Throwable, T], ZStream[ZE, Throwable, T2]) => ZStream[ZE, Throwable, T3],
-           n:String="broadcastOp",
-           maximumLag: Int=100,
-      ): Pipe[E with E2 with ZE with Scope, ZE, T0, T3] =
+       writer1: Pipe[E, ZE, T0, T],
+       writer2: Pipe[E2, ZE, T0, T2],
+       op: (ZStream[ZE, Throwable, T], ZStream[ZE, Throwable, T2]) => ZStream[ZE, Throwable, T3],
+       n:String="broadcastOp",
+       maximumLag: Int=100,
+   ): Pipe[E with E2 with ZE with Scope, ZE, T0, T3] =
     new Pipe[E with E2 with ZE with Scope, ZE, T0, T3] {
       override def name: String = n
-
-      override val transitions: Seq[Transition] = writer1.transitions ++
-        Seq(
-          Transition(
-            implicitly[ClassTag[T]].runtimeClass.getSimpleName, n, implicitly[ClassTag[T3]].runtimeClass.getSimpleName
-          )
-        ) ++ writer2.transitions
 
       override protected[this] def pipe(i: ZStream[ZE, Throwable, T0]):
       ZIO[E with E2 with ZE with Scope, Throwable, ZStream[ZE, Throwable, T3]] =
@@ -133,10 +145,10 @@ object Pipe {
 
   //same input will be send to 2 writers, zipping the results and producing a tuple ot T and T2
   def zip[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
-       writer1: Pipe[E, ZE, T0, T],
-       writer2: Pipe[E2, ZE, T0, T2],
-       maximumLag: Int=1
-     ): Pipe[E with E2 with ZE with Scope, ZE, T0, (T, T2)] =
+                                                               writer1: Pipe[E, ZE, T0, T],
+                                                               writer2: Pipe[E2, ZE, T0, T2],
+                                                               maximumLag: Int=1
+                                                             ): Pipe[E with E2 with ZE with Scope, ZE, T0, (T, T2)] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 zip s2,
       s"{(${writer1.name}) ++ (${writer2.name})}",
@@ -145,10 +157,10 @@ object Pipe {
 
   //same input will be send to 2 writers and streams will be consumed sequentially this *> that
   def crossRight[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
-        writer1: Pipe[E, ZE, T0, T],
-        writer2: Pipe[E2, ZE, T0, T2],
-        maximumLag: Int=1
-      ): Pipe[E with E2 with ZE with Scope, ZE, T0, T2] =
+                                                                      writer1: Pipe[E, ZE, T0, T],
+                                                                      writer2: Pipe[E2, ZE, T0, T2],
+                                                                      maximumLag: Int=1
+                                                                    ): Pipe[E with E2 with ZE with Scope, ZE, T0, T2] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 *> s2,
       s"{(${writer1.name}) *> (${writer2.name})}",
@@ -157,22 +169,24 @@ object Pipe {
 
   //same input will be send to 2 writers and streams will be consumed sequentially this <*> that
   def cross[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
-       writer1: Pipe[E, ZE, T0, T],
-       writer2: Pipe[E2, ZE, T0, T2],
-       maximumLag: Int=1
-     ): Pipe[E with E2 with ZE with Scope, ZE, T0, Any] =
+                                                                 writer1: Pipe[E, ZE, T0, T],
+                                                                 writer2: Pipe[E2, ZE, T0, T2],
+                                                                 maximumLag: Int=1
+                                                               ): Pipe[E with E2 with ZE with Scope, ZE, T0, Any] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 <*> s2,
       s"{(${writer1.name}) <*> (${writer2.name})}",
       maximumLag
     )
 
+
+
   //same input will be send to 2 writers and streams will be consumed sequentially this <* that
   def crossLeft[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
-       writer1: Pipe[E, ZE, T0, T],
-       writer2: Pipe[E2, ZE, T0, T2],
-       maximumLag: Int=1
-     ): Pipe[E with E2 with ZE with Scope, ZE, T0, T] =
+                                                                     writer1: Pipe[E, ZE, T0, T],
+                                                                     writer2: Pipe[E2, ZE, T0, T2],
+                                                                     maximumLag: Int=1
+                                                                   ): Pipe[E with E2 with ZE with Scope, ZE, T0, T] =
     broadcastOp(writer1, writer2,
       (s1: ZStream[ZE, Throwable, T], s2: ZStream[ZE, Throwable, T2]) => s1 <* s2,
       s"{(${writer1.name}) <* (${writer2.name})}",
@@ -182,46 +196,46 @@ object Pipe {
   // output of a writer will be passed to the second writer then the output T will be passed to the second writer,
   // producing an output of T2
   def concatenate[E, E2, ZE, T0: ClassTag, T: ClassTag, T2: ClassTag](
-       writer1: Pipe[E, ZE, T0, T],
-       writer2: Pipe[E2, ZE, T, T2]
-     ): Pipe[E with E2, ZE, T0, T2] =
-    UnitPipe( i =>
+                                                                       writer1: Pipe[E, ZE, T0, T],
+                                                                       writer2: Pipe[E2, ZE, T, T2]
+                                                                     ): Pipe[E with E2, ZE, T0, T2] =
+    UnitWriter( i =>
       for {
         s <- writer1(i)
         s2 <- writer2(s)
       } yield s2
     )
 
-  def TTPipe[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
-           w: Pipe[E, ZE, T0, T1],
-           t:T1=>T2,
-           n:String="TTWriter"
-      )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T0, T2] =
+  def TTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
+                                                                 w: Pipe[E, ZE, T0, T1],
+                                                                 t:T1=>T2,
+                                                                 n:String="TTWriter"
+              )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T0, T2] =
     new TTPipe[E, ZE, T0, T1, T2](w, t, n)
 
-  def UnitPipe[E, ZE, T: ClassTag, T2: ClassTag] (
-       t: ZStream[ZE, Throwable, T] => ZIO[E, Throwable, ZStream[ZE, Throwable, T2]],
-       n:String = "UnitWriter"
-     )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
+  def UnitWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+                 t: ZStream[ZE, Throwable, T] => ZIO[E, Throwable, ZStream[ZE, Throwable, T2]],
+                 n:String = "UnitWriter"
+               )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
     new UnitPipe[E, ZE, T, T2](t, n)
 
-  def UnitZPipe[E, ZE, T: ClassTag, T2: ClassTag] (
-        t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
-        n:String = "UnitZWriter"
-      )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
+  def UnitZWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+                  t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
+                  n:String = "UnitZWriter"
+                )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
     new UnitZPipe[E, ZE, T, T2](t, n)
 
-  def UnitTPipe[E, ZE, T: ClassTag, T2: ClassTag] (
-        t: T => T2,
-        n:String = "UnitTWriter"
-      )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
+  def UnitTWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+                  t: T => T2,
+                  n:String = "UnitTWriter"
+                )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
     new UnitTPipe[E, ZE, T, T2](t, n)
 
-  def ZTPipe[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
-        i: Pipe[E, ZE, T0, T1],
-        t:ZStream[ZE, Throwable, T1] => ZStream[ZE, Throwable, T2],
-        n:String="ZTWriter"
-     )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T0, T2] =
+  def ZTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
+                  i: Pipe[E, ZE, T0, T1],
+                  t:ZStream[ZE, Throwable, T1] => ZStream[ZE, Throwable, T2],
+                  n:String="ZTWriter"
+                 )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T0, T2] =
     new ZTPipe[E, ZE, T0, T1, T2](i, t, n)
 }
 

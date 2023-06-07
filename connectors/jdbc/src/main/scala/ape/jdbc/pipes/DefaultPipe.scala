@@ -33,11 +33,22 @@ protected[jdbc] class DefaultPipe[ET,
     for {
       config <- ZIO.service[Config]
       errors = i
-        .groupedWithin(config.batchSize, config.syncDuration)
-        .mapZIO(batch => for {
-          error <- ZIO.scoped(for {
-            error <- insertBatch(batch).provideSomeLayer(ZLayer.succeed(config))
-          } yield error )
-        } yield error )
+        .grouped(config.batchSize * config.parallelism)
+        .flatMap{ batch => {
+          ZStream.fromIterable {
+            {
+              val batchSpliced: Chunk[Chunk[Model]] = batch.split(config.parallelism)
+              val indexes: Seq[Int] = (1 to config.parallelism)
+              batchSpliced zip indexes
+            }
+              .map { case (batch, i) => (i, batch.length, insertBatch(batch).provideSomeLayer(ZLayer.succeed(config))) }
+          }.mapZIOParByKey(_._1) {
+            case (ix: Int, size: Int, eff: ZIO[Nothing, Throwable, Chunk[Model]]) =>
+              for {
+                _ <- ZIO.logInfo(s"Inserting batch on parallel index $ix and a batch size of $size")
+                eff <- ZIO.scoped(eff)
+              } yield eff
+          }
+        }}
     } yield errors
 }

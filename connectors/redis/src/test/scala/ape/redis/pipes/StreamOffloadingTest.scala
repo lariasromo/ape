@@ -5,7 +5,6 @@ import ape.reader.Reader
 import ape.redis.configs.RedisConfig
 import ape.redis.utils.RedisContainerService
 import com.redis.testcontainers.RedisContainer
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{EnvironmentTag, Scope, ZIO, ZIOApp, ZIOAppArgs, ZLayer, durationInt}
 
@@ -18,13 +17,13 @@ object StreamOffloadingTest extends ZIOApp {
   val writer1 = Pipe.UnitZPipe[Any, Any, Int, Int](s =>
     s.groupedWithin(100000, 1.seconds)
       .map(c => c.sum)
-      .tap(s => printLine("First sum: " + s))
+      .tap(s => ZIO.logInfo("First sum: " + s))
   )
 
   val writer2 = Pipe.UnitZPipe[Any, Any, Int, Int](s =>
     s.groupedWithin(100, 10.seconds)
       .map(c => c.sum)
-      .tap(s => printLine("Second sum: " + s))
+      .tap(s => ZIO.logInfo("Second sum: " + s))
   )
 
   val pipeWithBackPressure =

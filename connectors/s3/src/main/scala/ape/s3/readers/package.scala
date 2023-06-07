@@ -5,9 +5,9 @@ import ape.s3.models.CompressionType._
 import ape.utils.AvroUtils.implicits._
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import software.amazon.awssdk.services.s3.model.S3Exception
-import zio.{Tag, ZIO}
 import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.{ZPipeline, ZStream}
+import zio.{Tag, ZIO}
 
 package object readers {
   type S3FileWithContent[T] = (S3ObjectSummary, ZStream[Any, Throwable, T])

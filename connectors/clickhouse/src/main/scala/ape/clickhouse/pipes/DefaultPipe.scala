@@ -4,7 +4,6 @@ import ape.clickhouse.configs.{ClickhouseConfig, MultiClickhouseConfig}
 import ape.clickhouse.models.ClickhouseModel
 import ape.clickhouse.utils.ClickhouseJDBCUtils.runConnect
 import com.clickhouse.jdbc.ClickHouseConnection
-import zio.Console.printLine
 import zio.stream.ZStream
 import zio.{Chunk, Tag, ZIO, ZLayer}
 
@@ -38,22 +37,36 @@ protected[clickhouse] class DefaultPipe[ET, T <:ClickhouseModel :ClassTag, Confi
     errors <- runConnect(insertRetrieveResults(batch))
       .catchAll{ error => {
           for {
-            _ <- printLine(error.getMessage).catchAll(_=>ZIO.unit)
+            _ <- ZIO.logError(error.getMessage)
           } yield batch.map(t => (t, Statement.EXECUTE_FAILED)) // if the whole batch failed, mark all rows as failed
         }
       }
   } yield errors
 
+  def cross[X, Y](xs: Iterable[X], ys: Iterable[Y]): Iterable[(X, Y)] = for {x <- xs; y <- ys} yield (x, y)
+
   override protected[this] def pipe(i: ZStream[ET, Throwable, T]):
     ZIO[Config, Throwable, ZStream[ET, Throwable, Chunk[(T, Int)]]] = for {
     config <- ZIO.service[Config]
     r = i
-      .grouped(config.chConfigs.length * config.chConfigs.head.batchSize)
+      .grouped(config.chConfigs.length * config.chConfigs.head.batchSize * config.parallelism)
       .flatMap{ batch => {
-        ZStream.fromIterable{
-          config.chConfigs.zip(batch.split(config.chConfigs.length))
-            .map { case (config, batch) => insertBatch(batch).provideSomeLayer(ZLayer.succeed(config)) }
-        }.mapZIOPar(config.chConfigs.length)(x => ZIO.scoped(x))
+        ZStream.fromIterable {
+          {
+            val batchSpliced: Chunk[Chunk[T]] = batch.split(config.chConfigs.length * config.parallelism)
+            val indexes: Seq[Int] = (1 to config.parallelism)
+            val configWithParallelism: List[(ClickhouseConfig, Int)] = cross(config.chConfigs, indexes).toList
+            batchSpliced zip configWithParallelism
+          }
+            .map { case (batch, (config, i)) => ((config,i), batch.length, insertBatch(batch).provideSomeLayer(ZLayer.succeed(config))) }
+        }.mapZIOParByKey(_._1) {
+          case (((config: ClickhouseConfig, ix: Int), size: Int, eff: ZIO[Any, Nothing, Chunk[(T, Int)]])) =>
+            for {
+              _ <- ZIO.logInfo(s"Inserting batch on parallel index $ix for CH instance ${config.host} and a batch size " +
+                s"of $size")
+              eff <- ZIO.scoped(eff)
+            } yield eff
+        }
       }}
   } yield r
 }

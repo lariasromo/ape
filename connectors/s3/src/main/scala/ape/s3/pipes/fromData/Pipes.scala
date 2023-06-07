@@ -4,8 +4,8 @@ import ape.pipe.Pipe
 import ape.s3.configs.S3Config
 import ape.utils.Utils.:=
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
+import zio.Tag
 import zio.s3.S3
-import zio.{Duration, Tag}
 
 import scala.reflect.ClassTag
 

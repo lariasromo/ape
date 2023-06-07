@@ -5,7 +5,7 @@ import ape.kafka.models.dummy
 import ape.kafka.utils.KafkaContainerService
 import com.dimafeng.testcontainers.KafkaContainer
 import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
-import zio.{Scope, ZLayer}
+import zio.{Scope, ZIO, ZLayer}
 
 object KafkaJsonReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
   val reader = ape.kafka.Readers.readers[KafkaConfig].jsonCirce[dummy]
@@ -14,13 +14,11 @@ object KafkaJsonReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
     suite("KafkaJsonReaderTest")(
       test("Reads plaintext message") {
         for {
-          _ <- zio.Console.printLine("Sending text message")
+          _ <- ZIO.logInfo("Sending text message")
           _ <- KafkaContainerService.sendJsonMessage
           stream <- reader.apply
           data <- stream
-            .tap(d => {
-              zio.Console.printLine(d.value())
-            })
+            .tap(d => ZIO.logInfo(d.value()))
             .runHead
         } yield {
           assertTrue(data.nonEmpty)

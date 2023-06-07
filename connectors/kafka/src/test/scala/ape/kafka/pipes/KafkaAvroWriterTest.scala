@@ -41,7 +41,7 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
 
   val setup: ZIO[KafkaConfig, Throwable, Unit] = for {
     config <- ZIO.service[KafkaConfig]
-    _ <- zio.Console.printLine("Sending dummy message")
+    _ <- ZIO.logInfo("Sending dummy message")
     _ <- ape.kafka.Pipes.pipes[KafkaConfig].avro.of[dummy].write(data(config.topicName))
   } yield ()
 

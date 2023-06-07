@@ -1,6 +1,6 @@
 package ape.clickhouse.configs
 
-import zio.System.{env, envOrElse}
+import zio.System.envOrElse
 import zio.{Duration, ZIO, ZLayer, durationInt}
 
 import scala.util.Try
@@ -13,7 +13,6 @@ case class ClickhouseConfig(
                              databaseName: String,
                              username: String,
                              password: String,
-                             clusterName: Option[String],
                              socketTimeout: Duration = 3.minutes
   ){
   val jdbcUrl = s"jdbc:clickhouse://$host:$port/$databaseName"
@@ -23,7 +22,6 @@ object ClickhouseConfig {
   def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, ClickhouseConfig] = ZLayer(make(prefix))
 
   def make(prefix:Option[String]=None): ZIO[Any, SecurityException, ClickhouseConfig] = for {
-    clusterName <- env(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_CLUSTER_NAME")
     syncDuration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_SYNC_DURATION", "5")
     batchSize <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_BATCH_SIZE", "10000")
     host <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CLICKHOUSE_HOST", "")
@@ -40,7 +38,6 @@ object ClickhouseConfig {
     databaseName = databaseName,
     username = username,
     password = password,
-    clusterName = clusterName,
     socketTimeout = Try(socketTimeout.toInt.seconds).toOption.getOrElse(3.minutes),
   )
 }
