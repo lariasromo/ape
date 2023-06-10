@@ -7,25 +7,25 @@ different sources the fastest and easiest possible way.
 
 ## Resources
 ### General descriptions
-- [Ape interface](examples/docs/Ape.md)
-- [Reader interface](examples/docs/Readers.md)
-- [Pipe interface](examples/docs/Pipes.md)
-- [Config interface](examples/docs/Configs.md)
+- [Ape interface](docs/Ape.md)
+- [Reader interface](docs/Readers.md)
+- [Pipe interface](docs/Pipes.md)
+- [Config interface](docs/Configs.md)
 
 ### List of available connectors with configs
-- [List of Config classes](examples/docs/ConfigList.md)
-- [List of Readers](examples/docs/ReaderList.md)
-- [List of pipes](examples/docs/PipeList.md)
+- [List of Config classes](docs/ConfigList.md)
+- [List of Readers](docs/ReaderList.md)
+- [List of pipes](docs/PipeList.md)
 
 ### Advanced features
-- [Pipe operations](examples/docs/PipeOps.md)
-- [Read operations](examples/docs/ReaderOps.md)
-- [Ape Metrics](examples/docs/Metrics.md)
-- [S3 file readers](examples/docs/S3FileReaders.md)
-- [Back pressure](examples/docs/BackPressure.md)
+- [Pipe operations](docs/PipeOps.md)
+- [Read operations](docs/ReaderOps.md)
+- [Ape Metrics](docs/Metrics.md)
+- [S3 file readers](docs/S3FileReaders.md)
+- [Back pressure](docs/BackPressure.md)
 
 # Getting started
-- [See example](examples/Readme.md)
+- [See example](Readme.md)
 
 ### Include APE in your build
 ```scala

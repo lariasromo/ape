@@ -199,42 +199,42 @@ object Pipe {
                                                                        writer1: Pipe[E, ZE, T0, T],
                                                                        writer2: Pipe[E2, ZE, T, T2]
                                                                      ): Pipe[E with E2, ZE, T0, T2] =
-    UnitWriter( i =>
+    UnitPipe( i =>
       for {
         s <- writer1(i)
         s2 <- writer2(s)
       } yield s2
     )
 
-  def TTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
+  def TTPipe[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
                                                                  w: Pipe[E, ZE, T0, T1],
                                                                  t:T1=>T2,
-                                                                 n:String="TTWriter"
+                                                                 n:String="TTPipe"
               )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T0, T2] =
     new TTPipe[E, ZE, T0, T1, T2](w, t, n)
 
-  def UnitWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+  def UnitPipe[E, ZE, T: ClassTag, T2: ClassTag] (
                  t: ZStream[ZE, Throwable, T] => ZIO[E, Throwable, ZStream[ZE, Throwable, T2]],
-                 n:String = "UnitWriter"
+                 n:String = "UnitPipe"
                )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
     new UnitPipe[E, ZE, T, T2](t, n)
 
-  def UnitZWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+  def UnitZPipe[E, ZE, T: ClassTag, T2: ClassTag] (
                   t: ZStream[ZE, Throwable, T] => ZStream[ZE, Throwable, T2],
-                  n:String = "UnitZWriter"
+                  n:String = "UnitZPipe"
                 )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
     new UnitZPipe[E, ZE, T, T2](t, n)
 
-  def UnitTWriter[E, ZE, T: ClassTag, T2: ClassTag] (
+  def UnitTPipe[E, ZE, T: ClassTag, T2: ClassTag] (
                   t: T => T2,
-                  n:String = "UnitTWriter"
+                  n:String = "UnitTPipe"
                 )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T, T2] =
     new UnitTPipe[E, ZE, T, T2](t, n)
 
-  def ZTWriter[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
+  def ZTPipe[E, ZE, T0: ClassTag, T1: ClassTag, T2: ClassTag](
                   i: Pipe[E, ZE, T0, T1],
                   t:ZStream[ZE, Throwable, T1] => ZStream[ZE, Throwable, T2],
-                  n:String="ZTWriter"
+                  n:String="ZTPipe"
                  )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T0, T2] =
     new ZTPipe[E, ZE, T0, T1, T2](i, t, n)
 }

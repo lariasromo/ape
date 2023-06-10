@@ -1,6 +1,5 @@
 package ape.datahub
 
-import ape.datahub.DatahubDataset.{dataHubDesc, withDHDescription}
 import ape.datahub.configs.DatahubConfig
 import ape.datahub.models.DummyModels._
 import ape.datahub.pipe.RestEmitterPipe
@@ -34,5 +33,12 @@ object RestEmitterTest extends ZIOSpec[DatahubConfig] {
       }
     }
 
-  override def bootstrap: ZLayer[Any, Any, DatahubConfig] = ZLayer.succeed(DatahubConfig(fabricType = FabricType.DEV))
+  override def bootstrap: ZLayer[Any, Any, DatahubConfig] = ZLayer.succeed(
+    DatahubConfig(
+      fabricType = FabricType.DEV,
+      tags = Seq("restTest", "ZIO", "happy", "alexandria")
+//      restEmitterUrl = "https://datahub.qa-env.com",
+//      restEmitterToken = "eyJhbGciOiJIUzI1NiJ9.eyJhY3RvclR5cGUiOiJVU0VSIiwiYWN0b3JJZCI6ImRhdGFodWJfZ3Vlc3QiLCJ0eXBlIjoiUEVSU09OQUwiLCJ2ZXJzaW9uIjoiMiIsImp0aSI6ImQzZjUzZTA0LTJhZjYtNGNkMi04MWJiLTUxMjAyYzc3MTBmYiIsInN1YiI6ImRhdGFodWJfZ3Vlc3QiLCJleHAiOjE2ODg5MjgyODEsImlzcyI6ImRhdGFodWItbWV0YWRhdGEtc2VydmljZSJ9.quUz-0I8UgNTypp_WhFbaMkLDBPx-dAhUCwy5MxDWM8"
+    )
+  )
 }
