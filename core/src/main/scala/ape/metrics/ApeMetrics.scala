@@ -70,8 +70,8 @@ object ApeMetrics {
 
   class StreamWithMetrics[ZE, T](stream: ZStream[ZE, Throwable, T]){
     def withMetrics(pipeName: String): ZStream[ZE, Throwable, T] = stream
-      .tap(_ => ZIO.unit @@ ApeMetrics.apeCountPipe(pipeName))
-      .tap(_ => ZIO.unit @@ ApeMetrics.apeCountAll)
+      .tap(_ => ZIO.unit @@ apeCountPipe(pipeName))
+      .tap(_ => ZIO.unit @@ apeCountAll)
   }
 
   implicit def streamWithMetrics[ZE, T]: ZStream[ZE, Throwable, T] => StreamWithMetrics[ZE, T] = s =>

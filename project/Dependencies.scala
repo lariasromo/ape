@@ -60,7 +60,8 @@ object Dependencies {
 
   val dataHubLibraries = Seq(
     "io.acryl" % "datahub-client" % "0.10.3-1rc1",
-    "org.apache.httpcomponents" % "httpasyncclient" % "4.1.5"
+    "org.apache.httpcomponents" % "httpasyncclient" % "4.1.5",
+    "com.github.java-json-tools" % "json-schema-avro" % "0.1.8"
   )
 
   val testLibraries = Seq(
