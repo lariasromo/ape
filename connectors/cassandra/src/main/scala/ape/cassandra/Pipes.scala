@@ -16,8 +16,8 @@ protected[cassandra] class Pipes[Config <: CassandraConfig :Tag]() {
     (implicit default: E := Any, default2: Model := CassandraModel): Pipe[Config, E, Model, Chunk[AsyncResultSet]] =
     new DefaultPipe[E, Config, Model]
 
-  def lookup[E, T, Model <: CassandraLookupModel[T] :Tag :ClassTag]: Pipe[Config, E, Model, (Model, Chunk[T])] =
-    LookupPipe.lookup[Config, E, T, Model]
+  def lookup[E, Model <: CassandraLookupModel[T] :Tag :ClassTag, T]: Pipe[Config, E, Model, (Model, Chunk[T])] =
+    LookupPipe.lookup[Config, E, Model, T]
 }
 
 object Pipes {
