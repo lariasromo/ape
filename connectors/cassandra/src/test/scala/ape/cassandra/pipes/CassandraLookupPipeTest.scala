@@ -29,7 +29,7 @@ object CassandraLookupPipeTest extends ZIOSpec[CassandraConfig with CassandraCon
   val sampleData: ZStream[Any, Throwable, dummy] = ZStream.fromChunk(sampleRecords)
 
   val writer = ape.cassandra.Pipes.pipes[CassandraConfig].default[Any, dummy]
-  val lookupWriter = ape.cassandra.Pipes.pipes[CassandraConfig].lookup[Any, dummy, LookupModel]
+  val lookupWriter = ape.cassandra.Pipes.pipes[CassandraConfig].lookup[Any, LookupModel, dummy]
   val reader = Reader.UnitReader(ZStream.fromChunk(lookupRecords))
 
   override def spec: Spec[CassandraConfig with CassandraContainer with TestEnvironment with Scope, Any] =
