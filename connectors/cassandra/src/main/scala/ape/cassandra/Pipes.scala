@@ -17,7 +17,7 @@ protected[cassandra] class Pipes[Config <: CassandraConfig :Tag]() {
     new DefaultPipe[E, Config, Model]
 
   def lookup[E, T, Model <: CassandraLookupModel[T] :Tag :ClassTag]: Pipe[Config, E, Model, (Model, Chunk[T])] =
-    new LookupPipe[E, Config, T, Model].mapZ(_.flatMap(x=>ZStream.fromChunk(x)))
+    LookupPipe.lookup[Config, E, T, Model]
 }
 
 object Pipes {
