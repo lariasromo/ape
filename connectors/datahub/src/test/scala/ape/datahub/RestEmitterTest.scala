@@ -46,7 +46,7 @@ object RestEmitterTest extends ZIOSpec[DatahubConfig] {
       fabricType = FabricType.DEV,
       tags = Seq("restTest", "ZIO", "happy", "alexandria"),
       restEmitterUrl = "https://datahub-gms.qa-env.com:443",
-      restEmitterToken = ""
+      restEmitterToken = "eyJhbGciOiJIUzI1NiJ9.eyJhY3RvclR5cGUiOiJVU0VSIiwiYWN0b3JJZCI6ImRhdGFodWIiLCJ0eXBlIjoiUEVSU09OQUwiLCJ2ZXJzaW9uIjoiMiIsImp0aSI6ImM1ZmVlMzFkLWU0MDQtNDQ2Ny1hMzRkLWZmN2I0MDJiMjA3OCIsInN1YiI6ImRhdGFodWIiLCJpc3MiOiJkYXRhaHViLW1ldGFkYXRhLXNlcnZpY2UifQ.GOCMRa6KujhQvR6WtUD1eeRvyBe6ojzCfN9TYnGvMmc"
     )
   )
 }
