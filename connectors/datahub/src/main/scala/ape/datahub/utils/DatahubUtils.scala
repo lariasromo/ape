@@ -1,21 +1,25 @@
 package ape.datahub.utils
 
 import ape.datahub.configs.DatahubConfig
-import com.linkedin.common.urn.{DataPlatformUrn, DatasetUrn, TagUrn, Urn}
-import com.linkedin.common.{AuditStamp, FabricType, GlobalTags, TagAssociation, TagAssociationArray}
+import ape.datahub.pipe.EmitterMechanism
+import ape.datahub.pipe.EmitterMechanism.EmitterMechanism
+import com.linkedin.common.urn.{DataPlatformUrn, DatasetUrn, TagUrn}
+import com.linkedin.common.{FabricType, GlobalTags, TagAssociation, TagAssociationArray}
+import com.linkedin.data.template.SetMode
+import com.linkedin.dataset.{DatasetLineageType, Upstream, UpstreamArray, UpstreamLineage}
 import com.linkedin.schema.SchemaFieldDataType.Type
 import com.linkedin.schema.SchemaMetadata.PlatformSchema
 import com.linkedin.schema._
 import com.sksamuel.avro4s.{AvroSchema, SchemaFor}
-import datahub.client.MetadataWriteResponse
 import datahub.client.kafka.KafkaEmitter
 import datahub.client.rest.RestEmitter
+import datahub.client.{Emitter, MetadataWriteResponse}
 import datahub.event.MetadataChangeProposalWrapper
+import datahub.event.MetadataChangeProposalWrapper.MetadataChangeProposalWrapperBuilder
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
 import zio.ZIO
 
-import java.time.{LocalDateTime, ZoneOffset}
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.reflect.{ClassTag, classTag}
@@ -54,7 +58,36 @@ object DatahubUtils {
     fieldArray
   }
 
-  def getMCPs[T: ClassTag :SchemaFor](fabricType: FabricType = FabricType.DEV, tags:Seq[String] = Seq.empty) = {
+  def getLineageChangeProposal(
+                                upstreams: Seq[DatasetUrn],
+                                downstream: DatasetUrn
+                              ) = {
+    var upstreamTables = new UpstreamArray()
+    upstreams
+      .map(urn => {
+        new Upstream().setDataset(urn, SetMode.IGNORE_NULL).setType(DatasetLineageType.TRANSFORMED)
+      })
+      .foreach(upstreamTables.add)
+
+    val upstreamLineage = new UpstreamLineage().setUpstreams(upstreamTables)
+
+    val mcp = MetadataChangeProposalWrapper
+      .builder()
+      .entityType("dataset")
+      .entityUrn(downstream)
+      .upsert()
+      .aspect(upstreamLineage)
+      .build()
+
+    Seq(mcp)
+  }
+
+  def getDatasetChangeProposal[T: ClassTag :SchemaFor] (
+                                                         fabricType: FabricType = FabricType.DEV,
+                                                         tags:Seq[String] = Seq.empty
+                                                       ) =
+  {
+
     val datasetName = classTag[T].runtimeClass.getSimpleName
     val urn: DatasetUrn = new DatasetUrn(new DataPlatformUrn("ape"), datasetName, fabricType)
     val avroSchema = AvroSchema[T]
@@ -84,26 +117,33 @@ object DatahubUtils {
 
     val c1 = c.aspect(aspectSchema).build()
     val c2 = c.aspect(aspectTags).build()
-    Seq(c1, c2)
+    (urn, Seq(c1, c2))
   }
 
-  def emitRest[T: ClassTag :SchemaFor]: ZIO[DatahubConfig, Throwable, MetadataWriteResponse] = for {
-    dhConfig <- ZIO.service[DatahubConfig]
-    f <- {
-      val emitter = RestEmitter.create(dhConfig.getRestEmitterConfig)
-      getMCPs[T](dhConfig.fabricType, dhConfig.tags)
-        .map(mcp => ZIO.fromFuture{ implicit ec => Future(emitter.emit(mcp).get()) })
-        .reduce(_ *> _)
-    }
-  } yield f
+  def emitLineage(upstreams: Seq[DatasetUrn], downstream:DatasetUrn):
+    ZIO[DatahubConfig, Throwable, MetadataWriteResponse] =
+      for {
+        emitter <- getEmitter
+        resp <- getLineageChangeProposal(upstreams, downstream)
+          .map(mcp => ZIO.fromFuture{ implicit ec => Future(emitter.emit(mcp).get()) })
+          .reduce(_ *> _)
+      } yield resp
 
-  def emitKafka[T: ClassTag :SchemaFor]: ZIO[DatahubConfig, Throwable, MetadataWriteResponse] = for {
-    dhConfig <- ZIO.service[DatahubConfig]
-    f <- {
-      val emitter = new KafkaEmitter(dhConfig.getKafkaEmitterConfig)
-      getMCPs[T](dhConfig.fabricType, dhConfig.tags)
+  def emitDataset[T: ClassTag :SchemaFor]: ZIO[DatahubConfig, Throwable, (DatasetUrn, MetadataWriteResponse)] =
+    for {
+      dhConfig <- ZIO.service[DatahubConfig]
+      emitter <- getEmitter
+      resp = getDatasetChangeProposal[T](dhConfig.fabricType, dhConfig.tags)
+      asyncResp <- resp._2
         .map(mcp => ZIO.fromFuture{ implicit ec => Future(emitter.emit(mcp).get()) })
         .reduce(_ *> _)
-    }
-  } yield f
+    } yield (resp._1, asyncResp)
+
+
+  def getEmitter: ZIO[DatahubConfig, Nothing, Emitter] = for {
+    dhConfig <- ZIO.service[DatahubConfig]
+  } yield dhConfig.mechanism match {
+    case ape.datahub.pipe.EmitterMechanism.REST => RestEmitter.create(dhConfig.getRestEmitterConfig)
+    case ape.datahub.pipe.EmitterMechanism.KAFKA => new KafkaEmitter(dhConfig.getKafkaEmitterConfig)
+  }
 }

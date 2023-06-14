@@ -3,6 +3,7 @@ package ape.pipe
 import ape.metrics.ApeMetrics._
 import ape.pipe.Pipe.concatenate
 import ape.utils.Utils.{:=, reLayer}
+import com.sksamuel.avro4s.SchemaFor
 import zio.stream.ZStream
 import zio.{Scope, Tag, ZIO}
 
