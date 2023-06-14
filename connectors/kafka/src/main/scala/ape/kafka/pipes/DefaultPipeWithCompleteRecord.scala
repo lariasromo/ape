@@ -15,7 +15,7 @@ protected[kafka]  class DefaultPipeWithCompleteRecord [ET, Config <: KafkaConfig
     config <- ZIO.service[Config]
     s = i.tap(v => {
       val producerRecord =  new ProducerRecord[String,String](
-        config.topicName,  0,  v.key(), v.value(), v.headers()  )
+        config.topicName,  null,  v.key(), v.value(), v.headers()  )
       ZIO.scoped {
         Producer.produce[Any, String, String](
           record = producerRecord,
