@@ -14,13 +14,13 @@ object StreamOffloadingTest extends ZIOApp {
   val stream1 = ZStream.iterate(1)(_ + 1)
   //      .schedule(Schedule.spaced(1.millisecond))
 
-  val writer1 = Pipe.UnitZWriter[Any, Any, Int, Int](s =>
+  val writer1 = Pipe.UnitZPipe[Any, Any, Int, Int](s =>
     s.groupedWithin(100000, 1.seconds)
       .map(c => c.sum)
       .tap(s => ZIO.logInfo("First sum: " + s))
   )
 
-  val writer2 = Pipe.UnitZWriter[Any, Any, Int, Int](s =>
+  val writer2 = Pipe.UnitZPipe[Any, Any, Int, Int](s =>
     s.groupedWithin(100, 10.seconds)
       .map(c => c.sum)
       .tap(s => ZIO.logInfo("Second sum: " + s))

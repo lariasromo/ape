@@ -1,6 +1,10 @@
 import Dependencies._
 
-ThisBuild / version := "3.0.4.1"
+
+
+
+ThisBuild / version := "3.1.1.3"
+
 ThisBuild / scalaVersion := "2.13.10"
 
 lazy val commonSettings = Seq(
@@ -19,6 +23,14 @@ lazy val clickhouse = (project in file("connectors/clickhouse"))
   .settings(commonSettings,
     name := "ape-clickhouse",
     libraryDependencies ++= commonLibraries ++ clickhouseLibraries
+  )
+  .enablePlugins(JavaAppPackaging)
+  .dependsOn(core)
+
+lazy val datahub = (project in file("connectors/datahub"))
+  .settings(commonSettings,
+    name := "ape-datahub",
+    libraryDependencies ++= commonLibraries ++ dataHubLibraries
   )
   .enablePlugins(JavaAppPackaging)
   .dependsOn(core)

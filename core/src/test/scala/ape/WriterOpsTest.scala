@@ -12,20 +12,20 @@ import scala.reflect.ClassTag
 object WriterOpsTest extends ZIOSpec[Unit] {
   val stream = ZStream.apply("file1", "file2", "file3", "file4", "file5")
   val reader = Reader.UnitReader[Any, Any, String](stream)
-  val writer1 = Pipe.UnitZWriter[Any, Any, String, Unit](
+  val writer1 = Pipe.UnitZPipe[Any, Any, String, Unit](
     s => s.tap(i => printLine("InsertWithDlq: " + i) *> ZIO.succeed((1 to 1000000000).foreach(_ => ()))).map(_ => ())
   )
 
-  val writer10 = Pipe.UnitZWriter[Any, Any, String, String](
+  val writer10 = Pipe.UnitZPipe[Any, Any, String, String](
     s => s.tap(i => printLine("Read: " + i))
   )
-  val writer11 = Pipe.UnitZWriter[Any, Any, String, Unit](
+  val writer11 = Pipe.UnitZPipe[Any, Any, String, Unit](
     s => s.tap(i => printLine("Insert: " + i)).map(_ => ())
   )
-  val writer12 = Pipe.UnitZWriter[Any, Any, Unit, Unit](
+  val writer12 = Pipe.UnitZPipe[Any, Any, Unit, Unit](
     s => s.tap(_ => printLine("Dlq ")).map(_ => ())
   )
-  val writer2 = Pipe.UnitZWriter[Any, Any, String, Unit](
+  val writer2 = Pipe.UnitZPipe[Any, Any, String, Unit](
     s => s.tap(i => printLine("Counting: " + i)).map(_ => ())
   )
 

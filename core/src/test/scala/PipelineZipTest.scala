@@ -28,22 +28,22 @@ object PipelineZipTest extends ZIOSpecDefault {
   )
 
 
-  val pipeVasil = Pipe.UnitZWriter[Any, Any, Person, Vasil](s =>
+  val pipeVasil = Pipe.UnitZPipe[Any, Any, Person, Vasil](s =>
     s.tap(p => printLine("Vasil: " + p.name)).map(p => Vasil(p .name))
   )
     .filter(p=>Seq("a", "d") contains p.name)
 
-  val pipeLuis = Pipe.UnitZWriter[Any, Any, Person, Luis](s =>
+  val pipeLuis = Pipe.UnitZPipe[Any, Any, Person, Luis](s =>
     s.tap(p => printLine("Luis: " + p.name)).map(p => Luis(p.name))
   )
     .filter(p=>Seq("b", "e", "a") contains p.name)
 
-  val pipeTopi = Pipe.UnitZWriter[Any, Any, Person, Topi](s =>
+  val pipeTopi = Pipe.UnitZPipe[Any, Any, Person, Topi](s =>
     s.tap(p => printLine("Topi: " + p.name)).map(p => Topi(p.name))
   )
     .filter(p=>Seq("c", "f", "d") contains p.name)
 
-  val pipeSergey = Pipe.UnitZWriter[Any, Any, Person, Sergey](s =>
+  val pipeSergey = Pipe.UnitZPipe[Any, Any, Person, Sergey](s =>
     s.tap(p => printLine("Sergey: " + p.name)).map(p => Sergey(p.name))
   )
     .filter(p=>Seq("g", "h", "b") contains p.name)
