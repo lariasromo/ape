@@ -50,8 +50,7 @@ object CassandraContainerService {
 
   val stopContainer: CassandraContainer => UIO[Unit] = c => ZIO.succeedBlocking(c.stop())
 
-
-  val cassandraConfigLayer: ZLayer[CassandraContainer, Throwable, CassandraConfig] = ZLayer.fromZIO(
+  lazy val makeCassandraConfig: ZIO[CassandraContainer, CassandraException, CassandraConfig] =
     for {
       container <- ZIO.service[CassandraContainer]
       config = CassandraConfig(
@@ -66,9 +65,14 @@ object CassandraContainerService {
       keyspace = "test"
       _ <- createKeyspace(keyspace).provideSomeLayer(ZLayer.succeed(config))
     } yield config.copy(keyspace = "test")
-  )
 
-  val layer: ZLayer[Any, Throwable, CassandraConfig with CassandraContainer] = ZLayer.scoped {
+  lazy val cassandraConfigLayer: ZLayer[CassandraContainer, Throwable, CassandraConfig] = ZLayer.fromZIO(makeCassandraConfig)
+
+  lazy val layer: ZLayer[Any, Throwable, CassandraConfig with CassandraContainer] = ZLayer.scoped {
     ZIO.acquireRelease(startContainer)(stopContainer)
   }  >+> cassandraConfigLayer
+
+  lazy val containerLayer: ZLayer[Any, Throwable, CassandraContainer] = ZLayer.scoped {
+    ZIO.acquireRelease(startContainer)(stopContainer)
+  }
 }
