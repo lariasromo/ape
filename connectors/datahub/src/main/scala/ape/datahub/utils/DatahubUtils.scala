@@ -26,6 +26,32 @@ import scala.reflect.{ClassTag, classTag}
 
 object DatahubUtils {
 
+  def createDataset[A :SchemaFor :ClassTag]: ZIO[DatahubConfig, Throwable, DatasetUrn] = for {
+    _ <-  ZIO.logInfo("Dataset Name: " + classTag[A].runtimeClass.getSimpleName)
+    resp <- DatahubUtils.emitDataset[A]
+    (urn, emitResp) = resp
+    _ <- if(emitResp.isSuccess){
+      ZIO.logInfo("Successfully emitted metadata event") *>
+        ZIO.logInfo(emitResp.toString) *>
+        ZIO.logInfo(emitResp.getResponseContent)
+    } else {
+      ZIO.logError("Failed to emit metadata event") *>
+        ZIO.logError(emitResp.getUnderlyingResponse.toString)
+    }
+  } yield urn
+
+  def createLineage(upstreams:Seq[DatasetUrn], downstream:DatasetUrn): ZIO[DatahubConfig, Throwable, MetadataWriteResponse] = for {
+    lineageResp <- DatahubUtils.emitLineage(upstreams, downstream)
+    _ <- if(lineageResp.isSuccess){
+      ZIO.logInfo("Successfully emitted metadata lineage event") *>
+        ZIO.logInfo(lineageResp.toString) *>
+        ZIO.logInfo(lineageResp.getResponseContent)
+    } else {
+      ZIO.logInfo("Failed to emit metadata lineage event") *>
+        ZIO.logInfo(lineageResp.getUnderlyingResponse.toString)
+    }
+  } yield lineageResp
+
   def avro2LinkedInType(f: Schema.Field): Type = {
     f.schema().getType match {
       case RECORD => Type.create(new RecordType())
