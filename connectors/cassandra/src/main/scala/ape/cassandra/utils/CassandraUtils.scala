@@ -1,17 +1,43 @@
 package ape.cassandra.utils
 
 import ape.cassandra.configs.CassandraConfig
-import com.datastax.oss.driver.api.core.cql.Row
+import ape.cassandra.models.CassandraLookupModel
+import com.datastax.oss.driver.api.core.cql.{Row, SimpleStatement}
 import com.datastax.oss.driver.api.core.{CqlSession => DatastaxSession}
 import palanga.zio.cassandra.CassandraException.SessionOpenException
 import palanga.zio.cassandra.ZStatement.StringOps
-import palanga.zio.cassandra.{CassandraException, ZCqlSession, session}
+import palanga.zio.cassandra.{CassandraException, ZCqlSession, ZSimpleStatement, session}
 import zio.stream.ZStream
-import zio.{Scope, ZIO, ZLayer}
+import zio.{Chunk, Scope, Tag, ZIO, ZLayer}
 
 import java.net.InetSocketAddress
+import scala.reflect.ClassTag
 
 object CassandraUtils {
+  def lookupChunk[Config <: CassandraConfig, T, Model <: CassandraLookupModel[T] :Tag :ClassTag](lookupChunk: Chunk[Model]):
+    ZIO[Config, Throwable, Chunk[(Model, Chunk[T])]] = ZIO.scoped[Config] {
+    for {
+      res <- lookupChunk.mapZIO { lookup[Config, T, Model] }
+    } yield res
+  }
+
+  def lookup[Config <: CassandraConfig, T, Model <: CassandraLookupModel[T] :Tag :ClassTag](lookup: Model):
+    ZIO[Scope with Config, Throwable, (Model, Chunk[T])] = for {
+    s <- sessionFromCqlSession[Config]
+    chunk <- {
+      ZCqlSession.stream ( {
+        val zS = new ZSimpleStatement[T] (
+          statement = SimpleStatement.builder (lookup.lookupQuery).build (),
+          bindInternal = pS => lookup.lookupBind (pS),
+          decodeInternal = row => Right (lookup.lookupDecode (row))
+        )
+        zS
+      } )
+        .runCollect
+        .provideSomeLayer (ZLayer.succeed (s))
+    }
+  } yield (lookup, chunk.flatten)
+
   def sessionFromCqlSession[Config <: CassandraConfig]: ZIO[Scope with Config, SessionOpenException, ZCqlSession] =
     for {
       config <- ZIO.service[CassandraConfig]
