@@ -33,10 +33,11 @@ object DatahubUtils {
     _ <- if(emitResp.isSuccess){
       ZIO.logInfo("Successfully emitted metadata event") *>
         ZIO.logInfo(emitResp.toString) *>
-        ZIO.logInfo(emitResp.getResponseContent)
+        ZIO.logInfo(emitResp.getResponseContent) *> ZIO.unit
     } else {
       ZIO.logError("Failed to emit metadata event") *>
-        ZIO.logError(emitResp.getUnderlyingResponse.toString)
+        ZIO.logError(emitResp.getUnderlyingResponse.toString) *>
+        ZIO.attempt(throw new Exception("Failed to emit datahub dataset"))
     }
   } yield urn
 
@@ -45,10 +46,11 @@ object DatahubUtils {
     _ <- if(lineageResp.isSuccess){
       ZIO.logInfo("Successfully emitted metadata lineage event") *>
         ZIO.logInfo(lineageResp.toString) *>
-        ZIO.logInfo(lineageResp.getResponseContent)
+        ZIO.logInfo(lineageResp.getResponseContent) *> ZIO.unit
     } else {
-      ZIO.logInfo("Failed to emit metadata lineage event") *>
-        ZIO.logInfo(lineageResp.getUnderlyingResponse.toString)
+      ZIO.logError("Failed to emit metadata lineage event") *>
+        ZIO.logError(lineageResp.getUnderlyingResponse.toString) *>
+        ZIO.attempt(throw new Exception("Failed to emit datahub lineage"))
     }
   } yield lineageResp
 
