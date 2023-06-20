@@ -34,6 +34,7 @@ object CassandraUtils {
         zS
       } )
         .runCollect
+        .catchAll(ex => ZIO.logError(ex.getMessage) *> ZIO.succeed(Chunk.empty))
         .provideSomeLayer (ZLayer.succeed (s))
     }
   } yield (lookup, chunk.flatten)
