@@ -27,7 +27,7 @@ object CassandraUtils {
     chunk <- {
       ZCqlSession.stream ( {
         val zS = new ZSimpleStatement[T] (
-          statement = SimpleStatement.builder (lookup.lookupQuery).build (),
+          statement = SimpleStatement.builder (lookup.lookupQuery).setTimeout(lookup.timeout).build (),
           bindInternal = pS => lookup.lookupBind (pS),
           decodeInternal = row => Right (lookup.lookupDecode (row))
         )
