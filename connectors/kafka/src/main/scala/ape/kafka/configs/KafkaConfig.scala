@@ -16,7 +16,8 @@ case class KafkaConfig(
                         flushSeconds: Duration = 1.seconds,
                         batchSize: Int = 1,
                         autoOffsetStrategy: AutoOffsetStrategy=AutoOffsetStrategy.Latest,
-                        pollInterval: Duration = 10.minutes,
+                        pollInterval: Duration = 50.milliseconds,
+                        pollTimeout: Duration = 50.milliseconds,
                         additionalProperties: Map[String, String]=Map.empty
   ){
   val producerSettings: ProducerSettings = ProducerSettings(kafkaBrokers)
@@ -29,6 +30,7 @@ case class KafkaConfig(
         .withClientId(clientId)
         .withRestartStreamOnRebalancing(false)
         .withPollInterval(pollInterval)
+        .withPollTimeout(pollTimeout)
         .withProperties(additionalProperties)
 }
 
@@ -44,7 +46,8 @@ object KafkaConfig {
       topicName <- envOrElse(p + "KAFKA_TOPIC", "")
       flushSeconds <- envOrElse(p + "KAFKA_FLUSH_SECONDS", "300")
       batchSize <- envOrElse(p + "KAFKA_BATCH_SIZE", "10000")
-      pollInterval <- envOrElse(p + "KAFKA_POLL_INTERVAL", "10")
+      pollInterval <- envOrElse(p + "KAFKA_POLL_INTERVAL", "50")
+      pollTimeout <- envOrElse(p + "KAFKA_POLL_TIMEOUT", "50")
       envs <- envs
       additionalProperties = envs
         .filter(e => e._1.startsWith(p + "KAFKA_PROP_"))
@@ -65,7 +68,8 @@ object KafkaConfig {
       },
       additionalProperties = additionalProperties,
       clientId = clientId,
-      pollInterval = Try(pollInterval.toInt).toOption.getOrElse(10).minutes
+      pollInterval = Try(pollInterval.toInt).toOption.getOrElse(50).milliseconds,
+      pollTimeout = Try(pollTimeout.toInt).toOption.getOrElse(50).milliseconds
     )
   }
 
