@@ -18,6 +18,8 @@ case class KafkaConfig(
                         autoOffsetStrategy: AutoOffsetStrategy=AutoOffsetStrategy.Latest,
                         pollInterval: Duration = 50.milliseconds,
                         pollTimeout: Duration = 50.milliseconds,
+                        closeTimeout: Duration = 50.milliseconds,
+                        restartStreamOnRebalancing: Boolean = true,
                         additionalProperties: Map[String, String]=Map.empty
   ){
   val producerSettings: ProducerSettings = ProducerSettings(kafkaBrokers)
@@ -48,6 +50,8 @@ object KafkaConfig {
       batchSize <- envOrElse(p + "KAFKA_BATCH_SIZE", "10000")
       pollInterval <- envOrElse(p + "KAFKA_POLL_INTERVAL", "50")
       pollTimeout <- envOrElse(p + "KAFKA_POLL_TIMEOUT", "50")
+      closeTimeout <- envOrElse(p + "KAFKA_CLOSE_TIMEOUT", "60000")
+      restartStreamOnRebalancing <- envOrElse(p + "KAFKA_RESTART_STREAM_ON_REBALANCING", "true")
       envs <- envs
       additionalProperties = envs
         .filter(e => e._1.startsWith(p + "KAFKA_PROP_"))
@@ -69,7 +73,9 @@ object KafkaConfig {
       additionalProperties = additionalProperties,
       clientId = clientId,
       pollInterval = Try(pollInterval.toInt).toOption.getOrElse(50).milliseconds,
-      pollTimeout = Try(pollTimeout.toInt).toOption.getOrElse(50).milliseconds
+      pollTimeout = Try(pollTimeout.toInt).toOption.getOrElse(50).milliseconds,
+      closeTimeout = Try(closeTimeout.toInt).toOption.getOrElse(60000).milliseconds,
+      restartStreamOnRebalancing = restartStreamOnRebalancing.toLowerCase.equals("true")
     )
   }
 
