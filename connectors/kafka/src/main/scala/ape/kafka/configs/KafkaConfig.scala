@@ -16,6 +16,7 @@ case class KafkaConfig(
                         flushSeconds: Duration = 1.seconds,
                         batchSize: Int = 1,
                         autoOffsetStrategy: AutoOffsetStrategy=AutoOffsetStrategy.Latest,
+                        pollInterval: Duration = 10.minutes,
                         additionalProperties: Map[String, String]=Map.empty
   ){
   val producerSettings: ProducerSettings = ProducerSettings(kafkaBrokers)
@@ -26,6 +27,8 @@ case class KafkaConfig(
         .withOffsetRetrieval(OffsetRetrieval.Auto(autoOffsetStrategy))
         .withGroupId(consumerGroup)
         .withClientId(clientId)
+        .withRestartStreamOnRebalancing(false)
+        .withPollInterval(pollInterval)
         .withProperties(additionalProperties)
 }
 
@@ -41,6 +44,7 @@ object KafkaConfig {
       topicName <- envOrElse(p + "KAFKA_TOPIC", "")
       flushSeconds <- envOrElse(p + "KAFKA_FLUSH_SECONDS", "300")
       batchSize <- envOrElse(p + "KAFKA_BATCH_SIZE", "10000")
+      pollInterval <- envOrElse(p + "KAFKA_POLL_INTERVAL", "10")
       envs <- envs
       additionalProperties = envs
         .filter(e => e._1.startsWith(p + "KAFKA_PROP_"))
@@ -60,7 +64,8 @@ object KafkaConfig {
         else AutoOffsetStrategy.Earliest
       },
       additionalProperties = additionalProperties,
-      clientId = clientId
+      clientId = clientId,
+      pollInterval = Try(pollInterval.toInt).toOption.getOrElse(10).minutes
     )
   }
 
