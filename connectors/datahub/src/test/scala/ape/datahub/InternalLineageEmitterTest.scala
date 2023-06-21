@@ -16,7 +16,7 @@ object InternalLineageEmitterTest extends ZIOSpec[DatahubConfig] {
   val stream = ZStream(Person("a"), Person("b"), Person("c"))
 
   val reader = EmitterReader(Reader.UnitReader(stream))
-  val pipe1 = EmitterPipe.fromPipeBoth(Pipe.UnitTPipe[Any, Any, Person, Car](p => Car(p.name))).withUpstreams(Seq())
+  val pipe1 = EmitterPipe.fromPipeBoth(Pipe.UnitTPipe[Any, Any, Person, Car](p => Car(p.name)))
   val pipe2 = EmitterPipe.fromPipeBoth(Pipe.UnitTPipe[Any, Any, Car, House](p => House(p.name)))
   val pipe3 = EmitterPipe.fromPipeBoth(Pipe.UnitTPipe[Any, Any, House, Airplane](p => Airplane(p.name)))
   val pipe4 = EmitterPipe.fromPipeBoth(Pipe.UnitTPipe[Any, Any, Airplane, Building](p => Building(p.name)))

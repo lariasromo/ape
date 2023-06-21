@@ -23,9 +23,12 @@ object ExternalLineageEmitterTest extends ZIOSpec[DatahubConfig] {
 
   val reader = EmitterReader(Reader.UnitReader(stream)).withUpstreams(Seq(kafkaUrn))
 
-  val pipe = EmitterPipe.fromPipeBoth(Pipe.UnitTPipe[Any, Any, Registration, RegistrationWithCountry](p => {
-    RegistrationWithCountry(p.clientId, Country("UK"))
-  })).withDownstream(chUrn)
+  val pipe = EmitterPipe(
+    Pipe.UnitTPipe[Any, Any, Registration, RegistrationWithCountry](p => {
+      RegistrationWithCountry(p.clientId, Country("UK"))
+    }),
+    downstream = Some(chUrn)
+  )
 
   val pipeline = reader --> pipe
 
