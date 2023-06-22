@@ -1,10 +1,11 @@
 package ape.s3.pipes.fromData
 
 import ape.s3.configs.S3Config
+import ape.s3.models.CompressionType
 import io.circe.Encoder
 import io.circe.syntax.EncoderOps
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
-import zio.stream.ZStream
+import zio.stream.{ZPipeline, ZStream}
 import zio.{Tag, ZIO}
 
 import scala.reflect.ClassTag
@@ -23,12 +24,14 @@ protected[s3] class JsonLinesCircePipe[E,
         .map(s => s.asJson.noSpaces + "\n")
         .map(_.getBytes)
         .flatMap(bytes => ZStream.fromIterable(bytes))
+      compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
+                         else bytesStream
       randomUUID <- zio.Random.nextUUID
       fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
       _ <- multipartUpload(
         bucket,
         s"${location}/${fileName}.json",
-        bytesStream,
+        compressedStream,
         MultipartUploadOptions.default
       )(config.parallelism)
         .catchAll(_ => ZIO.unit)

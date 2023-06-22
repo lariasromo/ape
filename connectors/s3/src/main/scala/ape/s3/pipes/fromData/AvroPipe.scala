@@ -1,10 +1,11 @@
 package ape.s3.pipes.fromData
 
 import ape.s3.configs.S3Config
+import ape.s3.models.CompressionType
 import ape.utils.AvroUtils.implicits._
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import zio.s3.{MultipartUploadOptions, S3, UploadOptions, multipartUpload}
-import zio.stream.ZStream
+import zio.stream.{ZPipeline, ZStream}
 import zio.{Tag, ZIO}
 
 import scala.reflect.ClassTag
@@ -21,13 +22,13 @@ protected[s3] class AvroPipe[E,
     location <- config.taskLocation
     randomUUID <- zio.Random.nextUUID
     fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
+    bytesStream = i.map(r => { r.encode().orNull}).flatMap(r => ZStream.fromIterable(r))
+    compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
+                        else bytesStream
     _ <- multipartUpload(
       bucket,
       s"${location}/${fileName}",
-        i.map(r => {
-          r.encode().orNull
-        })
-        .flatMap(r => ZStream.fromIterable(r)),
+      compressedStream,
       MultipartUploadOptions.fromUploadOptions(UploadOptions.fromContentType("application/zip"))
     )(config.parallelism)
       .catchAll(_ => ZIO.unit)
