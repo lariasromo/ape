@@ -81,7 +81,7 @@ object S3Config {
     filePeekDuration <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_FILE_PEEK_DURATION", "PT1H")
     filePeekDurationMargin <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_FILE_PEEK_DURATION_MARGIN", "PT1H")
     s3Bucket <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_BUCKET")
-    compressionType <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "COMPRESSION_TYPE", "GZIP")
+    compressionType <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "S3_COMPRESSION_TYPE", "GZIP")
     s3Host <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_OVERRIDE_URL")
     startDate <- env(prefix.map(s=>s+"_").getOrElse("") + "S3_START_DATE")
     reg <- envOrElse(prefix.map(s=>s+"_").getOrElse("") +  "S3_AWS_REGION", "eu-west-1")

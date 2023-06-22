@@ -21,7 +21,10 @@ protected[s3] class AvroPipe[E,
     bucket <- config.taskS3Bucket
     location <- config.taskLocation
     randomUUID <- zio.Random.nextUUID
-    fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
+    fileName =
+      config.filePrefix.getOrElse("") +
+        config.fileName.getOrElse(randomUUID) +
+        config.fileSuffix.getOrElse("") + ".avro" + {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
     bytesStream = i.map(r => { r.encode().orNull}).flatMap(r => ZStream.fromIterable(r))
     compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
                         else bytesStream
