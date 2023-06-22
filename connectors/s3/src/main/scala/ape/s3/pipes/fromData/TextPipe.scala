@@ -18,13 +18,15 @@ protected[s3] class TextPipe[E,
       bucket <- config.taskS3Bucket
       location <- config.taskLocation
       randomUUID <- zio.Random.nextUUID
-      fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
+      fileName = config.filePrefix.getOrElse("") +
+        config.fileName.getOrElse(randomUUID) + ".txt" +
+        config.fileSuffix.getOrElse("") + {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
       bytesStream = i.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r))
       compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
       else bytesStream
       _ <- multipartUpload(
         bucket,
-        s"${location}/${fileName}.txt",
+        s"${location}/${fileName}",
         compressedStream,
         MultipartUploadOptions.default
       )(config.parallelism)

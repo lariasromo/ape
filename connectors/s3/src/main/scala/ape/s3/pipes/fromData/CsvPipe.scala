@@ -40,10 +40,12 @@ protected[s3] class CsvPipe[ZE, T: ClassTag,Config <: S3Config :Tag]
       compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
       else bytesStream
       randomUUID <- zio.Random.nextUUID
-      fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
+      fileName = config.filePrefix.getOrElse("") +
+        config.fileName.getOrElse(randomUUID) + ".csv" +
+        config.fileSuffix.getOrElse("") + {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
       _ <- multipartUpload(
         bucket,
-        s"${location}/${fileName}.csv",
+        s"${location}/${fileName}",
         compressedStream,
         MultipartUploadOptions.default
       )(config.parallelism)

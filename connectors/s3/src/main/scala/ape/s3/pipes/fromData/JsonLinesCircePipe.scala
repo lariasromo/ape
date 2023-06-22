@@ -27,10 +27,13 @@ protected[s3] class JsonLinesCircePipe[E,
       compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
                          else bytesStream
       randomUUID <- zio.Random.nextUUID
-      fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
+      fileName = config.filePrefix.getOrElse("") +
+        config.fileName.getOrElse(randomUUID) +
+        config.fileSuffix.getOrElse("") + ".json" +
+        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
       _ <- multipartUpload(
         bucket,
-        s"${location}/${fileName}.json",
+        s"${location}/${fileName}",
         compressedStream,
         MultipartUploadOptions.default
       )(config.parallelism)
