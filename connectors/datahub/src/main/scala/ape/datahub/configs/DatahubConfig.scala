@@ -6,7 +6,7 @@ import com.linkedin.common.FabricType
 import datahub.client.kafka.KafkaEmitterConfig
 import datahub.client.rest.RestEmitterConfig
 import zio.System.envOrElse
-import zio.ZIO
+import zio.{ZIO, ZLayer}
 
 import java.util.function.Consumer
 
@@ -36,7 +36,7 @@ case class DatahubConfig(
 object DatahubConfig {
   def make(prefix:Option[String]=None): ZIO[Any, SecurityException, DatahubConfig] = for {
     fabricType <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "DATAHUB_FABRIC_TYPE", "DEV")
-    emitterMechanism <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "DATAHUB_EMITTER_MECHANISM", "DEV")
+    emitterMechanism <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "DATAHUB_EMITTER_MECHANISM", "REST")
     restEmitterUrl <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "DATAHUB_REST_EMITTER_URL", "")
     restEmitterToken <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "DATAHUB_REST_EMITTER_TOKEN", "")
     schemaRegistryUrl <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "DATAHUB_SCHEMA_REGISTRY_URL", "")
@@ -51,4 +51,6 @@ object DatahubConfig {
     kafkaBootstrapServers = kafkaBootstrapServers,
     tags = tags.split(",")
   )
+
+  def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, DatahubConfig] = ZLayer.fromZIO(make(prefix))
 }

@@ -1,8 +1,9 @@
 package ape.s3.pipes.fromData
 
 import ape.s3.configs.S3Config
+import ape.s3.models.CompressionType
 import zio.s3.{MultipartUploadOptions, S3, multipartUpload}
-import zio.stream.ZStream
+import zio.stream.{ZPipeline, ZStream}
 import zio.{Tag, ZIO}
 
 protected[s3] class TextPipe[E,
@@ -18,10 +19,13 @@ protected[s3] class TextPipe[E,
       location <- config.taskLocation
       randomUUID <- zio.Random.nextUUID
       fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
+      bytesStream = i.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r))
+      compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
+      else bytesStream
       _ <- multipartUpload(
         bucket,
         s"${location}/${fileName}.txt",
-        i.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r)),
+        compressedStream,
         MultipartUploadOptions.default
       )(config.parallelism)
         .catchAll(_ => ZIO.unit)
