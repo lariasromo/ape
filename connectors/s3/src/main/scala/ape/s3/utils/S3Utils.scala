@@ -1,7 +1,9 @@
 package ape.s3.utils
 
 import ape.s3.configs.S3Config
-import zio.ZIO
+import zio.{Tag, ZIO}
+import zio.s3.{ListObjectOptions, MultipartUploadOptions, S3, S3ObjectListing, UploadOptions, listObjects, multipartUpload}
+import zio.stream.ZStream
 
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
 
@@ -32,4 +34,14 @@ object S3Utils {
     }
     conv
   }
+
+  def uploadStream[E, Config <: S3Config :Tag](fileName:String, stream: ZStream[E, Throwable, Byte]): ZIO[S3 with E with Config, Throwable, S3ObjectListing] = for {
+    config <- ZIO.service[Config]
+    bucket <- config.taskS3Bucket
+    location <- config.taskLocation
+    opts = MultipartUploadOptions.fromUploadOptions(UploadOptions.fromContentType("application/zip"))
+    _ <- multipartUpload(bucket, s"${location}/${fileName}", stream, opts)(config.parallelism)
+      .catchAll(exception => ZIO.logError(exception.getMessage).unit)
+    resultFile <- listObjects(bucket, ListObjectOptions.from(s"${location}/${fileName}", 1))
+  } yield resultFile
 }
