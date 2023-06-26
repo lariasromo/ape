@@ -34,7 +34,9 @@ case class S3Config (
                       fileName:Option[String]=None,
                       filePrefix:Option[String]=None,
                       fileSuffix:Option[String]=None,
+                      chunkSizeMb:Option[Int]=None,
   ) {
+  val chunkSizeKb = chunkSizeMb.map(mb => mb * 1024L * 1024L)
   val taskLocation: Task[String] = ZIO.succeed{
     location.getOrElse({
       locationPattern.map(l => l(ZonedDateTime.now())).getOrElse("location and location pattern are empty")
@@ -88,6 +90,7 @@ object S3Config {
     fileName <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_NAME")
     fileSuffix <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_SUFFIX")
     filePrefix <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_PREFIX")
+    chunkSizeMb <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_CHUNK_SIZE_MB")
   } yield S3Config (
     region = reg,
     location = location,
@@ -103,7 +106,8 @@ object S3Config {
     }),
     fileName=fileName,
     fileSuffix=fileSuffix,
-    filePrefix=filePrefix
+    filePrefix=filePrefix,
+    chunkSizeMb=chunkSizeMb.flatMap(m => Try(m.toInt).toOption),
   )
 
   def makeWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {
