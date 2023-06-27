@@ -5,7 +5,7 @@ import ape.s3.models.CompressionType
 import ape.s3.utils.S3Utils.uploadStream
 import io.circe.Encoder
 import io.circe.syntax.EncoderOps
-import zio.s3.{MultipartUploadOptions, S3, S3ObjectListing, multipartUpload}
+import zio.s3.{MultipartUploadOptions, S3, S3ObjectListing, S3ObjectSummary, multipartUpload}
 import zio.stream.{ZPipeline, ZStream}
 import zio.{Chunk, Tag, ZIO}
 
@@ -14,9 +14,9 @@ import scala.reflect.ClassTag
 protected[s3] class JsonLinesCircePipe[E,
   T: Encoder : ClassTag,
   Config <: S3Config :Tag
-] extends S3Pipe[E with S3 with Config, E, T, S3ObjectListing] {
+] extends S3Pipe[E with S3 with Config, E, T, S3ObjectSummary] {
   override protected[this] def pipe(stream: ZStream[E, Throwable, T]):
-    ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, S3ObjectListing]] =
+    ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
     for {
       config <- ZIO.service[Config]
       bytesStream = stream

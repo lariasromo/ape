@@ -4,7 +4,7 @@ import ape.s3.configs.S3Config
 import ape.s3.models.CompressionType
 import ape.s3.utils.S3Utils.uploadStream
 import purecsv.unsafe.converter.StringConverterUtils
-import zio.s3.{MultipartUploadOptions, S3, S3ObjectListing, multipartUpload}
+import zio.s3.{MultipartUploadOptions, S3, S3ObjectListing, S3ObjectSummary, multipartUpload}
 import zio.stream.{ZPipeline, ZStream}
 import zio.{Chunk, Tag, ZIO}
 
@@ -14,7 +14,7 @@ protected[s3] class CsvPipe[ZE, T: ClassTag,Config <: S3Config :Tag]
 (
   sep: String = ",",
   order:Option[Seq[String]]=None
-) extends S3Pipe[ZE with S3 with Config, ZE, T, S3ObjectListing] {
+) extends S3Pipe[ZE with S3 with Config, ZE, T, S3ObjectSummary] {
   def getTMap(cc: T): Map[String, Any] =
     cc.getClass.getDeclaredFields.foldLeft(Map.empty[String, Any]) { (a, f) =>
       f.setAccessible(true)
@@ -22,7 +22,7 @@ protected[s3] class CsvPipe[ZE, T: ClassTag,Config <: S3Config :Tag]
     }
 
   override protected[this] def pipe(stream: ZStream[ZE, Throwable, T]):
-    ZIO[ZE with S3 with Config, Throwable, ZStream[ZE, Throwable, S3ObjectListing]] =
+    ZIO[ZE with S3 with Config, Throwable, ZStream[ZE, Throwable, S3ObjectSummary]] =
     for {
       config <- ZIO.service[Config]
       bytesStream = stream
