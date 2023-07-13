@@ -14,7 +14,7 @@ import zio.{Chunk, Scope, ZIO, ZIOApp, ZIOAppArgs, ZLayer}
 object Example1 extends ZIOApp {
 
   val reader: Reader[KafkaConfig, Any, Transaction] =
-    ape.kafka.Readers.readers[KafkaConfig].avro[Transaction]
+    ape.kafka.Readers.readersFlattened[KafkaConfig].avro[Transaction]
     .mapZ(s => s
       .map(_.value()) // Getting the value of the ConsumerRecord
       .filter(_.isDefined) //filtering broken avro records

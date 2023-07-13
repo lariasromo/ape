@@ -29,7 +29,7 @@ object KafkaTextWriterTest extends ZIOSpec[KafkaContainer with KafkaConfig] {
     suite("KafkaTextWriterTest")(
       test("Writes plaintext messages"){
         for {
-          stream <- ape.kafka.Readers.readers[KafkaConfig].string.apply
+          stream <- ape.kafka.Readers.readersFlattened[KafkaConfig].string.apply
           data <- stream
             .tap(d => ZIO.logInfo(d.value()))
             .runHead
