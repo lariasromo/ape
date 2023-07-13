@@ -29,7 +29,7 @@ object KafkaAvroWriterTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
     suite("KafkaAvroWriterTest")(
       test("Writes avro messages"){
         for {
-          stream <- ape.kafka.Readers.readers[KafkaConfig].avro[dummy].apply
+          stream <- ape.kafka.Readers.readersFlattened[KafkaConfig].avro[dummy].apply
           data <- stream.map(_.value()).runHead
         } yield {
           val result = data.flatten

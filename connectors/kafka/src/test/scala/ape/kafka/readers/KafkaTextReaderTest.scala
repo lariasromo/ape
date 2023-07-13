@@ -7,7 +7,7 @@ import zio.test.{Spec, TestEnvironment, ZIOSpec, assertTrue}
 import zio.{Scope, ZIO, ZLayer}
 
 object KafkaTextReaderTest extends ZIOSpec[KafkaConfig with KafkaContainer] {
-  val reader = ape.kafka.Readers.readers[KafkaConfig].string
+  val reader = ape.kafka.Readers.readersFlattened[KafkaConfig].string
 
   override def spec: Spec[KafkaConfig with KafkaContainer with TestEnvironment with Scope, Any] =
     suite("KafkaReaderTest")(
