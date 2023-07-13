@@ -8,15 +8,16 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
-import zio.{Chunk, Tag, ZIO}
+import zio.{Tag, ZIO}
 
-protected[kafka] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder, Config <: KafkaConfig :Tag]
-  extends KafkaReader[Config, Any, Chunk[ConsumerRecord[String, Option[T]]]] {
+protected[kafka] class AvroReaderFlattened[T >:Null :SchemaFor :Decoder :Encoder, Config <: KafkaConfig :Tag]
+  extends KafkaReader[Config, Any, ConsumerRecord[String, Option[T]]] {
 
-  override protected [this] def read: ZIO[Config, Nothing, ZStream[Any, Throwable, Chunk[ConsumerRecord[String, Option[T]]]]] =
+  override protected [this] def read:
+    ZIO[Config, Throwable, ZStream[Any, Throwable, ConsumerRecord[String, Option[T]]]] =
     for {
-      kafkaConfig <- ZIO.service[Config]
-      l <- reLayer[Config]
+        kafkaConfig <- ZIO.service[Config]
+        l <- reLayer[Config]
     } yield Consumer.subscribeAnd( Subscription.topics( kafkaConfig.topicName ) )
       .plainStream(Serde.string, AvroUtils.getSerde[T])
       .provideSomeLayer(l >>> KafkaConfig.liveConsumer)
@@ -24,5 +25,5 @@ protected[kafka] class AvroReader[T >:Null :SchemaFor :Decoder :Encoder, Config 
       .tap{batch => batch.offset.commit}
       .map(record => record.record)
       .groupedWithin(kafkaConfig.batchSize, kafkaConfig.flushSeconds)
-
+      .flatMap(r => ZStream.fromChunk(r))
 }

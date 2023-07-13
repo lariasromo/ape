@@ -6,12 +6,12 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
-import zio.{Chunk, Tag, ZIO}
+import zio.{Tag, ZIO}
 
-protected[kafka] class StringReader[Config <: KafkaConfig :Tag]
-  extends KafkaReader[Config, Any, Chunk[ConsumerRecord[String, String]]] {
+protected[kafka] class StringReaderFlattened[Config <: KafkaConfig :Tag]
+  extends KafkaReader[Config, Any, ConsumerRecord[String, String]] {
 
-  override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, Chunk[ConsumerRecord[String, String]]]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, ConsumerRecord[String, String]]] =
     for {
       kafkaConfig <- ZIO.service[Config]
       l <- reLayer[Config]
@@ -21,4 +21,5 @@ protected[kafka] class StringReader[Config <: KafkaConfig :Tag]
       .tap { batch => batch.offset.commit }
       .map(record => record.record)
       .groupedWithin(kafkaConfig.batchSize, kafkaConfig.flushSeconds)
+      .flatMap(r => ZStream.fromChunk(r))
 }
