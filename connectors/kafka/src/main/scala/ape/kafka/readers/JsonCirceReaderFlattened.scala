@@ -7,14 +7,14 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import zio.kafka.consumer.{Consumer, Subscription}
 import zio.kafka.serde.Serde
 import zio.stream.ZStream
-import zio.{Chunk, Tag, ZIO}
+import zio.{Tag, ZIO}
 
 import scala.reflect.ClassTag
 
-protected[kafka] class JsonCirceReader[T: Decoder :ClassTag, Config <: KafkaConfig :Tag]
-  extends KafkaReader[Config, Any, Chunk[ConsumerRecord[String, T]]] {
+protected[kafka] class JsonCirceReaderFlattened[T: Decoder :ClassTag, Config <: KafkaConfig :Tag]
+  extends KafkaReader[Config, Any, ConsumerRecord[String, T]] {
 
-  override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, Chunk[ConsumerRecord[String, T]]]] =
+  override protected[this] def read: ZIO[Config, Throwable, ZStream[Any, Throwable, ConsumerRecord[String, T]]] =
     for {
       kafkaConfig <- ZIO.service[Config]
       l <- reLayer[Config]
@@ -30,4 +30,5 @@ protected[kafka] class JsonCirceReader[T: Decoder :ClassTag, Config <: KafkaConf
         })
       }).filter(_.isDefined).map(_.get)
       .groupedWithin(kafkaConfig.batchSize, kafkaConfig.flushSeconds)
+      .flatMap(r => ZStream.fromChunk(r))
 }
