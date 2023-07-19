@@ -1,14 +1,14 @@
 package ape.clickhouse
 
 import ape.clickhouse.configs.MultiClickhouseConfig
-import ape.clickhouse.models.{ClickhouseDLQModel, ClickhouseModel}
-import ape.clickhouse.pipes.DefaultPipe
+import ape.clickhouse.models.{ClickhouseDLQModel, ClickhouseLookupModel, ClickhouseModel}
+import ape.clickhouse.pipes.{DefaultPipe, LookupPipe}
 import ape.pipe.Pipe
 import ape.utils.Utils.:=
 import zio.stream.ZStream
 import zio.{Chunk, Tag}
 
-import java.sql.Statement
+import java.sql.{ResultSet, Statement}
 import scala.reflect.ClassTag
 
 protected[clickhouse] class Pipes[Config <: MultiClickhouseConfig :Tag]() {
@@ -23,6 +23,8 @@ protected[clickhouse] class Pipes[Config <: MultiClickhouseConfig :Tag]() {
     .map(_.filter(_._2.equals(Statement.EXECUTE_FAILED)).map(r => r._1.dlq))
     .mapZ(_.flatMap(dlq => ZStream.fromChunk(dlq))) --> default[E, DLQ]
 
+  def lookup[ET, Config <: MultiClickhouseConfig :Tag, T :ClassTag, Model <: ClickhouseLookupModel[T] :Tag :ClassTag ]
+    (implicit d: Config := MultiClickhouseConfig, r: ResultSet => T) = new LookupPipe[ET, Config, Model, T]()
 }
 
 object Pipes {
