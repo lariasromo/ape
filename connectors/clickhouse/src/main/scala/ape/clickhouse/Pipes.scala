@@ -23,8 +23,9 @@ protected[clickhouse] class Pipes[Config <: MultiClickhouseConfig :Tag]() {
     .map(_.filter(_._2.equals(Statement.EXECUTE_FAILED)).map(r => r._1.dlq))
     .mapZ(_.flatMap(dlq => ZStream.fromChunk(dlq))) --> default[E, DLQ]
 
-  def lookup[ET, Model <: ClickhouseLookupModel[T] :Tag :ClassTag, T :ClassTag ]
-    (implicit d: Config := MultiClickhouseConfig, r: ResultSet => T) = new LookupPipe[ET, Config, Model, T]()
+  def lookup[ET, Model <: ClickhouseLookupModel[T] :Tag :ClassTag, T :ClassTag]
+  (implicit d1: ET := Any, d2: T := ClickhouseModel, d3: Model := ClickhouseLookupModel[ClickhouseModel])=
+    new LookupPipe[ET, Config, Model, T]()
 }
 
 object Pipes {
