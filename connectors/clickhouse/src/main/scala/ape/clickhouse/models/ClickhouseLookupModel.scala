@@ -9,7 +9,7 @@ trait ClickhouseLookupModel[T] {
 
   def lookupBind(preparedStatement: PreparedStatement): Unit
 
-  def lookupDecode(row: ResultSet): T
+  val lookupDecode: ResultSet => T
 
   lazy val timeout: Duration = 10.seconds
 }
