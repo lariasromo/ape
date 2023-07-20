@@ -39,7 +39,7 @@ object ClickhouseJDBCUtils {
     getChunk(conn => {
       val st = conn.prepareStatement(model.lookupQuery)
       model.lookupBind(st)
-      st.getResultSet
+      st.executeQuery()
     }  )
   }
 
