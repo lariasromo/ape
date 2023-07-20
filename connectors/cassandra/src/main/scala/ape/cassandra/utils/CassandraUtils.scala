@@ -17,13 +17,14 @@ object CassandraUtils {
   def lookupChunk[Config <: CassandraConfig, T, Model <: CassandraLookupModel[T] :Tag :ClassTag](lookupChunk: Chunk[Model]):
     ZIO[Config, Throwable, Chunk[(Model, Chunk[T])]] = ZIO.scoped[Config] {
     for {
-      res <- lookupChunk.mapZIO { lookup[Config, T, Model] }
+      s <- sessionFromCqlSession[Config]
+      res <- lookupChunk.mapZIO { lookup[T, Model] }
+        .provideSomeLayer (ZLayer.succeed (s))
     } yield res
   }
 
-  def lookup[Config <: CassandraConfig, T, Model <: CassandraLookupModel[T] :Tag :ClassTag](lookup: Model):
-    ZIO[Scope with Config, Throwable, (Model, Chunk[T])] = for {
-    s <- sessionFromCqlSession[Config]
+  def lookup[T, Model <: CassandraLookupModel[T] :Tag :ClassTag](lookup: Model):
+    ZIO[ZCqlSession, Nothing, (Model, Chunk[T])] = for {
     chunk <- {
       ZCqlSession.stream ( {
         val zS = new ZSimpleStatement[T] (
@@ -35,7 +36,6 @@ object CassandraUtils {
       } )
         .runCollect
         .catchAll(ex => ZIO.logError(ex.getMessage) *> ZIO.succeed(Chunk.empty))
-        .provideSomeLayer (ZLayer.succeed (s))
     }
   } yield (lookup, chunk.flatten)
 
