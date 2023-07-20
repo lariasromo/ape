@@ -6,7 +6,8 @@ import zio.System.{env, envOrElse}
 import zio.{ULayer, ZIO, ZLayer, durationInt}
 
 import java.sql.ResultSet
-
+import zio.config.ZConfig
+import zio.config.magnolia.descriptor
 
 case class MultiClickhouseConfig(
                                   clusterName: String,
@@ -17,6 +18,9 @@ case class MultiClickhouseConfig(
 }
 
 object MultiClickhouseConfig {
+  val configDescriptor = descriptor[MultiClickhouseConfig]
+  val liveMagnolia: ZLayer[Any, Throwable, MultiClickhouseConfig] = ZConfig.fromSystemEnv(configDescriptor)
+
   case class Node(host_address: String, port: Int)
   object Node {
     implicit val result2Clickstream: ResultSet => Node = rs =>
