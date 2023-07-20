@@ -7,6 +7,8 @@ import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.{Duration, Scope, ZIO, ZLayer, durationInt}
 
 import scala.util.Try
+import zio.config.ZConfig
+import zio.config.magnolia.descriptor
 
 case class KafkaConfig(
                         topicName: String,
@@ -38,6 +40,10 @@ case class KafkaConfig(
 
 
 object KafkaConfig {
+
+  val configDescriptor = descriptor[KafkaConfig]
+  val liveMagnolia: ZLayer[Any, Throwable, KafkaConfig] = ZConfig.fromSystemEnv(configDescriptor)
+
   def make(prefix:Option[String]=None): ZIO[Any, SecurityException, KafkaConfig] = {
     val p = prefix.map(s => s + "_").getOrElse("")
     for {

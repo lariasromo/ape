@@ -12,6 +12,8 @@ object Dependencies {
   ).map(_ % circeVersion)
 
   val zioLibraries = Seq(
+    "dev.zio" %% "zio-config" % "3.0.7",
+    "dev.zio" %% "zio-config-magnolia" % "3.0.7",
     "dev.zio" %% "zio"            % zioVersion,
     "dev.zio" %% "zio-concurrent" % zioVersion,
     "dev.zio" %% "zio-zmx" % "2.0.0-RC4",

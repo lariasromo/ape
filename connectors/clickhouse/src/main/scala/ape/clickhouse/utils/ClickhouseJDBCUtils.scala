@@ -1,7 +1,8 @@
 package ape.clickhouse.utils
 
 import ape.clickhouse.configs.{ClickhouseConfig, MultiClickhouseConfig}
-import com.clickhouse.jdbc.{ClickHouseConnection, ClickHouseDataSource}
+import ape.clickhouse.models.ClickhouseLookupModel
+import com.clickhouse.jdbc.{ClickHouseConnection, ClickHouseDataSource, ClickHouseStatement}
 import zio.stream.ZStream
 import zio.{Chunk, Duration, Scope, ZIO, ZLayer}
 
@@ -13,19 +14,38 @@ import scala.util.{Failure, Success, Try}
 object ClickhouseJDBCUtils {
   case class ConnectionWithZStream(connection: ClickHouseConnection, ZStream: ZStream[Any, Throwable, ResultSet])
 
-  def query2Chunk[T: ClassTag](query: String)
-                              (implicit row2Object: ResultSet => T): ZIO[ClickhouseConfig, Throwable, Chunk[T]] =
+  def getChunk[T: ClassTag](eff: ClickHouseConnection => ResultSet)
+                           (implicit dec: ResultSet => T ): ZIO[ClickhouseConfig, Nothing, Chunk[T]] =
     ZIO.scoped {
       for {
         conf <- ZIO.service[ClickhouseConfig]
         conn <- connect
-        chk <- ZIO.fromTry(Try(toChunk(conn.createStatement().executeQuery(query))))
+        chk <- ZIO.fromTry(
+          Try {
+            toChunk { eff(conn) }
+          })
           .catchAll(ex => for {
             _ <- ZIO.logError(ex.getMessage)
             _ <- ZIO.logError("No data found on node: " + conf)
           } yield Chunk.empty)
       } yield chk
-    }
+  }
+
+  def lookupModel2Chunk[
+    Model <: ClickhouseLookupModel[T],
+    T: ClassTag
+  ](model: Model): ZIO[ClickhouseConfig, Throwable, Chunk[T]] = {
+    implicit val decoder: ResultSet => T = model.lookupDecode
+    getChunk(conn => {
+      val st = conn.prepareStatement(model.lookupQuery)
+      model.lookupBind(st)
+      st.getResultSet
+    }  )
+  }
+
+  def query2Chunk[T: ClassTag](query: String)
+                              (implicit row2Object: ResultSet => T): ZIO[ClickhouseConfig, Throwable, Chunk[T]] =
+    getChunk(conn => conn.createStatement().executeQuery(query))
 
   def query2ChunkMulti[T: ClassTag](query: String)
                                    (implicit row2Object: ResultSet => T): ZIO[MultiClickhouseConfig, Throwable, Chunk[T]] = {

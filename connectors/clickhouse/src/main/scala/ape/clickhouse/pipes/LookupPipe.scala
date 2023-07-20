@@ -2,12 +2,10 @@ package ape.clickhouse.pipes
 
 import ape.clickhouse.configs.MultiClickhouseConfig
 import ape.clickhouse.models.ClickhouseLookupModel
-import ape.clickhouse.utils.ClickhouseJDBCUtils.query2ChunkMulti
-import ape.utils.Utils.reLayer
+import ape.clickhouse.utils.ClickhouseJDBCUtils.lookupModel2Chunk
 import zio.stream.ZStream
-import zio.{Chunk, Tag, ZIO}
+import zio.{Chunk, Tag, ZIO, ZLayer}
 
-import java.sql.ResultSet
 import scala.reflect.ClassTag
 
 protected[clickhouse] class LookupPipe[
@@ -19,11 +17,11 @@ protected[clickhouse] class LookupPipe[
   override protected[this] def pipe(i: ZStream[E, Throwable, Model]):
     ZIO[Config, Throwable, ZStream[E, Throwable, (Model, Chunk[T])]] =
       for {
-        rL <- reLayer[Config]
+        conf <- ZIO.service[Config]
       } yield i.mapZIO(lookupModel => for {
         results <- {
-          implicit val decoder: ResultSet => T = lookupModel.lookupDecode
-          query2ChunkMulti[T](lookupModel.lookupQuery).provideSomeLayer(rL)
+          lookupModel2Chunk[Model, T](lookupModel)
+            .provideSomeLayer(ZLayer.succeed(conf.chConfigs.head))
         }
       } yield (lookupModel, results) )
 }

@@ -4,6 +4,8 @@ import zio.System.envOrElse
 import zio.{Duration, ZIO, ZLayer, durationInt}
 
 import scala.util.Try
+import zio.config.ZConfig
+import zio.config.magnolia.descriptor
 
 case class ClickhouseConfig(
                              batchSize: Int,
@@ -19,6 +21,9 @@ case class ClickhouseConfig(
 }
 
 object ClickhouseConfig {
+  val configDescriptor = descriptor[ClickhouseConfig]
+  val liveMagnolia: ZLayer[Any, Throwable, ClickhouseConfig] = ZConfig.fromSystemEnv(configDescriptor)
+
   def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, ClickhouseConfig] = ZLayer(make(prefix))
 
   def make(prefix:Option[String]=None): ZIO[Any, SecurityException, ClickhouseConfig] = for {

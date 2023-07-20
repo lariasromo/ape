@@ -4,6 +4,8 @@ import zio.System.envOrElse
 import zio.{ZIO, ZLayer, durationInt}
 
 import scala.util.Try
+import zio.config.ZConfig
+import zio.config.magnolia.descriptor
 
 case class CassandraConfig(
                             host: String,
@@ -17,6 +19,9 @@ case class CassandraConfig(
                           )
 
 object CassandraConfig {
+  val configDescriptor = descriptor[CassandraConfig]
+  val liveMagnolia: ZLayer[Any, Throwable, CassandraConfig] = ZConfig.fromSystemEnv(configDescriptor)
+
   def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, CassandraConfig] = ZLayer(make(prefix))
 
   def make(prefix:Option[String]=None): ZIO[Any, SecurityException, CassandraConfig] = for {
