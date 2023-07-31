@@ -9,8 +9,8 @@ import zio.http.{Client, Request}
 import scala.reflect.ClassTag
 
 class Pipes() {
-  def byte[ZE]: Pipe[Client,ZE,Request, Byte] = new RestAPIPipeByte[ZE]
-  def string[ZE]: Pipe[Client,ZE,Request, String] = new RestAPIPipeString[ZE]
+  def byte[ZE](implicit d1: ZE := Any): Pipe[Client,ZE,Request, Byte] = new RestAPIPipeByte[ZE]
+  def string[ZE](implicit d1: ZE := Any): Pipe[Client,ZE,Request, String] = new RestAPIPipeString[ZE]
 
   class decode[ZE] {
     def default[T:ClassTag](implicit enc: String => T): Pipe[Client,ZE,Request, T] =
@@ -25,6 +25,8 @@ class Pipes() {
       new RestAPIPipeDecodeCirceZip[ZE, T, T2]
     def zipCirceWithRequest[T:ClassTag, T2: ClassTag :Decoder]:
       Pipe[Client, ZE, (Request,T),(T, Option[T2])] = new RestAPIPipeRequestCirce[ZE,T,T2]
+    def zipWithRequest[T:ClassTag]: Pipe[Client, ZE, (Request,T),(T, String)] =
+      new RestAPIPipeRequestString[ZE, T, String]
   }
   def decode[ZE](implicit d1: ZE := Any) = new decode[ZE]
 }
