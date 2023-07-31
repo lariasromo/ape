@@ -1,6 +1,6 @@
 import Dependencies._
 
-ThisBuild / version := "3.4.2"
+ThisBuild / version := "3.4.2.2"
 ThisBuild / scalaVersion := "2.13.10"
 
 lazy val commonSettings = Seq(
@@ -10,6 +10,7 @@ lazy val commonSettings = Seq(
 
 lazy val cassandra = (project in file("connectors/cassandra"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-cassandra",
     libraryDependencies ++= commonLibraries ++ cassandraLibraries)
   .enablePlugins(JavaAppPackaging)
@@ -17,6 +18,7 @@ lazy val cassandra = (project in file("connectors/cassandra"))
 
 lazy val clickhouse = (project in file("connectors/clickhouse"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-clickhouse",
     libraryDependencies ++= commonLibraries ++ clickhouseLibraries
   )
@@ -25,6 +27,7 @@ lazy val clickhouse = (project in file("connectors/clickhouse"))
 
 lazy val datahub = (project in file("connectors/datahub"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-datahub",
     libraryDependencies ++= commonLibraries ++ dataHubLibraries
   )
@@ -33,6 +36,7 @@ lazy val datahub = (project in file("connectors/datahub"))
 
 lazy val jdbc = (project in file("connectors/jdbc"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-jdbc",
     libraryDependencies ++= commonLibraries
   )
@@ -41,6 +45,7 @@ lazy val jdbc = (project in file("connectors/jdbc"))
 
 lazy val kafka = (project in file("connectors/kafka"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-kafka",
     libraryDependencies ++= commonLibraries ++ kafkaLibraries
   )
@@ -49,6 +54,7 @@ lazy val kafka = (project in file("connectors/kafka"))
 
 lazy val redis = (project in file("connectors/redis"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-redis",
     libraryDependencies ++= commonLibraries ++ redisLibraries
   )
@@ -57,6 +63,7 @@ lazy val redis = (project in file("connectors/redis"))
 
 lazy val rest = (project in file("connectors/rest"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-rest",
     libraryDependencies ++= commonLibraries ++ httpLibraries
   )
@@ -65,6 +72,7 @@ lazy val rest = (project in file("connectors/rest"))
 
 lazy val s3 = (project in file("connectors/s3"))
   .settings(commonSettings,
+    assembly / test := {},
     name := "ape-s3",
     libraryDependencies ++= commonLibraries ++ awsLibraries ++ s3Libraries
   )
@@ -73,6 +81,7 @@ lazy val s3 = (project in file("connectors/s3"))
 
 lazy val websocket = (project in file("connectors/websocket"))
   .settings( commonSettings,
+    assembly / test := {},
     name := "ape-websocket",
     libraryDependencies ++= commonLibraries ++ httpLibraries ++ testLibraries)
   .enablePlugins(JavaAppPackaging)
@@ -80,6 +89,7 @@ lazy val websocket = (project in file("connectors/websocket"))
 
 lazy val examples = (project in file("examples"))
   .settings(commonSettings,
+    assembly / test := {},
     publish / skip := true,
     libraryDependencies ++= cassandraLibraries
   )
@@ -88,6 +98,7 @@ lazy val examples = (project in file("examples"))
 
 lazy val core = (project in file("core"))
   .settings(
+    assembly / test := {},
     name := "ape-core",
     commonSettings,
     libraryDependencies ++= commonLibraries ++ kafkaLibraries
