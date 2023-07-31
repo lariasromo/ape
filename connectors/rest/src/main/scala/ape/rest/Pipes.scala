@@ -26,7 +26,7 @@ class Pipes() {
     def zipCirceWithRequest[T:ClassTag, T2: ClassTag :Decoder]:
       Pipe[Client, ZE, (Request,T),(T, Option[T2])] = new RestAPIPipeRequestCirce[ZE,T,T2]
     def zipWithRequest[T:ClassTag]: Pipe[Client, ZE, (Request,T),(T, String)] =
-      new RestAPIPipeRequestString[ZE, T, String]
+      new RestAPIPipeRequestString[ZE, T]
   }
   def decode[ZE](implicit d1: ZE := Any) = new decode[ZE]
 }
