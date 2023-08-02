@@ -12,6 +12,7 @@ import com.linkedin.schema.SchemaMetadata.PlatformSchema
 import com.linkedin.schema._
 import com.sksamuel.avro4s.{AvroSchema, SchemaFor}
 import datahub.client.kafka.KafkaEmitter
+import datahub.client.patch.dataset.UpstreamLineagePatchBuilder
 import datahub.client.rest.RestEmitter
 import datahub.client.{Emitter, MetadataWriteResponse}
 import datahub.event.MetadataChangeProposalWrapper
@@ -90,24 +91,13 @@ object DatahubUtils {
                                 upstreams: Seq[DatasetUrn],
                                 downstream: DatasetUrn
                               ) = {
-    var upstreamTables = new UpstreamArray()
     upstreams
       .map(urn => {
-        new Upstream().setDataset(urn, SetMode.IGNORE_NULL).setType(DatasetLineageType.TRANSFORMED)
+        new UpstreamLineagePatchBuilder()
+          .urn(downstream)
+          .addUpstream(urn, DatasetLineageType.TRANSFORMED)
+          .build();
       })
-      .foreach(upstreamTables.add)
-
-    val upstreamLineage = new UpstreamLineage().setUpstreams(upstreamTables)
-
-    val mcp = MetadataChangeProposalWrapper
-      .builder()
-      .entityType("dataset")
-      .entityUrn(downstream)
-      .upsert()
-      .aspect(upstreamLineage)
-      .build()
-
-    Seq(mcp)
   }
 
   def getDatasetChangeProposal[T: ClassTag :SchemaFor] (
