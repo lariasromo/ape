@@ -125,17 +125,21 @@ object DatahubUtils {
     val tagArray = new TagAssociationArray()
     tags.foreach(t => tagArray.add(new TagAssociation().setTag(new TagUrn(t))))
 
-    val aspectTags = new GlobalTags().setTags(tagArray)
-
     val c = MetadataChangeProposalWrapper
       .builder()
       .entityType("dataset")
       .entityUrn(urn)
       .upsert()
 
-    val c1 = c.aspect(aspectSchema).build()
-    val c2 = c.aspect(aspectTags).build()
-    (urn, Seq(c1, c2))
+    val c1 = Some(c.aspect(aspectSchema).build())
+    val c2 = if(!tagArray.isEmpty){
+      val aspectTags = new GlobalTags().setTags(tagArray)
+      val c2 = c.aspect(aspectTags).build()
+      Some(c2)
+    } else None
+
+    val changes = Seq(c1, c2).filter(_.isDefined).map(_.get)
+    (urn, changes)
   }
 
   def emitLineage(upstreams: Seq[DatasetUrn], downstream:DatasetUrn):
