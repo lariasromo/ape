@@ -7,7 +7,7 @@ import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import io.circe.jawn
 import purecsv.safe.CSVReader
 import purecsv.safe.converter.RawFieldsConverter
-import zio.s3.S3ObjectSummary
+import zio.s3.{S3, S3ObjectSummary}
 import zio.stream.ZStream
 import zio.{Tag, ZIO}
 
@@ -62,16 +62,14 @@ object S3FilePipe {
       cfg <- ZIO.service[S3Cfg]
       s3 <- reLayer[S3Cfg]
     } yield i
-    .mapZIO(file =>
-      for {
-        data <- readPlainText(cfg.compressionType, file).runCollect.provideSomeLayer(s3 ++ cfg.liveS3)
-      } yield (file, data)
-    )
-    .map{case (file, data) => {
-      val content: List[T] = CSVReader[T]
-        .readCSVFromString(data.mkString, csvCfg.delimiter, csvCfg.trimming, csvCfg.headers, csvCfg.headerMapping)
-        .map(_.toOption).filter(_.isDefined).map(_.get)
-
-      (file, ZStream.fromIterable(content))
-    }}
+    .map(file => {
+      val data: ZStream[S3, Exception, T] = readPlainText(cfg.compressionType, file)
+        .map(data => CSVReader[T]
+          .readCSVFromString(data, csvCfg.delimiter, csvCfg.trimming, csvCfg.headers, csvCfg.headerMapping)
+          .map(_.toOption)
+          .filter(_.nonEmpty)
+          .map(a => a.get)
+        ).flatMap(ZStream.fromIterable(_))
+      (file, data.provideSomeLayer(s3 ++ cfg.liveS3))
+    })
 }
