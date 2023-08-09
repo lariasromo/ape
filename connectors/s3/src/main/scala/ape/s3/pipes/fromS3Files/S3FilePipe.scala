@@ -61,11 +61,17 @@ object S3FilePipe {
       csvCfg <- ZIO.service[CsvCfg]
       cfg <- ZIO.service[S3Cfg]
       s3 <- reLayer[S3Cfg]
-    } yield i.map(file => {
-      val stream = readPlainText(cfg.compressionType, file)
-        .map(l => CSVReader[T].readCSVFromString(l, csvCfg.delimiter, csvCfg.trimming, csvCfg.headers, csvCfg.headerMapping))
-        .map(a => a.map(_.toOption).filter(_.isDefined).map(_.get))
-        .flatMap(ZStream.fromIterable(_))
-      (file, stream.provideSomeLayer(s3 ++ cfg.liveS3))
-    })
+    } yield i
+    .mapZIO(file =>
+      for {
+        data <- readPlainText(cfg.compressionType, file).runCollect.provideSomeLayer(s3 ++ cfg.liveS3)
+      } yield (file, data)
+    )
+    .map{case (file, data) => {
+      val content: List[T] = CSVReader[T]
+        .readCSVFromString(data.mkString, csvCfg.delimiter, csvCfg.trimming, csvCfg.headers, csvCfg.headerMapping)
+        .map(_.toOption).filter(_.isDefined).map(_.get)
+
+      (file, ZStream.fromIterable(content))
+    }}
 }
