@@ -35,6 +35,7 @@ case class S3Config (
                       filePrefix:Option[String]=None,
                       fileSuffix:Option[String]=None,
                       chunkSizeMb:Option[Int]=None,
+                      maxKeySize:Int=100,
   ) {
   val chunkSizeKb = chunkSizeMb.map(mb => mb * 1024L * 1024L)
   val taskLocation: Task[String] = ZIO.succeed{
@@ -91,6 +92,7 @@ object S3Config {
     fileSuffix <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_SUFFIX")
     filePrefix <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_PREFIX")
     chunkSizeMb <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_CHUNK_SIZE_MB")
+    maxKeySize <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_MAX_KEY_SIZE")
   } yield S3Config (
     region = reg,
     location = location,
@@ -108,6 +110,7 @@ object S3Config {
     fileSuffix=fileSuffix,
     filePrefix=filePrefix,
     chunkSizeMb=chunkSizeMb.flatMap(m => Try(m.toInt).toOption),
+    maxKeySize=maxKeySize.flatMap(m => Try(m.toInt).toOption).getOrElse(100),
   )
 
   def makeWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {

@@ -20,7 +20,7 @@ protected [s3] class FileReaderSimple[Config <: S3Config :Tag]
       location = locPattern(now.toZonedDateTime)
       objs <- ZIO.foreach(Chunk.fromIterable(location))(l =>
         for {
-          loc <- listObjects(bucket, ListObjectOptions.from(l, 100)).provideLayer(config.liveS3)
+          loc <- listObjects(bucket, ListObjectOptions.from(l, config.maxKeySize)).provideLayer(config.liveS3)
         } yield loc.objectSummaries
       )
 
