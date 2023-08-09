@@ -1,8 +1,9 @@
 package ape.s3.utils
 
 import ape.s3.configs.S3Config
-import zio.{Tag, ZIO}
-import zio.s3.{ListObjectOptions, MultipartUploadOptions, S3, S3ObjectListing, S3ObjectSummary, UploadOptions, listObjects, multipartUpload}
+import software.amazon.awssdk.services.s3.model.S3Exception
+import zio.{Chunk, Tag, ZIO}
+import zio.s3.{ListObjectOptions, MaxKeys, MultipartUploadOptions, S3, S3ObjectListing, S3ObjectSummary, UploadOptions, getNextObjects, listObjects, multipartUpload}
 import zio.stream.ZStream
 
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
@@ -45,4 +46,15 @@ object S3Utils {
       .catchAll(exception => ZIO.logError(exception.getMessage).unit)
     resultFile <- listObjects(bucket, ListObjectOptions.from(s"${location}/${fileName}", 1))
   } yield resultFile.objectSummaries.head
+
+
+  def listPaginated(bucket: String, location: String, maxKeys: Long): ZIO[S3, S3Exception, Chunk[S3ObjectSummary]] =
+    for {
+      l1 <- listObjects(bucket, ListObjectOptions.from(location, maxKeys))
+      objs <- ZStream.paginateZIO(l1)(listing => for {
+        l2 <- getNextObjects(listing)
+      } yield ( listing.objectSummaries ++ l2.objectSummaries, l2.nextContinuationToken.map(_=>l2)) )
+        .flatMap(ZStream.fromChunk(_))
+        .runCollect
+    } yield objs
 }

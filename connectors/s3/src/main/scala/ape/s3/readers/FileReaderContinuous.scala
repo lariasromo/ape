@@ -32,8 +32,8 @@ protected [s3] class FileReaderContinuous[Config <: S3Config :Tag]
         })
         .mapZIO {
           case (now, location) => for {
-            objs <- listObjects(bucket, ListObjectOptions.from(location, config.maxKeySize)).provideLayer(config.liveS3)
-          } yield ZStream.fromChunk(objs.objectSummaries)
+            objs <- S3Utils.listPaginated(bucket, location, config.maxKeySize).provideLayer(config.liveS3)
+          } yield ZStream.fromChunk(objs)
             .filterZIO {
               summary =>
                 for {

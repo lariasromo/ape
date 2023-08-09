@@ -31,9 +31,9 @@ protected [s3] class FileReaderBounded[Config <: S3Config :Tag](
         Chunk.fromIterable(d)
       })
       .mapZIOPar(location => for {
-        objs <- listObjects(bucket, ListObjectOptions.from(location, config.maxKeySize)).provideLayer(config.liveS3)
-        _ <- ZIO.logInfo(s"Got a total of ${objs.objectSummaries.length} from (${location})")
-      } yield objs.objectSummaries
+        objs <- S3Utils.listPaginated(bucket, location, config.maxKeySize).provideLayer(config.liveS3)
+        _ <- ZIO.logInfo(s"Got a total of ${objs.length} from (${location})")
+      } yield objs
     )
   } yield ZStream.fromChunk(c.flatten)
 }
