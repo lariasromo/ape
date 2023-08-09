@@ -6,6 +6,7 @@ import ape.utils.Utils.reLayer
 import com.sksamuel.avro4s.{Decoder, Encoder, SchemaFor}
 import io.circe.jawn
 import purecsv.safe.CSVReader
+import purecsv.safe.converter.RawFieldsConverter
 import zio.s3.S3ObjectSummary
 import zio.stream.ZStream
 import zio.{Tag, ZIO}
@@ -54,7 +55,8 @@ object S3FilePipe {
     (file, readPlainText(cfg.compressionType, file).provideSomeLayer(s3 ++ cfg.liveS3))
   )
 
-  def csvPipe[ZE, S3Cfg <: S3Config : Tag, T: ClassTag, CsvCfg <: CSVConfig](i: ZStream[ZE, Throwable, S3ObjectSummary]):
+  def csvPipe[ZE, S3Cfg <: S3Config : Tag, T: ClassTag, CsvCfg <: CSVConfig : Tag]
+  (i: ZStream[ZE, Throwable, S3ObjectSummary])(implicit rfcImp: RawFieldsConverter[T]):
     ZIO[S3Cfg with CsvCfg, Nothing, ZStream[ZE, Throwable, S3FileWithContent[T]]] = for {
       csvCfg <- ZIO.service[CsvCfg]
       cfg <- ZIO.service[S3Cfg]
