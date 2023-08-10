@@ -51,9 +51,16 @@ object S3Utils {
   def listPaginated(bucket: String, location: String, maxKeys: Long): ZIO[S3, S3Exception, Chunk[S3ObjectSummary]] =
     for {
       l1 <- listObjects(bucket, ListObjectOptions.from(location, maxKeys))
-      objs <- ZStream.paginateZIO(l1)(listing => for {
-        l2 <- getNextObjects(listing)
-      } yield ( listing.objectSummaries ++ l2.objectSummaries, l2.nextContinuationToken.map(_=>l2)) )
+      objs <- ZStream.paginateZIO(l1)(listing =>
+        for {
+          l2 <- getNextObjects(listing)
+        } yield {
+          if(l1.objectSummaries.size >= maxKeys)
+            (l1.objectSummaries, None)
+          else
+            (listing.objectSummaries ++ l2.objectSummaries, l2.nextContinuationToken.map(_ => l2))
+        }
+      )
         .flatMap(ZStream.fromChunk(_))
         .runCollect
     } yield objs
