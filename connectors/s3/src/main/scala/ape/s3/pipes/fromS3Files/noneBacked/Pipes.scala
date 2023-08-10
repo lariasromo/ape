@@ -23,6 +23,7 @@ class Pipes[ SConfig <: S3Config :Tag ](reader: S3FileReader[SConfig]) {
 
   def text: Reader[Any, SConfig, S3FileWithContent[String]] = Reader.UnitReader(reader --> new TextPipe[SConfig])
 
-  def csv[CsvCfg <: CSVConfig :Tag, T: ClassTag](implicit rfcImp: RawFieldsConverter[T]):
-    Reader[Any, SConfig with CsvCfg, S3FileWithContent[T]] = Reader.UnitReader(reader --> new CsvPipe[SConfig, CsvCfg, T])
+  def csv[ZE, CsvCfg <: CSVConfig :Tag, T: ClassTag](implicit rfcImp: RawFieldsConverter[T]):
+    Reader[Any, SConfig with CsvCfg, S3FileWithContent[T]] =
+    Reader.UnitReader(reader --> new CsvPipe[SConfig, CsvCfg, T])
 }

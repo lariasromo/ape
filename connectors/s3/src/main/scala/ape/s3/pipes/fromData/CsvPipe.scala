@@ -41,7 +41,8 @@ protected[s3] class CsvPipe[ZE, T: ClassTag,Config <: S3Config :Tag]
       randomUUID <- zio.Random.nextUUID
       fileName = config.filePrefix.getOrElse("") +
         config.fileName.getOrElse(randomUUID) + ".csv" +
-        config.fileSuffix.getOrElse("") + {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
+        config.fileSuffix.getOrElse("") +
+        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""}
       files <- config.chunkSizeMb match {
         case Some(size) =>
           compressedStream

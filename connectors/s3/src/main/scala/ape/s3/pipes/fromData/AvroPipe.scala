@@ -23,7 +23,8 @@ protected[s3] class AvroPipe[E,
     fileName =
       config.filePrefix.getOrElse("") +
         config.fileName.getOrElse(randomUUID) +
-        config.fileSuffix.getOrElse("") + ".avro" + {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
+        config.fileSuffix.getOrElse("") + ".avro" +
+        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""}
     bytesStream = i.map(r => { r.encode().orNull}).flatMap(r => ZStream.fromIterable(r))
     compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
                         else bytesStream
