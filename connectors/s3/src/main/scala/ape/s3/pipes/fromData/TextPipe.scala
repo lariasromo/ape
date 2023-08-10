@@ -19,7 +19,8 @@ protected[s3] class TextPipe[E,
       randomUUID <- zio.Random.nextUUID
       fileName = config.filePrefix.getOrElse("") +
         config.fileName.getOrElse(randomUUID) + ".txt" +
-        config.fileSuffix.getOrElse("") + {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
+        config.fileSuffix.getOrElse("") +
+        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""}
       bytesStream = i.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r))
       compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
       else bytesStream

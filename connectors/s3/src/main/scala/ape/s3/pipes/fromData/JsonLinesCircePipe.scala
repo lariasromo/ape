@@ -29,7 +29,7 @@ protected[s3] class JsonLinesCircePipe[E,
       fileName = config.filePrefix.getOrElse("") +
         config.fileName.getOrElse(randomUUID) +
         config.fileSuffix.getOrElse("") + ".json" +
-        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz"}
+        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""}
       files <- config.chunkSizeMb match {
         case Some(size) =>
           compressedStream
