@@ -24,17 +24,16 @@ protected[s3] class JsonLinesPipe[E,
         .flatMap(bytes => ZStream.fromIterable(bytes))
       compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
       else bytesStream
-      randomUUID <- zio.Random.nextUUID
-      fileName = config.filePrefix.getOrElse("") + config.fileName.getOrElse(randomUUID) + config.fileSuffix.getOrElse("")
       files <- config.chunkSizeMb match {
         case Some(size) =>
           compressedStream
             .grouped(size)
             .map(chk => ZStream.fromChunk(chk))
-            .mapZIO(stream => uploadStream[E, Config](fileName, stream).provideSomeLayer[E with Config](config.liveS3))
+            .mapZIO(stream => uploadStream[E, Config](stream).provideSomeLayer[E with Config](config.liveS3))
             .runCollect
         case None =>
-          uploadStream[E, Config](fileName, compressedStream).flatMap(c => ZIO.succeed(Chunk(c)))
+          uploadStream[E, Config](compressedStream)
+            .flatMap(c => ZIO.succeed(Chunk(c)))
             .provideSomeLayer[E with Config](config.liveS3)
       }
     } yield ZStream.fromChunk(files)

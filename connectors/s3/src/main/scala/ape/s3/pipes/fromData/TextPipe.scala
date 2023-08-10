@@ -16,11 +16,6 @@ protected[s3] class TextPipe[E,
     ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
     for {
       config <- ZIO.service[Config]
-      randomUUID <- zio.Random.nextUUID
-      fileName = config.filePrefix.getOrElse("") +
-        config.fileName.getOrElse(randomUUID) + ".txt" +
-        config.fileSuffix.getOrElse("") +
-        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""}
       bytesStream = i.map(s => s"$s\n".getBytes).flatMap(r => ZStream.fromIterable(r))
       compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
       else bytesStream
@@ -29,10 +24,10 @@ protected[s3] class TextPipe[E,
           compressedStream
             .grouped(size)
             .map(chk => ZStream.fromChunk(chk))
-            .mapZIO(stream => uploadStream[E, Config](fileName, stream).provideSomeLayer[E with Config](config.liveS3))
+            .mapZIO(stream => uploadStream[E, Config](stream).provideSomeLayer[E with Config](config.liveS3))
             .runCollect
         case None =>
-          uploadStream[E, Config](fileName, compressedStream)
+          uploadStream[E, Config](compressedStream)
             .flatMap(c => ZIO.succeed(Chunk(c)))
             .provideSomeLayer[E with Config](config.liveS3)
       }
