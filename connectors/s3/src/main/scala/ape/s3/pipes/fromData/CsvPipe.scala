@@ -2,6 +2,7 @@ package ape.s3.pipes.fromData
 
 import ape.s3.configs.S3Config
 import ape.s3.models.CompressionType
+import ape.s3.utils.S3Utils
 import ape.s3.utils.S3Utils.uploadStream
 import purecsv.unsafe.converter.StringConverterUtils
 import zio.s3.{MultipartUploadOptions, S3, S3ObjectListing, S3ObjectSummary, multipartUpload}
@@ -38,20 +39,16 @@ protected[s3] class CsvPipe[ZE, T: ClassTag,Config <: S3Config :Tag]
         .flatMap(bytes => ZStream.fromIterable(bytes))
       compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
       else bytesStream
-      randomUUID <- zio.Random.nextUUID
-      fileName = config.filePrefix.getOrElse("") +
-        config.fileName.getOrElse(randomUUID) + ".csv" +
-        config.fileSuffix.getOrElse("") +
-        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""}
       files <- config.chunkSizeMb match {
         case Some(size) =>
           compressedStream
             .grouped(size)
             .map(chk => ZStream.fromChunk(chk))
-            .mapZIO(stream => uploadStream[ZE, Config](fileName, stream))
+            .mapZIO(stream => uploadStream[ZE, Config](stream))
             .runCollect
-        case None =>
-          uploadStream[ZE, Config](fileName, compressedStream).flatMap(c => ZIO.succeed(Chunk(c)))
+        case None => uploadStream[ZE, Config](compressedStream)
+          .flatMap(c => ZIO.succeed(Chunk(c)))
+
       }
     } yield ZStream.fromChunk(files)
 }

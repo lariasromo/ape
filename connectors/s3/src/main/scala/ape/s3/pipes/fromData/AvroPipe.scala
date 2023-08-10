@@ -19,12 +19,6 @@ protected[s3] class AvroPipe[E,
   override protected[this] def pipe(i: ZStream[E, Throwable, T]):
     ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[Config]
-    randomUUID <- zio.Random.nextUUID
-    fileName =
-      config.filePrefix.getOrElse("") +
-        config.fileName.getOrElse(randomUUID) +
-        config.fileSuffix.getOrElse("") + ".avro" +
-        {if(config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""}
     bytesStream = i.map(r => { r.encode().orNull}).flatMap(r => ZStream.fromIterable(r))
     compressedStream = if(config.compressionType.equals(CompressionType.GZIP)) bytesStream.via(ZPipeline.gzip())
                         else bytesStream
@@ -33,12 +27,12 @@ protected[s3] class AvroPipe[E,
         compressedStream
         .grouped(size)
         .map(chk => ZStream.fromChunk(chk))
-        .mapZIO(stream => uploadStream[E, Config](fileName, stream)
+        .mapZIO(stream => uploadStream[E, Config](stream)
           .provideSomeLayer[E with Config](config.liveS3)
         )
         .runCollect
       case None =>
-        uploadStream[E, Config](fileName, compressedStream)
+        uploadStream[E, Config](compressedStream)
           .flatMap(c => ZIO.succeed(Chunk(c)))
           .provideSomeLayer[E with Config](config.liveS3)
     }

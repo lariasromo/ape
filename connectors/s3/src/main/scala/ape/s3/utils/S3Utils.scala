@@ -1,6 +1,7 @@
 package ape.s3.utils
 
 import ape.s3.configs.S3Config
+import ape.s3.models.CompressionType
 import software.amazon.awssdk.services.s3.model.S3Exception
 import zio.{Chunk, Tag, ZIO}
 import zio.s3.{ListObjectOptions, MaxKeys, MultipartUploadOptions, S3, S3ObjectListing, S3ObjectSummary, UploadOptions, getNextObjects, listObjects, multipartUpload}
@@ -9,6 +10,16 @@ import zio.stream.ZStream
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
 
 object S3Utils {
+  def getRandomName[Config <: S3Config :Tag]: ZIO[Config, Nothing, String] = for {
+    config <- ZIO.service[Config]
+    randomUUID <- zio.Random.nextUUID
+  } yield {
+    config.filePrefix.getOrElse("") +
+      config.fileName.getOrElse(randomUUID) +
+      config.fileSuffix.getOrElse("") + ".json" + {
+      if (config.compressionType.equals(CompressionType.GZIP)) ".gz" else ""
+    }
+  }
   def dateRange(start: ZonedDateTime, end: ZonedDateTime, step: java.time.Duration): Seq[ZonedDateTime] = {
     val e = (end.toEpochSecond - start.toEpochSecond) / step.toSeconds
     (0L to e).map(s => end.minus(step multipliedBy s))
@@ -36,16 +47,24 @@ object S3Utils {
     conv
   }
 
-  def uploadStream[E, Config <: S3Config :Tag](fileName:String, stream: ZStream[E, Throwable, Byte]): ZIO[S3 with E
-    with Config, Throwable, S3ObjectSummary] = for {
-    config <- ZIO.service[Config]
-    bucket <- config.taskS3Bucket
-    location <- config.taskLocation
-    opts = MultipartUploadOptions.fromUploadOptions(UploadOptions.fromContentType("application/zip"))
-    _ <- multipartUpload(bucket, s"${location}/${fileName}", stream, opts)(config.parallelism)
-      .catchAll(exception => ZIO.logError(exception.getMessage).unit)
-    resultFile <- listObjects(bucket, ListObjectOptions.from(s"${location}/${fileName}", 1))
-  } yield resultFile.objectSummaries.head
+  def uploadStream[E, Config <: S3Config :Tag](stream: ZStream[E, Throwable, Byte]):
+    ZIO[S3 with E with Config, Throwable, S3ObjectSummary] =
+      for {
+        fileName <- S3Utils.getRandomName[Config]
+        files <- uploadStream(fileName, stream)
+      } yield files
+
+  def uploadStream[E, Config <: S3Config :Tag](fileName:String, stream: ZStream[E, Throwable, Byte]):
+    ZIO[S3 with E with Config, Throwable, S3ObjectSummary] =
+    for {
+      config <- ZIO.service[Config]
+      bucket <- config.taskS3Bucket
+      location <- config.taskLocation
+      opts = MultipartUploadOptions.fromUploadOptions(UploadOptions.fromContentType("application/zip"))
+      _ <- multipartUpload(bucket, s"${location}/${fileName}", stream, opts)(config.parallelism)
+        .catchAll(exception => ZIO.logError(exception.getMessage).unit)
+      resultFile <- listObjects(bucket, ListObjectOptions.from(s"${location}/${fileName}", 1))
+    } yield resultFile.objectSummaries.head
 
 
   def listPaginated(bucket: String, location: String, maxKeys: Long): ZIO[S3, S3Exception, Chunk[S3ObjectSummary]] =
