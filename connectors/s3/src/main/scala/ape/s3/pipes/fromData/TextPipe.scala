@@ -10,10 +10,10 @@ import zio.{Chunk, Tag, ZIO}
 protected[s3] class TextPipe[E,
   Config <: S3Config :Tag
 ]
-  extends S3Pipe[E with S3 with Config, E, String, S3ObjectSummary] {
+  extends S3Pipe[E with Config, E, String, S3ObjectSummary] {
 
   override protected[this] def pipe(i: ZStream[E, Throwable, String]):
-    ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
+    ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
     for {
       config <- ZIO.service[Config]
       randomUUID <- zio.Random.nextUUID
@@ -28,10 +28,12 @@ protected[s3] class TextPipe[E,
           compressedStream
             .grouped(size)
             .map(chk => ZStream.fromChunk(chk))
-            .mapZIO(stream => uploadStream[E, Config](fileName, stream))
+            .mapZIO(stream => uploadStream[E, Config](fileName, stream).provideSomeLayer[E with Config](config.liveS3))
             .runCollect
         case None =>
-          uploadStream[E, Config](fileName, compressedStream).flatMap(c => ZIO.succeed(Chunk(c)))
+          uploadStream[E, Config](fileName, compressedStream)
+            .flatMap(c => ZIO.succeed(Chunk(c)))
+            .provideSomeLayer[E with Config](config.liveS3)
       }
     } yield ZStream.fromChunk(files)
 }

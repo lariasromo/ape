@@ -14,9 +14,9 @@ import scala.reflect.ClassTag
 protected[s3] class JsonLinesCircePipe[E,
   T: Encoder : ClassTag,
   Config <: S3Config :Tag
-] extends S3Pipe[E with S3 with Config, E, T, S3ObjectSummary] {
+] extends S3Pipe[E with Config, E, T, S3ObjectSummary] {
   override protected[this] def pipe(stream: ZStream[E, Throwable, T]):
-    ZIO[E with S3 with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
+    ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
     for {
       config <- ZIO.service[Config]
       bytesStream = stream
@@ -35,10 +35,10 @@ protected[s3] class JsonLinesCircePipe[E,
           compressedStream
             .grouped(size)
             .map(chk => ZStream.fromChunk(chk))
-            .mapZIO(stream => uploadStream[E, Config](fileName, stream))
+            .mapZIO(stream => uploadStream[E, Config](fileName, stream).provideSomeLayer[E with Config](config.liveS3))
             .runCollect
         case None =>
-          uploadStream[E, Config](fileName, compressedStream).flatMap(c => ZIO.succeed(Chunk(c)))
+          uploadStream[E, Config](fileName, compressedStream).flatMap(c => ZIO.succeed(Chunk(c))).provideSomeLayer[E with Config](config.liveS3)
       }
     } yield ZStream.fromChunk(files)
 }

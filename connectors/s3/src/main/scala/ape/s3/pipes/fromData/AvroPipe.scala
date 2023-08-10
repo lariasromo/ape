@@ -14,10 +14,10 @@ import scala.reflect.ClassTag
 protected[s3] class AvroPipe[E,
   T >:Null :SchemaFor :Decoder :Encoder : ClassTag,
   Config <: S3Config :Tag
-] extends S3Pipe[E with S3 with Config, E, T, S3ObjectSummary] {
+] extends S3Pipe[E with Config, E, T, S3ObjectSummary] {
 
   override protected[this] def pipe(i: ZStream[E, Throwable, T]):
-    ZIO[S3 with E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] = for {
+    ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] = for {
     config <- ZIO.service[Config]
     randomUUID <- zio.Random.nextUUID
     fileName =
@@ -32,10 +32,14 @@ protected[s3] class AvroPipe[E,
         compressedStream
         .grouped(size)
         .map(chk => ZStream.fromChunk(chk))
-        .mapZIO(stream => uploadStream[E, Config](fileName, stream))
+        .mapZIO(stream => uploadStream[E, Config](fileName, stream)
+          .provideSomeLayer[E with Config](config.liveS3)
+        )
         .runCollect
       case None =>
-        uploadStream[E, Config](fileName, compressedStream).flatMap(c => ZIO.succeed(Chunk(c)))
+        uploadStream[E, Config](fileName, compressedStream)
+          .flatMap(c => ZIO.succeed(Chunk(c)))
+          .provideSomeLayer[E with Config](config.liveS3)
     }
   } yield ZStream.fromChunk(files)
 }
