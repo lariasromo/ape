@@ -2,7 +2,7 @@ package ape.s3.configs
 
 import ape.s3.models.CompressionType
 import ape.s3.models.CompressionType.CompressionType
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, DefaultCredentialsProvider, StaticCredentialsProvider}
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.core.retry.RetryPolicy
 import software.amazon.awssdk.regions.Region
@@ -36,6 +36,8 @@ case class S3Config (
                       fileSuffix:Option[String]=None,
                       chunkSizeMb:Option[Int]=None,
                       maxKeySize:Int=100,
+                      accessKeyId: Option[String] = None,
+                      secretAccessKey: Option[String] = None
   ) {
   val chunkSizeKb = chunkSizeMb.map(mb => mb * 1024L * 1024L)
   val taskLocation: Task[String] = ZIO.succeed{
@@ -51,7 +53,12 @@ case class S3Config (
         ZIO.attempt({
             val builder = S3AsyncClient
               .builder()
-              .credentialsProvider(DefaultCredentialsProvider.create())
+              .credentialsProvider({
+                (accessKeyId, secretAccessKey) match {
+                  case (Some(a), Some(b)) => StaticCredentialsProvider.create(AwsBasicCredentials.create(a, b))
+                  case _ => DefaultCredentialsProvider.create()
+                }
+              })
               .region(Region.of(region))
               .overrideConfiguration(
                 ClientOverrideConfiguration
@@ -93,6 +100,8 @@ object S3Config {
     filePrefix <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_FILE_PREFIX")
     chunkSizeMb <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_CHUNK_SIZE_MB")
     maxKeySize <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_MAX_KEY_SIZE")
+    accessKey <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_STATIC_ACCESS_KEY")
+    secretKey <- env(prefix.map(s=>s+"_").getOrElse("") +  "S3_STATIC_SECRET_KEY")
   } yield S3Config (
     region = reg,
     location = location,
@@ -111,6 +120,8 @@ object S3Config {
     filePrefix=filePrefix,
     chunkSizeMb=chunkSizeMb.flatMap(m => Try(m.toInt).toOption),
     maxKeySize=maxKeySize.flatMap(m => Try(m.toInt).toOption).getOrElse(100),
+    accessKeyId = accessKey,
+    secretAccessKey = secretKey
   )
 
   def makeWithPattern(pattern:ZonedDateTime=>String, prefix:Option[String]=None): ZIO[Any, SecurityException, S3Config] = for {
