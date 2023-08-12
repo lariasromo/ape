@@ -1,8 +1,9 @@
 package ape.misc
 
-import ape.misc.pipes.{BackPressureFinitePipe, BackPressureInfinitePipe, ConsolePipe, QueuePipe}
+import ape.misc.pipes.{BackPressureDisk, BackPressureFinitePipe, BackPressureInfinitePipe, ConsolePipe, QueuePipe}
 import ape.pipe.Pipe
 import ape.utils.Utils.:=
+import io.circe.{Decoder, Encoder}
 import zio.Queue
 
 import scala.reflect.ClassTag
@@ -22,6 +23,7 @@ protected[misc] class Pipes() {
   class backPressure[ZE]{
     def finite[T: ClassTag] = new BackPressureFinitePipe[ZE, T]
     def infinite[T: ClassTag] = new BackPressureInfinitePipe[ZE, T]
+    def disk[T: Decoder : Encoder] = new BackPressureDisk[ZE, T]
   }
   def backPressure[ZE](implicit d1: ZE := Any) = new backPressure[ZE]
 }
