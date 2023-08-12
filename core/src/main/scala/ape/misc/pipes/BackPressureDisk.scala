@@ -7,8 +7,9 @@ import zio.{Schedule, ZIO}
 import zio.stream.{ZPipeline, ZSink, ZStream}
 
 import java.io.File
+import scala.reflect.ClassTag
 
-class BackPressureDisk[ZE, T: Decoder: Encoder] extends Pipe[Any, ZE, T, T]{
+class BackPressureDisk[ZE, T: ClassTag: Decoder: Encoder] extends Pipe[Any, ZE, T, T]{
   override protected[this] def pipe(input: ZStream[ZE, Throwable, T]): ZIO[Any, Throwable, ZStream[ZE, Throwable, T]] =
   ZIO.attempt{
     val tmpFile = File.createTempFile("tmp", ".txt")

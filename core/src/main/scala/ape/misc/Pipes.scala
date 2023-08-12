@@ -23,7 +23,7 @@ protected[misc] class Pipes() {
   class backPressure[ZE]{
     def finite[T: ClassTag] = new BackPressureFinitePipe[ZE, T]
     def infinite[T: ClassTag] = new BackPressureInfinitePipe[ZE, T]
-    def disk[T: Decoder : Encoder] = new BackPressureDisk[ZE, T]
+    def disk[T: ClassTag: Decoder : Encoder] = new BackPressureDisk[ZE, T]
   }
   def backPressure[ZE](implicit d1: ZE := Any) = new backPressure[ZE]
 }
