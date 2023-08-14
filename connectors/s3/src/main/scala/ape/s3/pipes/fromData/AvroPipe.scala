@@ -18,7 +18,7 @@ protected[s3] class AvroPipe[E,
 
   override protected[this] def pipe(i: ZStream[E, Throwable, T]):
     ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] = for {
-    files <- uploadCompressedGroupedStream{
+    files <- uploadCompressedGroupedStream[E, Config]{
       i
         .map(r => { r.encode().orNull})
         .flatMap(r => ZStream.fromIterable(r))

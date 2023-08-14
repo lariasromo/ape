@@ -15,7 +15,7 @@ protected[s3] class TextPipe[E,
   override protected[this] def pipe(i: ZStream[E, Throwable, String]):
     ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
     for {
-      files <- uploadCompressedGroupedStream{
+      files <- uploadCompressedGroupedStream[E, Config]{
         i
           .map(s => s"$s\n".getBytes)
           .flatMap(r => ZStream.fromIterable(r))
