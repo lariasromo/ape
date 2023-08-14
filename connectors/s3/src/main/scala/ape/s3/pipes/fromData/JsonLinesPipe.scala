@@ -17,7 +17,7 @@ protected[s3] class JsonLinesPipe[E,
   override protected[this] def pipe(stream: ZStream[E, Throwable, T]):
     ZIO[E with Config, Throwable, ZStream[E, Throwable, S3ObjectSummary]] =
     for {
-      files <- uploadCompressedGroupedStream{
+      files <- uploadCompressedGroupedStream[E, Config]{
         stream
           .map(s => enc(s) + "\n")
           .map(_.getBytes)

@@ -25,7 +25,7 @@ protected[s3] class CsvPipe[ZE, T: ClassTag,Config <: S3Config :Tag]
   override protected[this] def pipe(stream: ZStream[ZE, Throwable, T]):
     ZIO[ZE with S3 with Config, Throwable, ZStream[ZE, Throwable, S3ObjectSummary]] =
     for {
-      files <- uploadCompressedGroupedStream{
+      files <- uploadCompressedGroupedStream[ZE, Config]{
         stream
           .map(a => {
             val m = getTMap(a)
