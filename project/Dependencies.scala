@@ -53,6 +53,8 @@ object Dependencies {
 
   val clickhouseLibraries = Seq(
     "com.clickhouse" % "clickhouse-jdbc" % "0.3.2-patch11",
+    "org.liquibase" % "liquibase-core" % "4.6.1",
+    "com.mediarithmics" % "liquibase-clickhouse" % "0.7.2",
   )
 
   val cassandraLibraries = Seq(

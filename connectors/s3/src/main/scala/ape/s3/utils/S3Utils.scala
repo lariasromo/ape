@@ -5,11 +5,42 @@ import ape.s3.models.CompressionType
 import software.amazon.awssdk.services.s3.model.S3Exception
 import zio.{Chunk, Tag, ZIO}
 import zio.s3.{ListObjectOptions, MaxKeys, MultipartUploadOptions, S3, S3ObjectListing, S3ObjectSummary, UploadOptions, getNextObjects, listObjects, multipartUpload}
-import zio.stream.ZStream
+import zio.stream.{ZPipeline, ZStream}
 
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
 
 object S3Utils {
+  def uploadCompressedGroupedStream[ZE, Config <: S3Config :Tag](bytesStream: ZStream[ZE, Throwable, Byte]):
+  ZIO[ZE with Config, Throwable, Chunk[S3ObjectSummary]] =
+    for {
+      config <- ZIO.service[Config]
+      files <- config.chunkSizeMb match {
+        case Some(size) => {
+          if (Seq(CompressionType.GZIP, CompressionType.GUNZIP) contains config.compressionType) {
+            bytesStream
+              .grouped(size * 6)
+              .map(chk => ZStream.fromChunk(chk))
+              .mapZIO(stream => uploadStream[ZE, Config](stream.via(ZPipeline.gzip()))
+                .provideSomeLayer[ZE with Config](config.liveS3)
+              )
+          } else {
+            bytesStream
+              .grouped(size)
+              .map(chk => ZStream.fromChunk(chk))
+              .mapZIO(stream => uploadStream[ZE, Config](stream)
+                .provideSomeLayer[ZE with Config](config.liveS3)
+              )
+          }
+        }.runCollect
+        case None => {
+          val r: ZIO[ZE with Config, Throwable, Chunk[S3ObjectSummary]] = uploadStream[ZE, Config](bytesStream)
+            .flatMap(c => ZIO.succeed(Chunk(c)))
+            .provideSomeLayer[ZE with Config](config.liveS3)
+          r
+        }
+      }
+  } yield files
+
   def getRandomName[Config <: S3Config :Tag]: ZIO[Config, Nothing, String] = for {
     config <- ZIO.service[Config]
     randomUUID <- zio.Random.nextUUID
