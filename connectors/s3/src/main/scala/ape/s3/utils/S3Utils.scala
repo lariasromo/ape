@@ -33,7 +33,8 @@ object S3Utils {
           }
         }.runCollect
         case None => {
-          val r: ZIO[ZE with Config, Throwable, Chunk[S3ObjectSummary]] = uploadStream[ZE, Config](bytesStream)
+          val r: ZIO[ZE with Config, Throwable, Chunk[S3ObjectSummary]] =
+            uploadStream[ZE, Config](bytesStream.via(ZPipeline.gzip()))
             .flatMap(c => ZIO.succeed(Chunk(c)))
             .provideSomeLayer[ZE with Config](config.liveS3)
           r
