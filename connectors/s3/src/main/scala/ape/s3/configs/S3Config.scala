@@ -36,6 +36,7 @@ case class S3Config (
                       fileSuffix:Option[String]=None,
                       chunkSizeMb:Option[Int]=None,
                       maxKeySize:Int=100,
+                      maxRows:Option[Int]=None,
                       accessKeyId: Option[String] = None,
                       secretAccessKey: Option[String] = None
   ) {

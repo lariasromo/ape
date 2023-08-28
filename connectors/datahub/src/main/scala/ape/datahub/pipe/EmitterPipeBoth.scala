@@ -1,6 +1,7 @@
 package ape.datahub.pipe
 
 import ape.datahub.configs.DatahubConfig
+import ape.datahub.utils.DatahubUtils
 import ape.datahub.utils.DatahubUtils._
 import ape.pipe.Pipe
 import com.linkedin.common.urn.DatasetUrn
@@ -20,7 +21,7 @@ class EmitterPipeBoth[-E, ZE, T1 : SchemaFor :ClassTag, T2 : SchemaFor :ClassTag
 
 
   private def createDatasets: ZIO[DatahubConfig, Throwable, Unit] = for {
-    urnLeft <- ZIO.when(Seq(EmitterType.BOTH, EmitterType.LEFT) contains emitterType)(createDataset[T1])
+    urnLeft <- ZIO.when(Seq(EmitterType.BOTH, EmitterType.LEFT) contains emitterType)(DatahubUtils.createDataset[T1])
     urnRight <- ZIO.when(Seq(EmitterType.BOTH, EmitterType.RIGHT) contains emitterType)(createDataset[T2])
     leftRightLineageResp <- ZIO.when(emitterType.equals(EmitterType.BOTH) && urnLeft.isDefined && urnRight.isDefined) {
       createLineage(Seq(urnLeft.orNull), urnRight.orNull)
