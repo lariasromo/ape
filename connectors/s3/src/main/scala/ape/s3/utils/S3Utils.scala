@@ -10,6 +10,17 @@ import zio.stream.{ZPipeline, ZStream}
 import java.time.{LocalDateTime, ZoneOffset, ZonedDateTime}
 
 object S3Utils {
+  def splitStream[U, ZE, Config <: S3Config :Tag](i: ZStream[ZE, Throwable, U]):
+  ZIO[Config, Throwable, ZStream[ZE, Throwable, ZStream[ZE, Throwable, U]]] =
+    for {
+      cfg <- ZIO.service[Config]
+      files = {
+        cfg.maxRows
+          .map( size => i.grouped(size).map(c => ZStream.fromChunk(c)) )
+          .getOrElse(ZStream(i))
+      }
+    } yield files
+
   def uploadCompressedGroupedStream[ZE, Config <: S3Config :Tag](bytesStream: ZStream[ZE, Throwable, Byte]):
   ZIO[ZE with Config, Throwable, Chunk[S3ObjectSummary]] =
     for {
