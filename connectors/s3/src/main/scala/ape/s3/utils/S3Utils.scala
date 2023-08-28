@@ -125,5 +125,6 @@ object S3Utils {
       )
         .flatMap(ZStream.fromChunk(_))
         .runCollect
+      _ <- ZIO.logInfo(s"Got a total of ${objs.size} files from S3")
     } yield objs
 }
