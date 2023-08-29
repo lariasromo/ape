@@ -110,9 +110,10 @@ object S3Utils {
     } yield resultFile.objectSummaries.head
 
 
-  def listPaginated(bucket: String, location: String, maxKeys: Long): ZIO[S3, S3Exception, Chunk[S3ObjectSummary]] =
-    for {
+  def listPaginated(bucket: String, location: String, maxKeys: Long): ZIO[S3, Nothing, Chunk[S3ObjectSummary]] =
+    (for {
       l1 <- listObjects(bucket, ListObjectOptions.from(location, maxKeys))
+
       objs <- ZStream.paginateZIO(l1)(listing =>
         for {
           l2 <- getNextObjects(listing)
@@ -127,4 +128,9 @@ object S3Utils {
         .runCollect
       _ <- ZIO.logInfo(s"Got a total of ${objs.size} files from S3")
     } yield objs
+    )
+      .catchAll(exception => for {
+          _ <- ZIO.logError("Got an S3 connection error")
+          _ <- ZIO.logError(exception.getMessage)
+        } yield Chunk.empty )
 }
