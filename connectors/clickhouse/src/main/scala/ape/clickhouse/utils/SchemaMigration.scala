@@ -2,7 +2,6 @@ package ape.clickhouse.utils
 
 import ape.clickhouse.configs.MultiClickhouseConfig.ReplicatedMode
 import ape.clickhouse.configs.{ClickhouseConfig, MultiClickhouseConfig}
-import ape.clickhouse.utils.ClickhouseJDBCUtils
 import liquibase.Liquibase
 import liquibase.database.DatabaseFactory
 import liquibase.database.jvm.JdbcConnection
@@ -11,7 +10,6 @@ import zio.System.env
 import zio.{ZIO, ZLayer}
 
 import java.sql.Connection
-import scala.util.{Failure, Try}
 
 /**
  * Runs Liquibase based database schema and data migrations. This is the only place for all related
@@ -44,18 +42,9 @@ class SchemaMigration {
       config <- ZIO.service[ClickhouseConfig]
       connection <- ClickhouseJDBCUtils.connect
       liquibase <- ZIO.succeed(createLiquibase(path, config.databaseName, connection, liquibaseSuffix))
-      _ <- ZIO.succeed {
-        Try {
-          liquibase.update("")
-          liquibase.forceReleaseLocks()
-        } match {
-          case Failure(exception) => {
-            exception.printStackTrace()
-            println(exception.getMessage)
-            //            throw exception
-          }
-          case _ =>
-        }
+      _ <- ZIO.attempt {
+        liquibase.update("")
+        liquibase.forceReleaseLocks()
       }
     } yield ()
   }
