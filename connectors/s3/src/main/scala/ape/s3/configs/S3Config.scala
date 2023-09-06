@@ -34,13 +34,11 @@ case class S3Config (
                       fileName:Option[String]=None,
                       filePrefix:Option[String]=None,
                       fileSuffix:Option[String]=None,
-                      chunkSizeMb:Option[Int]=None,
                       maxKeySize:Int=100,
                       maxRows:Option[Int]=None,
                       accessKeyId: Option[String] = None,
                       secretAccessKey: Option[String] = None
   ) {
-  val chunkSizeKb = chunkSizeMb.map(mb => mb * 1024L * 1024L)
   val taskLocation: Task[String] = ZIO.succeed{
     location.getOrElse({
       locationPattern.map(l => l(ZonedDateTime.now())).getOrElse("location and location pattern are empty")
@@ -119,7 +117,6 @@ object S3Config {
     fileName=fileName,
     fileSuffix=fileSuffix,
     filePrefix=filePrefix,
-    chunkSizeMb=chunkSizeMb.flatMap(m => Try(m.toInt).toOption),
     maxKeySize=maxKeySize.flatMap(m => Try(m.toInt).toOption).getOrElse(100),
     accessKeyId = accessKey,
     secretAccessKey = secretKey
