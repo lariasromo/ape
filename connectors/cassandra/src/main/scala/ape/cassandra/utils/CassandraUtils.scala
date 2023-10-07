@@ -18,8 +18,14 @@ object CassandraUtils {
     ZIO[Config, Throwable, Chunk[(Model, Chunk[T])]] = ZIO.scoped[Config] {
     for {
       s <- sessionFromCqlSession[Config]
-      res <- lookupChunk.mapZIO { lookup[T, Model] }
-        .provideSomeLayer (ZLayer.succeed (s))
+      res <- lookupChunk.mapZIO { lookup[T, Model] }.provideSomeLayer (ZLayer.succeed (s))
+      _ <- lookupChunk.head.postQuery match {
+        case Some(postSql) => for {
+          postScript <- s.prepare(SimpleStatement.builder(postSql).build)
+          _ <- s.executePar(lookupChunk.toList.flatMap(element => element.postBind(postScript)): _*)
+        } yield ()
+        case _ => ZIO.unit
+      }
     } yield res
   }
 

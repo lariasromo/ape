@@ -18,8 +18,15 @@ protected[cassandra] class DefaultPipe[E, Config <: CassandraConfig :Tag, Model 
       for {
         session <- sessionFromCqlSession[CassandraConfig]
         error <- for {
-          ps <- session.prepare(SimpleStatement.builder(batch.head.sql).build)
-          results <- session.executePar(batch.toList.map(element => element.bind(ps)): _*)
+          script <- session.prepare(SimpleStatement.builder(batch.head.sql).build)
+          results <- session.executePar(batch.toList.map(element => element.bind(script)): _*)
+          _ <- batch.head.postSql match {
+            case Some(postSql) => for {
+              postScript <- session.prepare(SimpleStatement.builder(postSql).build)
+              _ <- session.executePar(batch.toList.flatMap(element => element.postBind(postScript)): _*)
+            } yield ()
+            case _ => ZIO.unit
+          }
         } yield Chunk.fromIterable(results)
       } yield error
     }.provideSomeLayer(ZLayer.succeed(config))
