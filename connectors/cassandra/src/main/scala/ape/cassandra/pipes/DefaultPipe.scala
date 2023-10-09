@@ -11,9 +11,9 @@ import zio.{Chunk, Tag, ZIO, ZLayer}
 import scala.reflect.ClassTag
 
 protected[cassandra] class DefaultPipe[E, Config <: CassandraConfig :Tag, Model <: CassandraModel :Tag :ClassTag]
-  extends CassandraPipe[Config, E, Model, Chunk[AsyncResultSet]] {
+  extends CassandraPipe[Config, E, Model, Chunk[(Model, AsyncResultSet)]] {
 
-  def insertToCassandra(batch: Chunk[Model], config: CassandraConfig): ZIO[Any, CassandraException, Chunk[AsyncResultSet]] =
+  def insertToCassandra(batch: Chunk[Model], config: CassandraConfig): ZIO[Any, CassandraException, Chunk[(Model, AsyncResultSet)]] =
     ZIO.scoped {
       for {
         session <- sessionFromCqlSession[CassandraConfig]
@@ -27,12 +27,12 @@ protected[cassandra] class DefaultPipe[E, Config <: CassandraConfig :Tag, Model 
             } yield ()
             case _ => ZIO.unit
           }
-        } yield Chunk.fromIterable(results)
+        } yield Chunk.fromIterable(batch.zip(results))
       } yield error
     }.provideSomeLayer(ZLayer.succeed(config))
 
   override protected[this] def pipe(i: ZStream[E, Throwable, Model]):
-    ZIO[Config, Throwable, ZStream[E, Throwable, Chunk[AsyncResultSet]]] = for {
+    ZIO[Config, Throwable, ZStream[E, Throwable, Chunk[(Model, AsyncResultSet)]]] = for {
     config <- ZIO.service[Config]
     s = i
       .groupedWithin(config.batchSize, config.syncDuration)

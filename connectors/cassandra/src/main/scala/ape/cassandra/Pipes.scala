@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
 
 protected[cassandra] class Pipes[Config <: CassandraConfig :Tag]() {
   def default[E, Model <: CassandraModel :Tag :ClassTag]
-    (implicit default: E := Any, default2: Model := CassandraModel): Pipe[Config, E, Model, Chunk[AsyncResultSet]] =
+    (implicit default: E := Any, default2: Model := CassandraModel): Pipe[Config, E, Model, Chunk[(Model, AsyncResultSet)]] =
     new DefaultPipe[E, Config, Model]
 
   def lookup[E, Model <: CassandraLookupModel[T] :Tag :ClassTag, T]: Pipe[Config, E, Model, (Model, Chunk[T])] =
