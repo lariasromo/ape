@@ -22,11 +22,12 @@ object Example1 extends ZIOApp {
       .filter(r => Seq("SUCCESS", "SUCCEEDED").contains(r.status)) // filtering specific status values
     )
 
-  val parallelPipes: Pipe[CassandraConfig with JDBCConfig with Any with Scope, Any, Transaction, (Chunk[AsyncResultSet], Chunk[Transaction])] =
+  val parallelPipes: Pipe[CassandraConfig with JDBCConfig with Any with Scope, Any, Transaction, (Chunk[(Transaction, AsyncResultSet)], Chunk[Transaction])] =
     ape.cassandra.Pipes.pipes[CassandraConfig].default[Any, Transaction] ++
       ape.jdbc.Pipes.pipes[JDBCConfig].default[Any, Transaction]
 
-  val pipe: ZStream[Any with KafkaConfig with CassandraConfig with JDBCConfig with Scope, Throwable, (Chunk[AsyncResultSet], Chunk[Transaction])] = reader --> parallelPipes
+  val pipe: ZStream[Any with KafkaConfig with CassandraConfig with JDBCConfig with Scope, Throwable, (Chunk[(Transaction, AsyncResultSet)], Chunk[Transaction])] =
+    reader --> parallelPipes
 
   val layer: ZLayer[Any with System, Throwable, KafkaConfig with Consumer with CassandraConfig with JDBCConfig] =
     (KafkaConfig.live() >+> KafkaConfig.liveConsumer) ++ CassandraConfig.live() ++ JDBCConfig.live()
