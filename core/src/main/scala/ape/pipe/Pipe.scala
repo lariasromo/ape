@@ -238,6 +238,11 @@ object Pipe {
                   n:String="ZTPipe"
                  )(implicit d: E := Any, d1: ZE := Any): Pipe[E, ZE, T0, T2] =
     new ZTPipe[E, ZE, T0, T1, T2](i, t, n)
+
+  def Unit[ZE, T: ClassTag](
+                  n:String="Unit"
+                 )(implicit d1: ZE := Any): Pipe[Any, ZE, T, T] =
+    new UnitTPipe[Any, ZE, T, T](x=>x, n)
 }
 
 
