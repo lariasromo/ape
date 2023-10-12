@@ -6,6 +6,8 @@ import com.dimafeng.testcontainers.CassandraContainer
 import palanga.zio.cassandra.CassandraException
 import zio.{Task, UIO, ZIO, ZLayer, durationInt}
 
+import java.net.InetSocketAddress
+
 object CassandraContainerService {
   def createKeyspaceStmt(keyspace:String) = SimpleStatement
       .builder(
@@ -56,8 +58,7 @@ object CassandraContainerService {
       config = CassandraConfig(
         batchSize=1,
         syncDuration=1.minute,
-        host=container.host,
-        port=container.mappedPort(9042),
+        hosts=List(new InetSocketAddress(container.host, container.mappedPort(9042))),
         keyspace="",
         username=container.username,
         password=container.password

@@ -7,10 +7,11 @@ import scala.util.Try
 import zio.config.ZConfig
 import zio.config.magnolia.descriptor
 
+import java.net.InetSocketAddress
+
 case class CassandraConfig(
-                            host: String,
+                            hosts: List[InetSocketAddress],
                             keyspace: String,
-                            port: Int,
                             batchSize: Int,
                             syncDuration: zio.Duration,
                             username: String,
@@ -19,8 +20,8 @@ case class CassandraConfig(
                           )
 
 object CassandraConfig {
-  val configDescriptor = descriptor[CassandraConfig]
-  val liveMagnolia: ZLayer[Any, Throwable, CassandraConfig] = ZConfig.fromSystemEnv(configDescriptor)
+//  val configDescriptor = descriptor[CassandraConfig]
+//  val liveMagnolia: ZLayer[Any, Throwable, CassandraConfig] = ZConfig.fromSystemEnv(configDescriptor)
 
   def live(prefix:Option[String]=None): ZLayer[Any, SecurityException, CassandraConfig] = ZLayer(make(prefix))
 
@@ -35,9 +36,8 @@ object CassandraConfig {
     password <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_PASSWORD", "")
     datacenter <- envOrElse(prefix.map(s=>s+"_").getOrElse("") + "CASSANDRA_DATACENTER", "datacenter1")
   } yield CassandraConfig(
-    host=host,
+    hosts=List(new InetSocketAddress(host, Try(port.toInt).toOption.getOrElse(9042))),
     keyspace=keyspace,
-    port=Try(port.toInt).toOption.getOrElse(9042),
     batchSize=Try(batchSize.toInt).toOption.getOrElse(10000),
     syncDuration=Try(syncDuration.toInt.minutes).toOption.getOrElse(5.minutes),
     username=username,

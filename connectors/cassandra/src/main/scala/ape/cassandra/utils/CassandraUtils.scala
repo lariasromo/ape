@@ -11,6 +11,7 @@ import zio.stream.ZStream
 import zio.{Chunk, Scope, Tag, ZIO, ZLayer}
 
 import java.net.InetSocketAddress
+import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.reflect.ClassTag
 
 object CassandraUtils {
@@ -49,9 +50,8 @@ object CassandraUtils {
     for {
       config <- ZIO.service[CassandraConfig]
       con <- session.auto.openFromDatastaxSession({
-        var ses = DatastaxSession
-          .builder()
-          .addContactPoint(new InetSocketAddress(config.host, config.port))
+        var ses = DatastaxSession.builder()
+          .addContactPoints(config.hosts.asJava)
           .withAuthCredentials(config.username, config.password)
         if (config.keyspace.nonEmpty) {
           ses = ses.withKeyspace(config.keyspace)
