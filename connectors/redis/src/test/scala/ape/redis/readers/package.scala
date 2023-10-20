@@ -30,6 +30,6 @@ package object readers {
   )
   val stringStream: ZStream[Any, Nothing, String] = ZStream.fromChunk(stringData)
 
-  val dummyReader = Reader.UnitReader[Any, Any, dummy](dummyStream)
-  val stringReader = Reader.UnitReader[Any, Any, String](stringStream)
+  val dummyReader = Reader.UnitReaderStream(dummyStream)
+  val stringReader = Reader.UnitReaderStream(stringStream)
 }

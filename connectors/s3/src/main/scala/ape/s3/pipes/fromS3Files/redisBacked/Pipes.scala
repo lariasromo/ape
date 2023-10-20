@@ -13,17 +13,17 @@ class Pipes[ SConfig <: S3Config :Tag, RConfig <: RedisConfig :Tag ](reader: S3F
 
   def avro[T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag]:
     Reader[Any, SConfig with RConfig, S3FileWithContent[T]] =
-      Reader.UnitReader(reader --> new AvroPipe[T, SConfig, RConfig])
+      Reader.UnitReaderStream(reader --> new AvroPipe[T, SConfig, RConfig])
 
   def jsonLines[T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag](implicit decode: String => T):
     Reader[Any, SConfig with RConfig, S3FileWithContent[T]]  =
-      Reader.UnitReader(reader --> new JsonLinesPipe[T, SConfig, RConfig])
+      Reader.UnitReaderStream(reader --> new JsonLinesPipe[T, SConfig, RConfig])
 
   def jsonLinesCirce[T>:Null :SchemaFor :Encoder :Decoder :ClassTag :Tag : io.circe.Decoder]:
     Reader[Any, SConfig with RConfig, S3FileWithContent[T]]  =
-      Reader.UnitReader(reader --> new JsonLinesCircePipe[T, SConfig, RConfig])
+      Reader.UnitReaderStream(reader --> new JsonLinesCircePipe[T, SConfig, RConfig])
 
   def text: Reader[Any, SConfig with RConfig, S3FileWithContent[String]] =
-    Reader.UnitReader(reader --> new TextPipe[SConfig, RConfig])
+    Reader.UnitReaderStream(reader --> new TextPipe[SConfig, RConfig])
 
 }

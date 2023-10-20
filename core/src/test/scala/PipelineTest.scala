@@ -15,16 +15,15 @@ object PipelineTest extends ZIOSpecDefault {
   } yield {
     assertTrue(testResult)
   }
-  val sampleDataOptions: ZStream[Any, Nothing, Option[dummy]] = ZStream.fromChunk(
-    Chunk(
+  val sampleDataOptions  = Seq(
       Some(dummy("value1", "value2")),
       Some(dummy("value2", "value3")),
       None,
       Some(dummy("value3", "value4")),
       None,
     )
-  )
-  val reader: Reader[Any, Any, Option[dummy]] = Reader.UnitReader[Any, Any, Option[dummy]](sampleDataOptions)
+
+  val reader: Reader[Any, Any, Option[dummy]] = Reader.UnitReaderIter[Any, Any, Option[dummy]](sampleDataOptions)
   val dummyT: Option[dummy] => Option[dummy] = d => d
   val sampleDataNoOp: Chunk[dummy] = Chunk(
     dummy("value1", "value2"),

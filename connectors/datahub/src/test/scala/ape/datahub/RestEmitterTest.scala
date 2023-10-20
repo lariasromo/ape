@@ -15,7 +15,7 @@ object RestEmitterTest extends ZIOSpec[DatahubConfig] {
 
   val stream = ZStream("a", "b", "c").map(n => Person(n))
   val externalUrn = DatasetUrn.createFromString("urn:li:dataset:(urn:li:dataPlatform:kafka,mcs-attribution,PROD)")
-  val reader = Reader.UnitReader(stream)
+  val reader = Reader.UnitReaderStream(stream)
   val pipe1 = EmitterPipe(Pipe.UnitTPipe[Any, Any, Person,   Car](p =>      Car(p.name)))
   val pipe2 = EmitterPipe(Pipe.UnitTPipe[Any, Any, Car,      House](p =>    House(p.name)),
     upstreams = Seq(externalUrn)

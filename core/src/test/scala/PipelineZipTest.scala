@@ -56,7 +56,7 @@ object PipelineZipTest extends ZIOSpecDefault {
 //  val pipeAll = twoWritersDeposit ++ twoWriterRegistration
   val pipeAll: Pipe[Any with Scope, Any, Person, Person] = pipeVasil +++ (pipeLuis, pipeTopi, pipeSergey)
 
-  val reader = Reader.UnitReader(data)
+  val reader = Reader.UnitReaderStream(data)
   val pipe: ZStream[Any with Scope, Throwable, Person] = reader +++ (pipeVasil, pipeLuis, pipeTopi, pipeSergey)
 
 

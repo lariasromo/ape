@@ -20,7 +20,7 @@ class BackPressureInfinitePipe[E, ZE, Config<:RedisConfig :Tag, T :SchemaFor :En
         queueName <- rand.nextString(10)
         _ <- ZIO.logInfo(s"Reading stream with back pressure (using Redis queue ${queueName})")
         _ <- {
-          val r: Reader[Any, ZE, T] = Reader.UnitReader[Any, ZE, T](stream)
+          val r: Reader[Any, ZE, T] = Reader.UnitReaderStream[Any, ZE, T](stream)
           val w: Pipe[Config, ZE, T, T] = ape.redis.Pipes.pipes[Config].generalPurpose[ZE].typed[T](queueName)
           r --> w
         }.runDrain.fork

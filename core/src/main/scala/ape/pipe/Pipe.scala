@@ -243,6 +243,12 @@ object Pipe {
                   n:String="Unit"
                  )(implicit d1: ZE := Any): Pipe[Any, ZE, T, T] =
     new UnitTPipe[Any, ZE, T, T](x=>x, n)
+
+  def UnitPipeTap[ZE, T: ClassTag](
+                  t: T => ZIO[ZE, Throwable, Any],
+                  n:String="Unit"
+                 )(implicit d1: ZE := Any): Pipe[Any, ZE, T, T] =
+    new UnitPipeTap[Any, ZE, T](t, n)
 }
 
 

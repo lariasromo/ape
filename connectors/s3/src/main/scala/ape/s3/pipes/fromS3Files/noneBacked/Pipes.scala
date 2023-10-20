@@ -12,18 +12,18 @@ import scala.reflect.ClassTag
 class Pipes[ SConfig <: S3Config :Tag ](reader: S3FileReader[SConfig]) {
 
   def avro[T :SchemaFor :Encoder :Decoder :ClassTag :Tag]: Reader[Any, SConfig, S3FileWithContent[T]] =
-    Reader.UnitReader(reader --> new AvroPipe[T, SConfig])
+    Reader.UnitReaderStream(reader --> new AvroPipe[T, SConfig])
 
   def jsonLines[T :SchemaFor :Encoder :Decoder :ClassTag :Tag]
     (implicit decode: String => T): Reader[Any, SConfig, S3FileWithContent[T]] =
-    Reader.UnitReader(reader --> new JsonLinesPipe[T, SConfig])
+    Reader.UnitReaderStream(reader --> new JsonLinesPipe[T, SConfig])
 
   def jsonLinesCirce[T  :SchemaFor :Encoder :Decoder :ClassTag :Tag : io.circe.Decoder]:
-    Reader[Any, SConfig, S3FileWithContent[T]] = Reader.UnitReader(reader --> new JsonLinesCircePipe[T, SConfig])
+    Reader[Any, SConfig, S3FileWithContent[T]] = Reader.UnitReaderStream(reader --> new JsonLinesCircePipe[T, SConfig])
 
-  def text: Reader[Any, SConfig, S3FileWithContent[String]] = Reader.UnitReader(reader --> new TextPipe[SConfig])
+  def text: Reader[Any, SConfig, S3FileWithContent[String]] = Reader.UnitReaderStream(reader --> new TextPipe[SConfig])
 
   def csv[ZE, CsvCfg <: CSVConfig :Tag, T: ClassTag](implicit rfcImp: RawFieldsConverter[T]):
     Reader[Any, SConfig with CsvCfg, S3FileWithContent[T]] =
-    Reader.UnitReader(reader --> new CsvPipe[SConfig, CsvCfg, T])
+    Reader.UnitReaderStream(reader --> new CsvPipe[SConfig, CsvCfg, T])
 }

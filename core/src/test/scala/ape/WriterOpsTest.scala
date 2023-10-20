@@ -10,8 +10,7 @@ import zio.{Chunk, Scope, ZIO, ZLayer}
 import scala.reflect.ClassTag
 
 object WriterOpsTest extends ZIOSpec[Unit] {
-  val stream = ZStream.apply("file1", "file2", "file3", "file4", "file5")
-  val reader = Reader.UnitReader[Any, Any, String](stream)
+  val reader = Reader.UnitReaderIter(Seq("file1", "file2", "file3", "file4", "file5"))
   val writer1 = Pipe.UnitZPipe[Any, Any, String, Unit](
     s => s.tap(i => printLine("InsertWithDlq: " + i) *> ZIO.succeed((1 to 1000000000).foreach(_ => ()))).map(_ => ())
   )

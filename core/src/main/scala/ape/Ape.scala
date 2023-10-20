@@ -11,7 +11,7 @@ case class Ape[ZE, T: ClassTag] (stream: ZStream[ZE, Throwable, T]){
   def run: ZIO[ZE, Throwable, Unit] = stream.runDrain
   def run[R1, E1, L, Z](sink: => ZSink[R1, E1, T, L, Z]): ZIO[R1 with ZE, Any, Z] = stream.run(sink)
   def -->[E2, T2: ClassTag](writer: Pipe[E2, ZE, T, T2]): ZIO[E2, Throwable, Ape[ZE, T2]] =
-    Ape.apply[E2, E2, ZE, T, T2](Reader.UnitReader(stream), writer)
+    Ape.apply[E2, E2, ZE, T, T2](Reader.UnitReaderStream(stream), writer)
 }
 
 object Ape {

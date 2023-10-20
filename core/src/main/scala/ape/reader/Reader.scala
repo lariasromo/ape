@@ -92,10 +92,22 @@ object Reader {
                )(implicit d: E := Any, d1: ZE := Any): Reader[E, ZE, T1] =
     new ZTReader[E, ZE, T0, T1](input, transform, n)
 
-  def UnitReader[E, ZE, T: ClassTag](
+  def UnitReaderStream[E, ZE, T: ClassTag](
                   stream: ZStream[ZE, Throwable, T],
                   n:String = "UnitReader"
                 )(implicit d: E := Any, d1: ZE := Any): Reader[E, ZE, T] =
     new UnitReader[E, ZE, T](stream, n)
+
+  def UnitReader[E, ZE, T: ClassTag](
+                  uni: T,
+                  n:String = "UnitReader"
+                )(implicit d: E := Any, d1: ZE := Any): Reader[E, ZE, T] =
+    new UnitReader[E, ZE, T](ZStream(uni), n)
+
+  def UnitReaderIter[E, ZE, T: ClassTag](
+                  uni: Iterable[T],
+                  n:String = "UnitReader"
+                )(implicit d: E := Any, d1: ZE := Any): Reader[E, ZE, T] =
+    new UnitReader[E, ZE, T](ZStream.fromIterable(uni), n)
 }
 

@@ -21,7 +21,7 @@ object ExternalLineageEmitterTest extends ZIOSpec[DatahubConfig] {
   val chUrnStr = "urn:li:dataset:(urn:li:dataPlatform:clickhouse,DatabaseNameToBeIngested.datalake.ma_deposit_fxbank,PROD)"
   val chUrn = DatasetUrn.createFromString(chUrnStr)
 
-  val reader = EmitterReader(Reader.UnitReader(stream)).withUpstreams(Seq(kafkaUrn))
+  val reader = EmitterReader(Reader.UnitReaderStream(stream)).withUpstreams(Seq(kafkaUrn))
 
   val pipe = EmitterPipe(
     Pipe.UnitTPipe[Any, Any, Registration, RegistrationWithCountry](p => {

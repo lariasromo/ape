@@ -18,7 +18,7 @@ class BackPressureStringFinitePipe[E, ZE, Config<:RedisConfig :Tag]
       queueName <- ZIO.succeed(Random.alphanumeric.filter(_.isLetter).take(10).mkString)
       _ <- ZIO.logInfo(s"Reading stream with back pressure (using Redis queue ${queueName})")
       count <- {
-        val r: Reader[Any, ZE, String] = Reader.UnitReader[Any, ZE, String](stream)
+        val r: Reader[Any, ZE, String] = Reader.UnitReaderStream[Any, ZE, String](stream)
         val w: Pipe[Config, ZE, String, String] = ape.redis.Pipes.pipes[Config].generalPurpose[ZE].string(queueName)
         r --> w
       }.runCount
