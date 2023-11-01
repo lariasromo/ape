@@ -6,6 +6,7 @@ import zio.http.model.Method
 import zio.metrics._
 import zio.metrics.connectors.prometheus.PrometheusPublisher
 import zio.metrics.connectors.{MetricsConfig, prometheus}
+import zio.metrics.jvm.DefaultJvmMetrics
 import zio.stream.ZStream
 
 import java.net.InetSocketAddress
@@ -48,6 +49,8 @@ object ApeMetrics {
             // general config for all metric backend
             metricsConfig,
             // The prometheus reporting layer
+
+            Runtime.enableRuntimeMetrics >>> DefaultJvmMetrics.live,
             prometheus.publisherLayer,
             prometheus.prometheusLayer,
             ZLayer.succeed(ServerConfig(address = new InetSocketAddress(conf.port))) >>> Server.live
